@@ -1,0 +1,280 @@
+import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { ChevronLeft, Plus, X, Zap, Trash2, Edit2, Store as StoreIcon } from 'lucide-react'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { z } from 'zod'
+import toast from 'react-hot-toast'
+import {
+  flashDiscountApi,
+  type FlashDiscount,
+  type CreateFlashDiscountPayload,
+} from '@/api/endpoints/flashDiscounts'
+import { storeApi } from '@/api/endpoints/stores'
+
+// ── Form schema ───────────────────────────────────────────────────────────────
+
+const schema = z.object({
+  title:               z.string().min(1, 'Title required'),
+  description:         z.string().optional(),
+  discount_percentage: z.string().refine(v => !isNaN(parseFloat(v)) && parseFloat(v) > 0 && parseFloat(v) <= 100, 'Must be 1–100'),
+  store_id:            z.string().optional(),
+  valid_from:          z.string().optional(),
+  valid_until:         z.string().optional(),
+  max_redemptions:     z.string().optional(),
+})
+type FormData = z.infer<typeof schema>
+
+const STATUS_STYLE: Record<string, string> = {
+  active:   'bg-emerald-100 text-emerald-700',
+  inactive: 'bg-gray-100 text-gray-500',
+  expired:  'bg-red-100 text-red-600',
+}
+
+// ── Form Modal ────────────────────────────────────────────────────────────────
+
+function FlashDiscountFormModal({
+  editing,
+  onClose,
+}: {
+  editing: FlashDiscount | null
+  onClose: () => void
+}) {
+  const qc = useQueryClient()
+
+  const { data: stores = [] } = useQuery({
+    queryKey: ['stores'],
+    queryFn:  () => storeApi.list().then(r => r.data.data),
+  })
+
+  const { register, handleSubmit, formState: { errors } } = useForm<FormData>({
+    resolver: zodResolver(schema),
+    defaultValues: editing ? {
+      title:               editing.title,
+      description:         editing.description ?? '',
+      discount_percentage: editing.discount_percentage,
+      store_id:            editing.store_id ? String(editing.store_id) : '',
+      valid_from:          editing.valid_from?.slice(0, 16) ?? '',
+      valid_until:         editing.valid_until?.slice(0, 16) ?? '',
+      max_redemptions:     editing.max_redemptions ? String(editing.max_redemptions) : '',
+    } : {},
+  })
+
+  const createMutation = useMutation({
+    mutationFn: (data: CreateFlashDiscountPayload) => flashDiscountApi.create(data),
+    onSuccess: () => { toast.success('Flash discount created!'); qc.invalidateQueries({ queryKey: ['flash-discounts'] }); onClose() },
+    onError: () => toast.error('Failed to create'),
+  })
+
+  const updateMutation = useMutation({
+    mutationFn: (data: Partial<CreateFlashDiscountPayload>) => flashDiscountApi.update(editing!.id, data),
+    onSuccess: () => { toast.success('Updated!'); qc.invalidateQueries({ queryKey: ['flash-discounts'] }); onClose() },
+    onError: () => toast.error('Failed to update'),
+  })
+
+  const onSubmit = (values: FormData) => {
+    const payload: CreateFlashDiscountPayload = {
+      title:               values.title,
+      description:         values.description || undefined,
+      discount_percentage: parseFloat(values.discount_percentage),
+      store_id:            values.store_id ? parseInt(values.store_id) : undefined,
+      valid_from:          values.valid_from || undefined,
+      valid_until:         values.valid_until || undefined,
+      max_redemptions:     values.max_redemptions ? parseInt(values.max_redemptions) : undefined,
+    }
+    editing ? updateMutation.mutate(payload) : createMutation.mutate(payload)
+  }
+
+  const isPending = createMutation.isPending || updateMutation.isPending
+
+  return (
+    <div className="fixed inset-0 z-[60] flex items-end">
+      <div className="absolute inset-0 bg-black/40" onClick={onClose} />
+      <div className="relative w-full bg-white rounded-t-3xl pb-safe max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 sticky top-0 bg-white">
+          <h2 className="font-semibold text-gray-800">{editing ? 'Edit Flash Discount' : 'New Flash Discount'}</h2>
+          <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100">
+            <X size={18} className="text-gray-500" />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit(onSubmit)} className="px-5 py-4 space-y-4">
+          <div>
+            <label className="block text-xs font-medium text-gray-600 mb-1">Title *</label>
+            <input {...register('title')} placeholder="e.g. Weekend Flash Sale" className="input-field" />
+            {errors.title && <p className="text-xs text-red-500 mt-1">{errors.title.message}</p>}
+          </div>
+
+          <div>
+            <label className="block text-xs font-medium text-gray-600 mb-1">Discount (%) *</label>
+            <input {...register('discount_percentage')} type="number" step="0.01" min="1" max="100" placeholder="20" className="input-field" />
+            {errors.discount_percentage && <p className="text-xs text-red-500 mt-1">{errors.discount_percentage.message}</p>}
+          </div>
+
+          <div>
+            <label className="block text-xs font-medium text-gray-600 mb-1">Store (optional)</label>
+            <select {...register('store_id')} className="input-field">
+              <option value="">All stores</option>
+              {stores.map(s => <option key={s.id} value={s.id}>{s.store_name}</option>)}
+            </select>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">Valid From</label>
+              <input {...register('valid_from')} type="datetime-local" className="input-field text-sm" />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">Valid Until</label>
+              <input {...register('valid_until')} type="datetime-local" className="input-field text-sm" />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-medium text-gray-600 mb-1">Max Redemptions</label>
+            <input {...register('max_redemptions')} type="number" min="1" placeholder="Unlimited" className="input-field" />
+          </div>
+
+          <div>
+            <label className="block text-xs font-medium text-gray-600 mb-1">Description</label>
+            <textarea {...register('description')} rows={3} placeholder="Optional details…" className="w-full text-sm border border-gray-200 rounded-xl px-3 py-2.5 resize-none focus:outline-none focus:ring-2 focus:ring-brand-300" />
+          </div>
+
+          <button type="submit" disabled={isPending} className="btn-primary w-full">
+            {isPending ? 'Saving…' : editing ? 'Save Changes' : 'Create'}
+          </button>
+        </form>
+      </div>
+    </div>
+  )
+}
+
+// ── Discount Card ─────────────────────────────────────────────────────────────
+
+function DiscountCard({
+  item,
+  onEdit,
+  onDelete,
+}: {
+  item: FlashDiscount
+  onEdit: () => void
+  onDelete: () => void
+}) {
+  const now       = new Date()
+  const validUntil = item.valid_until ? new Date(item.valid_until) : null
+  const timeLeft   = validUntil && validUntil > now
+    ? Math.round((validUntil.getTime() - now.getTime()) / 60000)
+    : null
+
+  const timeLabel = timeLeft !== null
+    ? timeLeft < 60 ? `${timeLeft}m left`
+      : timeLeft < 1440 ? `${Math.floor(timeLeft / 60)}h left`
+      : `${Math.floor(timeLeft / 1440)}d left`
+    : null
+
+  return (
+    <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+      <div className="bg-gradient-to-r from-orange-500 to-rose-500 px-4 py-3 flex items-center justify-between">
+        <span className="text-white font-bold text-xl">{parseFloat(item.discount_percentage).toFixed(0)}% OFF</span>
+        <div className="flex items-center gap-2">
+          {timeLabel && <span className="text-white/80 text-xs">{timeLabel}</span>}
+          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${STATUS_STYLE[item.status]}`}>
+            {item.status.toUpperCase()}
+          </span>
+        </div>
+      </div>
+      <div className="px-4 py-3">
+        <p className="font-semibold text-gray-800 text-sm">{item.title}</p>
+        {item.description && <p className="text-xs text-gray-500 mt-0.5">{item.description}</p>}
+        <div className="flex items-center gap-3 mt-2 text-xs text-gray-400">
+          {item.store_name && (
+            <span className="flex items-center gap-1"><StoreIcon size={10} />{item.store_name}</span>
+          )}
+          {item.max_redemptions && (
+            <span>{item.current_redemptions}/{item.max_redemptions} used</span>
+          )}
+        </div>
+        <div className="flex gap-2 mt-3">
+          <button onClick={onEdit} className="flex-1 flex items-center justify-center gap-1 py-2 border border-gray-200 rounded-xl text-xs font-medium text-gray-600 hover:bg-gray-50">
+            <Edit2 size={12} /> Edit
+          </button>
+          <button onClick={onDelete} className="flex-1 flex items-center justify-center gap-1 py-2 border border-red-100 rounded-xl text-xs font-medium text-red-500 hover:bg-red-50">
+            <Trash2 size={12} /> Delete
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ── Page ──────────────────────────────────────────────────────────────────────
+
+export default function FlashDiscountPage() {
+  const navigate = useNavigate()
+  const qc       = useQueryClient()
+  const [showModal, setModal]   = useState(false)
+  const [editing, setEditing]   = useState<FlashDiscount | null>(null)
+
+  const { data: discounts = [], isLoading } = useQuery({
+    queryKey: ['flash-discounts'],
+    queryFn:  () => flashDiscountApi.list().then(r => r.data.data),
+  })
+
+  const deleteMutation = useMutation({
+    mutationFn: flashDiscountApi.remove,
+    onSuccess: () => { toast.success('Deleted'); qc.invalidateQueries({ queryKey: ['flash-discounts'] }) },
+    onError: () => toast.error('Failed to delete'),
+  })
+
+  const openCreate = () => { setEditing(null); setModal(true) }
+  const openEdit   = (item: FlashDiscount) => { setEditing(item); setModal(true) }
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <div className="gradient-brand px-5 pt-14 pb-6">
+        <div className="flex items-center gap-3">
+          <button onClick={() => navigate(-1)} className="w-9 h-9 bg-white/20 rounded-full flex items-center justify-center shrink-0 hover:bg-white/30">
+            <ChevronLeft size={20} className="text-white" />
+          </button>
+          <div className="flex-1">
+            <h1 className="text-white font-bold text-xl">Flash Discounts</h1>
+            <p className="text-white/70 text-xs mt-0.5">Time-limited offers for customers</p>
+          </div>
+          <button onClick={openCreate} className="w-9 h-9 bg-white/20 rounded-full flex items-center justify-center hover:bg-white/30">
+            <Plus size={20} className="text-white" />
+          </button>
+        </div>
+      </div>
+
+      <div className="px-4 py-4 space-y-3">
+        {isLoading ? (
+          Array.from({ length: 3 }).map((_, i) => <div key={i} className="bg-white rounded-2xl h-32 animate-pulse" />)
+        ) : discounts.length === 0 ? (
+          <div className="py-20 text-center">
+            <Zap size={40} className="text-gray-300 mx-auto mb-3" />
+            <p className="text-gray-500 font-medium">No flash discounts yet</p>
+            <p className="text-gray-400 text-sm mt-1">Create a time-limited offer to attract customers</p>
+            <button onClick={openCreate} className="btn-primary mt-4 inline-flex items-center gap-2">
+              <Plus size={14} /> Create Flash Discount
+            </button>
+          </div>
+        ) : (
+          discounts.map(d => (
+            <DiscountCard
+              key={d.id}
+              item={d}
+              onEdit={() => openEdit(d)}
+              onDelete={() => window.confirm('Delete this flash discount?') && deleteMutation.mutate(d.id)}
+            />
+          ))
+        )}
+        <div className="h-4" />
+      </div>
+
+      {showModal && (
+        <FlashDiscountFormModal editing={editing} onClose={() => setModal(false)} />
+      )}
+    </div>
+  )
+}

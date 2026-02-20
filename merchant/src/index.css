@@ -1,0 +1,129 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── Global resets for app-like feel ── */
+* {
+  -webkit-tap-highlight-color: transparent;
+  -webkit-font-smoothing: antialiased;
+}
+
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overscroll-behavior: none;
+}
+
+body {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  background: #F8FAFC;
+  color: #1a1a2e;
+}
+
+/* Safe area support for iOS notch / home bar */
+.safe-top    { padding-top:    env(safe-area-inset-top); }
+.safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
+
+/* Smooth scroll */
+* { scroll-behavior: smooth; }
+
+/* Remove blue outline on mobile tap */
+button:focus, a:focus { outline: none; }
+
+/* Custom scrollbar (desktop) */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 2px; }
+
+/* Brand gradient helper */
+.gradient-brand {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+.text-gradient-brand {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ── Component classes ───────────────────────────────────────────────────────
+   Defined here (not @layer components) so they are always included by
+   Tailwind's JIT scan regardless of whether the class names appear in
+   content files at compile time.
+   ─────────────────────────────────────────────────────────────────────────── */
+
+/* Styled text input / select / textarea */
+.input-field {
+  width: 100%;
+  font-size: 0.875rem;       /* text-sm */
+  line-height: 1.25rem;
+  border: 1px solid #e5e7eb; /* border-gray-200 */
+  border-radius: 0.75rem;    /* rounded-xl */
+  padding: 0.625rem 0.75rem; /* py-2.5 px-3 */
+  background-color: #ffffff;
+  color: #111827;            /* gray-900 */
+  transition: border-color 0.15s, box-shadow 0.15s;
+  -webkit-appearance: none;
+  appearance: none;
+  outline: none;
+}
+.input-field::placeholder {
+  color: #9ca3af; /* gray-400 */
+}
+.input-field:focus {
+  border-color: #667eea;     /* brand-600 */
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+}
+.input-field:disabled {
+  background-color: #f9fafb;
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Primary action button */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.25rem;  /* py-3 px-5 */
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: #ffffff;
+  font-size: 0.875rem;       /* text-sm */
+  font-weight: 600;          /* semibold */
+  border-radius: 0.75rem;    /* rounded-xl */
+  border: none;
+  cursor: pointer;
+  transition: opacity 0.15s, transform 0.1s;
+  white-space: nowrap;
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.btn-primary:hover {
+  opacity: 0.92;
+}
+.btn-primary:active {
+  transform: scale(0.97);
+}
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* ── Safe-area utilities ─────────────────────────────────────────────────────
+   Tailwind has no first-party safe-area classes; define them here.
+   ─────────────────────────────────────────────────────────────────────────── */
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+.pt-safe {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+.pl-safe {
+  padding-left: env(safe-area-inset-left, 0px);
+}
+.pr-safe {
+  padding-right: env(safe-area-inset-right, 0px);
+}

@@ -1,0 +1,23 @@
+Options -Indexes
+RewriteEngine On
+RewriteBase /
+
+# ── Pass Authorization header through to PHP ─────────────────────────────────
+SetEnvIf Authorization "(.*)" HTTP_AUTHORIZATION=$1
+RewriteCond %{HTTP:Authorization} ^(.*)
+RewriteRule .* - [env=HTTP_AUTHORIZATION:%1]
+
+# ── Block direct access to internal directories ───────────────────────────────
+RewriteRule ^(config|helpers|middleware|controllers|migrations|models|core)(/.*)?$ - [F,L]
+
+# ── Block access to .env, .git, composer files ────────────────────────────────
+RewriteRule ^(\.env|\.git|composer\.(json|lock))$ - [F,L]
+
+# ── Handle CORS preflight (OPTIONS) ──────────────────────────────────────────
+RewriteCond %{REQUEST_METHOD} OPTIONS
+RewriteRule ^ - [L,R=204]
+
+# ── Route all other requests to index.php ────────────────────────────────────
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^ /index.php [QSA,L]
