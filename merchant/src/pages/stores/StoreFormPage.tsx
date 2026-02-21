@@ -1,12 +1,61 @@
 import { useNavigate, useParams } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { useForm, Controller } from 'react-hook-form'
+import { useForm, Controller, useFieldArray } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { ChevronLeft, Save } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { useEffect } from 'react'
 import { storeApi, type CreateStorePayload } from '@/api/endpoints/stores'
+
+// ── Working hours helpers ─────────────────────────────────────────────────────
+
+const DAYS = [
+  { key: 'mon', label: 'Monday' },
+  { key: 'tue', label: 'Tuesday' },
+  { key: 'wed', label: 'Wednesday' },
+  { key: 'thu', label: 'Thursday' },
+  { key: 'fri', label: 'Friday' },
+  { key: 'sat', label: 'Saturday' },
+  { key: 'sun', label: 'Sunday' },
+] as const
+
+const dayHoursSchema = z.object({
+  day:   z.string(),
+  label: z.string(),
+  open:  z.boolean(),
+  from:  z.string(),
+  to:    z.string(),
+})
+
+function defaultDayHours() {
+  return DAYS.map((d) => ({
+    day: d.key,
+    label: d.label,
+    open: true,
+    from: '09:00',
+    to: '18:00',
+  }))
+}
+
+/** Serialize form day rows → JSON for API */
+function serializeHours(rows: z.infer<typeof dayHoursSchema>[]): Record<string, string> {
+  const result: Record<string, string> = {}
+  for (const r of rows) {
+    result[r.day] = r.open ? `${r.from}-${r.to}` : 'Closed'
+  }
+  return result
+}
+
+/** Deserialize JSON from API → form day rows */
+function deserializeHours(json: Record<string, string> | null | undefined) {
+  return DAYS.map((d) => {
+    const val = json?.[d.key]
+    if (!val || val === 'Closed') return { day: d.key, label: d.label, open: false, from: '09:00', to: '18:00' }
+    const [from, to] = val.split('-')
+    return { day: d.key, label: d.label, open: true, from: from ?? '09:00', to: to ?? '18:00' }
+  })
+}
 
 const schema = z.object({
   store_name:  z.string().min(2, 'Min 2 characters'),
@@ -16,6 +65,7 @@ const schema = z.object({
   phone:       z.string().regex(/^[0-9]{10}$/, '10-digit number').optional().or(z.literal('')),
   email:       z.string().email('Invalid email').optional().or(z.literal('')),
   description: z.string().optional().or(z.literal('')),
+  hours:       z.array(dayHoursSchema),
 })
 
 type FormValues = z.infer<typeof schema>
@@ -50,7 +100,12 @@ export default function StoreFormPage() {
   const {
     register, handleSubmit, watch, reset, control,
     formState: { errors, isDirty },
-  } = useForm<FormValues>({ resolver: zodResolver(schema) })
+  } = useForm<FormValues>({
+    resolver: zodResolver(schema),
+    defaultValues: { hours: defaultDayHours() },
+  })
+
+  const { fields: hourFields } = useFieldArray({ control, name: 'hours' })
 
   const selectedCity = watch('city_id')
 
@@ -78,6 +133,7 @@ export default function StoreFormPage() {
         phone:       existingStore.phone ?? '',
         email:       existingStore.email ?? '',
         description: existingStore.description ?? '',
+        hours:       deserializeHours(existingStore.opening_hours),
       })
     }
   }, [existingStore, reset])
@@ -107,13 +163,14 @@ export default function StoreFormPage() {
 
   const onSubmit = (values: FormValues) => {
     const payload: CreateStorePayload = {
-      store_name:  values.store_name,
-      address:     values.address,
-      city_id:     Number(values.city_id),
-      area_id:     values.area_id ? Number(values.area_id) : null,
-      phone:       values.phone || undefined,
-      email:       values.email || undefined,
-      description: values.description || undefined,
+      store_name:    values.store_name,
+      address:       values.address,
+      city_id:       Number(values.city_id),
+      area_id:       values.area_id ? Number(values.area_id) : null,
+      phone:         values.phone || undefined,
+      email:         values.email || undefined,
+      description:   values.description || undefined,
+      opening_hours: serializeHours(values.hours),
     }
     if (isEdit) updateMutation.mutate(payload)
     else        createMutation.mutate(payload)
@@ -190,6 +247,43 @@ export default function StoreFormPage() {
             <Field label="Email" error={errors.email?.message}>
               <input {...register('email')} type="email" placeholder="store@email.com" className={inputCls} />
             </Field>
+          </div>
+
+          {/* Working Hours */}
+          <div className="bg-white rounded-2xl p-4 shadow-sm space-y-3">
+            <p className="text-xs font-bold text-gray-400 uppercase tracking-wide">Working Hours</p>
+            {hourFields.map((field, idx) => {
+              const isOpen = watch(`hours.${idx}.open`)
+              return (
+                <div key={field.id} className="flex items-center gap-2">
+                  <label className="flex items-center gap-1.5 w-24 shrink-0">
+                    <input
+                      type="checkbox"
+                      {...register(`hours.${idx}.open`)}
+                      className="w-4 h-4 rounded border-gray-300 text-brand-600 focus:ring-brand-500"
+                    />
+                    <span className="text-xs font-semibold text-gray-700">{field.label.slice(0, 3)}</span>
+                  </label>
+                  {isOpen ? (
+                    <div className="flex items-center gap-1.5 flex-1">
+                      <input
+                        type="time"
+                        {...register(`hours.${idx}.from`)}
+                        className="flex-1 px-2 py-1.5 text-xs rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-brand-500/30"
+                      />
+                      <span className="text-xs text-gray-400">to</span>
+                      <input
+                        type="time"
+                        {...register(`hours.${idx}.to`)}
+                        className="flex-1 px-2 py-1.5 text-xs rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-brand-500/30"
+                      />
+                    </div>
+                  ) : (
+                    <span className="text-xs text-gray-400 italic">Closed</span>
+                  )}
+                </div>
+              )
+            })}
           </div>
         </form>
       </div>

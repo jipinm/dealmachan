@@ -72,7 +72,7 @@ class CouponController {
             [...$binds, $limit, $offset]
         );
 
-        Response::success($rows, 'OK', [
+        Response::success($rows, 'OK', 200, [
             'total' => $total,
             'page'  => $page,
             'limit' => $limit,
@@ -266,7 +266,7 @@ class CouponController {
             [$id, $limit, $offset]
         );
 
-        Response::success($rows, 'OK', [
+        Response::success($rows, 'OK', 200, [
             'total' => $total,
             'page'  => $page,
             'limit' => $limit,

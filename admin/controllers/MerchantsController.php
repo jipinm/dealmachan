@@ -340,6 +340,20 @@ class MerchantsController extends Controller {
             $storeStatus = sanitize($_POST['status']       ?? 'active');
             $redirect    = "merchants/add-store?merchant_id={$merchantId}";
 
+            // Parse opening hours from form
+            $openingHours = null;
+            if (!empty($_POST['hours']) && is_array($_POST['hours'])) {
+                $hoursData = [];
+                foreach ($_POST['hours'] as $day => $times) {
+                    $hoursData[$day] = [
+                        'open'   => $times['open']  ?? '09:00',
+                        'close'  => $times['close'] ?? '21:00',
+                        'closed' => isset($times['closed']) && $times['closed'] ? true : false,
+                    ];
+                }
+                $openingHours = json_encode($hoursData);
+            }
+
             if (!$storeName || !$address || !$cityId || !$areaId) {
                 $_SESSION['error'] = 'Store name, address, city and area are required.';
                 $this->redirect($redirect); return;
@@ -347,16 +361,17 @@ class MerchantsController extends Controller {
 
             try {
                 $storeId = $this->storeModel->createStore([
-                    'merchant_id'  => $merchantId,
-                    'store_name'   => $storeName,
-                    'address'      => $address,
-                    'city_id'      => $cityId,
-                    'area_id'      => $areaId,
-                    'location_id'  => $locationId,
-                    'phone'        => $phone  ?: null,
-                    'email'        => $email  ?: null,
-                    'description'  => $description ?: null,
-                    'status'       => $storeStatus,
+                    'merchant_id'   => $merchantId,
+                    'store_name'    => $storeName,
+                    'address'       => $address,
+                    'city_id'       => $cityId,
+                    'area_id'       => $areaId,
+                    'location_id'   => $locationId,
+                    'phone'         => $phone  ?: null,
+                    'email'         => $email  ?: null,
+                    'description'   => $description ?: null,
+                    'opening_hours' => $openingHours,
+                    'status'        => $storeStatus,
                 ]);
                 $cu = $this->auth->getCurrentUser();
                 logAudit('store_created', $storeId, 'store', $cu['id']);
@@ -403,6 +418,20 @@ class MerchantsController extends Controller {
             $storeStatus = sanitize($_POST['status']       ?? 'active');
             $redirect    = "merchants/edit-store?id={$storeId}";
 
+            // Parse opening hours from form
+            $openingHours = null;
+            if (!empty($_POST['hours']) && is_array($_POST['hours'])) {
+                $hoursData = [];
+                foreach ($_POST['hours'] as $day => $times) {
+                    $hoursData[$day] = [
+                        'open'   => $times['open']  ?? '09:00',
+                        'close'  => $times['close'] ?? '21:00',
+                        'closed' => isset($times['closed']) && $times['closed'] ? true : false,
+                    ];
+                }
+                $openingHours = json_encode($hoursData);
+            }
+
             if (!$storeName || !$address || !$cityId || !$areaId) {
                 $_SESSION['error'] = 'Store name, address, city and area are required.';
                 $this->redirect($redirect); return;
@@ -410,15 +439,16 @@ class MerchantsController extends Controller {
 
             try {
                 $this->storeModel->updateStore($storeId, [
-                    'store_name'  => $storeName,
-                    'address'     => $address,
-                    'city_id'     => $cityId,
-                    'area_id'     => $areaId,
-                    'location_id' => $locationId,
-                    'phone'       => $phone  ?: null,
-                    'email'       => $email  ?: null,
-                    'description' => $description ?: null,
-                    'status'      => $storeStatus,
+                    'store_name'    => $storeName,
+                    'address'       => $address,
+                    'city_id'       => $cityId,
+                    'area_id'       => $areaId,
+                    'location_id'   => $locationId,
+                    'phone'         => $phone  ?: null,
+                    'email'         => $email  ?: null,
+                    'description'   => $description ?: null,
+                    'opening_hours' => $openingHours,
+                    'status'        => $storeStatus,
                 ]);
                 $cu = $this->auth->getCurrentUser();
                 logAudit('store_updated', $storeId, 'store', $cu['id']);

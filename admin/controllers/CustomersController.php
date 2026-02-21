@@ -79,12 +79,18 @@ class CustomersController extends Controller {
         $customer = $this->customerModel->findWithDetails($id);
         if (!$customer) { $this->redirectWithError('customers', 'Customer not found.'); return; }
 
-        $redemptions = $this->customerModel->getRedemptions($id);
+        $redemptions  = $this->customerModel->getRedemptions($id);
+        $analytics    = $this->customerModel->getTransactionAnalytics($id);
+        $transactions = $this->customerModel->getRecentTransactions($id);
+        $storeCoupons = $this->customerModel->getStoreCoupons($id);
 
         $this->loadView('customers/view', [
             'title'        => 'Customer Profile — ' . escape($customer['name']),
             'customer'     => $customer,
             'redemptions'  => $redemptions,
+            'analytics'    => $analytics,
+            'transactions' => $transactions,
+            'storeCoupons' => $storeCoupons,
             'current_user' => $this->auth->getCurrentUser(),
         ]);
     }

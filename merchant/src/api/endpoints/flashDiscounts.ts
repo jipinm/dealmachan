@@ -29,6 +29,20 @@ export interface CreateFlashDiscountPayload {
   max_redemptions?: number
 }
 
+export interface RedeemFlashDiscountPayload {
+  customer_phone: string
+  transaction_amount?: number
+  store_id?: number
+}
+
+export interface FlashDiscountRedeemResult {
+  flash_discount_id: number
+  title: string
+  discount_percentage: string
+  discount_amount: number
+  transaction_amount: number | null
+}
+
 type R<T> = { success: boolean; message: string; data: T }
 
 export const flashDiscountApi = {
@@ -43,4 +57,7 @@ export const flashDiscountApi = {
 
   remove: (id: number) =>
     apiClient.delete<R<{ id: number }>>(`/merchants/flash-discounts/${id}`),
+
+  redeem: (id: number, data: RedeemFlashDiscountPayload) =>
+    apiClient.post<R<FlashDiscountRedeemResult>>(`/merchants/flash-discounts/${id}/redeem`, data),
 }

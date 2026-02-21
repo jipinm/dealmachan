@@ -51,7 +51,7 @@ class NotificationController {
             [$userId]
         )['cnt'] ?? 0);
 
-        Response::success($rows, 'OK', [
+        Response::success($rows, 'OK', 200, [
             'page'         => $page,
             'limit'        => $limit,
             'total'        => $total,

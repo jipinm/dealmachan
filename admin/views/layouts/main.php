@@ -97,6 +97,53 @@ $current_user = $auth->getCurrentUser();
                         </div>
                     </div>
                     
+                    <!-- Store Coupons - Super Admin, City Admin, Sales Admin -->
+                    <?php if (in_array($current_user['admin_type'], ['super_admin', 'city_admin', 'sales_admin'])): ?>
+                    <div class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="collapse" data-bs-target="#storeCouponsMenu" aria-expanded="false">
+                            <i class="fas fa-tags me-2"></i> Store Coupons
+                        </a>
+                        <div class="collapse" id="storeCouponsMenu">
+                            <div class="nav flex-column ps-3">
+                                <a class="nav-link small" href="<?= BASE_URL ?>store-coupons">
+                                    <i class="fas fa-list me-2"></i> View All
+                                </a>
+                                <a class="nav-link small" href="<?= BASE_URL ?>store-coupons?status=active">
+                                    <i class="fas fa-check-circle me-2"></i> Active
+                                </a>
+                                <a class="nav-link small" href="<?= BASE_URL ?>store-coupons?is_redeemed=1">
+                                    <i class="fas fa-check-double me-2"></i> Redeemed
+                                </a>
+                                <a class="nav-link small" href="<?= BASE_URL ?>store-coupons?is_gifted=1">
+                                    <i class="fas fa-gift me-2"></i> Gifted
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    <?php endif; ?>
+                    
+                    <!-- Flash Discounts - Super Admin, City Admin, Sales Admin -->
+                    <?php if (in_array($current_user['admin_type'], ['super_admin', 'city_admin', 'sales_admin'])): ?>
+                    <div class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="collapse" data-bs-target="#flashDiscountsMenu" aria-expanded="false">
+                            <i class="fas fa-bolt me-2"></i> Flash Discounts
+                        </a>
+                        <div class="collapse" id="flashDiscountsMenu">
+                            <div class="nav flex-column ps-3">
+                                <a class="nav-link small" href="<?= BASE_URL ?>flash-discounts">
+                                    <i class="fas fa-list me-2"></i> View All
+                                </a>
+                                <a class="nav-link small" href="<?= BASE_URL ?>flash-discounts?status=active">
+                                    <i class="fas fa-check-circle me-2"></i> Active
+                                </a>
+                                <a class="nav-link small" href="<?= BASE_URL ?>flash-discounts?expiry=expired">
+                                    <i class="fas fa-clock me-2"></i> Expired
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    <?php endif; ?>
+                    
                     <!-- Card Management - All Admin Types -->
                     <div class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="collapse" data-bs-target="#cardsMenu" aria-expanded="false">
@@ -429,32 +476,78 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     // Highlight active menu item based on current URL
-    const currentPath = window.location.pathname;
-    const navLinks = document.querySelectorAll('.sidebar .nav-link');
-    
+    // Strategy: collect all candidate matches, activate only the most specific one.
+    // Scoring: filter links (with query params) score path.length + 1000;
+    //          plain path links score path.length.
+    // This ensures:
+    //   /customers/add  → "Add Customer" wins over "View All" (longer path)
+    //   /store-coupons?is_redeemed=1 → "Redeemed" wins over "View All" (query boost)
+    //   /customers/profile?id=5 → "View All" wins (only sub-page match, no deeper link)
+    const currentPath   = window.location.pathname;
+    const currentSearch = window.location.search;
+    const navLinks      = document.querySelectorAll('.sidebar .nav-link');
+    const candidates    = [];
+
     navLinks.forEach(link => {
         const href = link.getAttribute('href');
-        if (href && currentPath.includes(href.replace('<?= BASE_URL ?>', ''))) {
-            link.classList.add('active');
-            
-            // If it's a submenu item, expand the parent
-            const parentCollapse = link.closest('.collapse');
-            if (parentCollapse) {
-                const bsCollapse = bootstrap.Collapse.getInstance(parentCollapse);
-                if (bsCollapse) {
-                    bsCollapse.show();
-                } else {
-                    // Fallback if collapse instance doesn't exist yet
-                    parentCollapse.classList.add('show');
-                    const parentToggle = document.querySelector(`[data-bs-target="#${parentCollapse.id}"]`);
-                    if (parentToggle) {
-                        parentToggle.setAttribute('aria-expanded', 'true');
-                        parentToggle.classList.add('active');
-                    }
+        if (!href || href === '#') return;
+
+        let linkUrl;
+        try {
+            linkUrl = new URL(href, window.location.origin);
+        } catch(e) {
+            return;
+        }
+
+        const hrefPath      = linkUrl.pathname;
+        const isExactPath   = currentPath === hrefPath;
+        // Sub-page: e.g. /coupons/detail under /coupons — uses hrefPath + '/' to prevent
+        // /store-coupons from being treated as a sub-page of /coupons
+        const isSubPagePath = !isExactPath && currentPath.startsWith(hrefPath + '/');
+
+        if (!isExactPath && !isSubPagePath) return;
+
+        if (linkUrl.search) {
+            // Filter link (e.g. ?status=active): only matches on the exact page
+            // when every query param in the link is present with the same value
+            if (!isExactPath) return;
+            const hrefParams    = linkUrl.searchParams;
+            const currentParams = new URLSearchParams(currentSearch);
+            let allMatch = true;
+            hrefParams.forEach((value, key) => {
+                if (currentParams.get(key) !== value) allMatch = false;
+            });
+            if (!allMatch) return;
+            // Boost score so a matching filter link always beats a plain "View All"
+            candidates.push({ link, score: hrefPath.length + 1000 });
+        } else {
+            // Plain path link — exact or sub-page
+            candidates.push({ link, score: hrefPath.length });
+        }
+    });
+
+    // Activate only the single best candidate
+    if (candidates.length > 0) {
+        candidates.sort((a, b) => b.score - a.score);
+        const winner = candidates[0].link;
+        winner.classList.add('active');
+
+        // Expand the parent collapse menu
+        const parentCollapse = winner.closest('.collapse');
+        if (parentCollapse) {
+            const bsCollapse = bootstrap.Collapse.getInstance(parentCollapse);
+            if (bsCollapse) {
+                bsCollapse.show();
+            } else {
+                parentCollapse.classList.add('show');
+                const parentToggle = document.querySelector(`[data-bs-target="#${parentCollapse.id}"]`);
+                if (parentToggle) {
+                    parentToggle.setAttribute('aria-expanded', 'true');
+                    parentToggle.classList.add('active');
                 }
             }
         }
-    });
+    }
     
     // Add smooth scrolling for long menus
     const sidebar = document.querySelector('.sidebar');

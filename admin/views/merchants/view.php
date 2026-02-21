@@ -171,6 +171,39 @@ $statusColors  = ['active'=>'success','inactive'=>'secondary','blocked'=>'danger
                                     <button class="btn btn-sm btn-outline-danger" onclick="confirmDeleteStore(<?= $store['id'] ?>, <?= $merchant['id'] ?>, '<?= escape($store['store_name']) ?>')" title="Delete"><i class="fas fa-trash"></i></button>
                                 </td>
                             </tr>
+                            <?php
+                                // Opening Hours row (collapsible)
+                                $hours = null;
+                                if (!empty($store['opening_hours'])) {
+                                    $hours = is_string($store['opening_hours']) ? json_decode($store['opening_hours'], true) : $store['opening_hours'];
+                                }
+                                if ($hours && is_array($hours)):
+                            ?>
+                            <tr class="table-light">
+                                <td colspan="5" class="py-2 px-3">
+                                    <div class="d-flex align-items-start gap-2">
+                                        <i class="fas fa-clock text-muted mt-1"></i>
+                                        <div class="d-flex flex-wrap gap-3 small">
+                                            <?php
+                                            $dayLabels = ['monday'=>'Mon','tuesday'=>'Tue','wednesday'=>'Wed','thursday'=>'Thu','friday'=>'Fri','saturday'=>'Sat','sunday'=>'Sun'];
+                                            foreach ($dayLabels as $dayKey => $dayLabel):
+                                                $dayData = $hours[$dayKey] ?? null;
+                                                if (!$dayData) continue;
+                                            ?>
+                                            <span>
+                                                <strong><?= $dayLabel ?>:</strong>
+                                                <?php if (!empty($dayData['closed'])): ?>
+                                                    <span class="text-danger">Closed</span>
+                                                <?php else: ?>
+                                                    <?= escape($dayData['open'] ?? '—') ?>–<?= escape($dayData['close'] ?? '—') ?>
+                                                <?php endif; ?>
+                                            </span>
+                                            <?php endforeach; ?>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                            <?php endif; ?>
                             <?php endforeach; ?>
                         </tbody>
                     </table>

@@ -146,4 +146,75 @@ class FlashDiscountController {
         $this->db->execute('DELETE FROM flash_discounts WHERE id = ?', [$id]);
         Response::success(['id' => $id], 'Deleted');
     }
+
+    // ── POST /merchants/flash-discounts/:id/redeem ────────────────────────────
+    public function redeem(array $user, int $id, array $body): never {
+        $merchantId = (int)$user['merchant_id'];
+
+        $discount = $this->db->queryOne(
+            "SELECT * FROM flash_discounts WHERE id = ? AND merchant_id = ? AND status = 'active'",
+            [$id, $merchantId]
+        );
+        if (!$discount) Response::notFound('Flash discount not found or not active');
+
+        // Check max redemptions
+        if ($discount['max_redemptions'] && (int)$discount['current_redemptions'] >= (int)$discount['max_redemptions']) {
+            Response::error('Maximum redemptions reached for this flash discount', 400);
+        }
+
+        // Check validity period
+        if ($discount['valid_until'] && strtotime($discount['valid_until']) < time()) {
+            Response::error('This flash discount has expired', 400);
+        }
+
+        $v = new Validator($body);
+        $v->required('customer_phone');
+        if ($v->fails()) Response::validationError($v->errors());
+
+        $customerPhone = trim((string)$body['customer_phone']);
+        $transactionAmount = !empty($body['transaction_amount']) ? (float)$body['transaction_amount'] : 0;
+
+        // Find customer by phone
+        $customer = $this->db->queryOne(
+            "SELECT c.id, c.name, u.phone FROM customers c JOIN users u ON u.id = c.user_id WHERE u.phone = ?",
+            [$customerPhone]
+        );
+
+        $customerId = $customer ? (int)$customer['id'] : null;
+
+        // Calculate discount amount
+        $discountAmount = round($transactionAmount * (float)$discount['discount_percentage'] / 100, 2);
+
+        // Increment redemption count
+        $this->db->execute(
+            'UPDATE flash_discounts SET current_redemptions = current_redemptions + 1 WHERE id = ?',
+            [$id]
+        );
+
+        // Record in sales_registry if we have a customer and transaction
+        if ($transactionAmount > 0 && $customerId) {
+            $this->db->execute(
+                "INSERT INTO sales_registry (merchant_id, store_id, customer_id, transaction_amount, discount_amount, coupon_used, transaction_date)
+                 VALUES (?, ?, ?, ?, ?, ?, NOW())",
+                [
+                    $merchantId,
+                    $discount['store_id'],
+                    $customerId,
+                    $transactionAmount,
+                    $discountAmount,
+                    $id,
+                ]
+            );
+        }
+
+        Response::success([
+            'flash_discount_id'   => $id,
+            'title'               => $discount['title'],
+            'discount_percentage' => $discount['discount_percentage'],
+            'discount_amount'     => $discountAmount,
+            'transaction_amount'  => $transactionAmount,
+            'customer_name'       => $customer['name'] ?? null,
+            'current_redemptions' => (int)$discount['current_redemptions'] + 1,
+        ], 'Flash discount redeemed successfully');
+    }
 }

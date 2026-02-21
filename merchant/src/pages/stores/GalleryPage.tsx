@@ -1,6 +1,6 @@
 import { useNavigate, useParams } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { ChevronLeft, Plus, Crown, Trash2, ImageOff } from 'lucide-react'
+import { ChevronLeft, Plus, Crown, Trash2, ImageOff, ArrowUp, ArrowDown } from 'lucide-react'
 import { useRef, useState } from 'react'
 import toast from 'react-hot-toast'
 import { storeApi, type GalleryImage } from '@/api/endpoints/stores'
@@ -8,14 +8,18 @@ import { storeApi, type GalleryImage } from '@/api/endpoints/stores'
 const API_BASE = 'http://dealmachan-api.local'
 
 function ImageCard({
-  image, storeId, onDelete, onSetCover, isDeleting, isSettingCover,
+  image, storeId, onDelete, onSetCover, onMoveUp, onMoveDown, isDeleting, isSettingCover, isFirst, isLast,
 }: {
   image: GalleryImage
   storeId: number
   onDelete: () => void
   onSetCover: () => void
+  onMoveUp: () => void
+  onMoveDown: () => void
   isDeleting: boolean
   isSettingCover: boolean
+  isFirst: boolean
+  isLast: boolean
 }) {
   return (
     <div className={`relative rounded-2xl overflow-hidden aspect-square ${
@@ -27,6 +31,25 @@ function ImageCard({
           <Crown size={8} />Cover
         </div>
       )}
+      {/* Reorder buttons */}
+      <div className="absolute top-1.5 right-1.5 flex flex-col gap-1">
+        {!isFirst && (
+          <button
+            onClick={onMoveUp}
+            className="w-6 h-6 bg-black/50 rounded-full flex items-center justify-center text-white hover:bg-black/70"
+          >
+            <ArrowUp size={12} />
+          </button>
+        )}
+        {!isLast && (
+          <button
+            onClick={onMoveDown}
+            className="w-6 h-6 bg-black/50 rounded-full flex items-center justify-center text-white hover:bg-black/70"
+          >
+            <ArrowDown size={12} />
+          </button>
+        )}
+      </div>
       <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/60 to-transparent p-2 flex items-center justify-between">
         {!image.is_cover && (
           <button
@@ -102,6 +125,24 @@ export default function GalleryPage() {
     onSettled: () => setCoverSettingId(null),
   })
 
+  const reorderMutation = useMutation({
+    mutationFn: (imageIds: number[]) => storeApi.reorderGallery(storeId, imageIds),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['store', id] })
+      toast.success('Order updated')
+    },
+    onError: () => toast.error('Failed to reorder'),
+  })
+
+  const handleMove = (index: number, direction: 'up' | 'down') => {
+    const newGallery = [...gallery]
+    const targetIndex = direction === 'up' ? index - 1 : index + 1
+    if (targetIndex < 0 || targetIndex >= newGallery.length) return
+    ;[newGallery[index], newGallery[targetIndex]] = [newGallery[targetIndex], newGallery[index]]
+    const orderedIds = newGallery.map(img => img.id)
+    reorderMutation.mutate(orderedIds)
+  }
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files ?? [])
     if (files.length > 0) uploadMutation.mutate(files)
@@ -162,15 +203,19 @@ export default function GalleryPage() {
               {gallery.length} photo{gallery.length !== 1 ? 's' : ''} · Tap a photo to set as cover
             </p>
             <div className="grid grid-cols-2 gap-3">
-              {gallery.map((img) => (
+              {gallery.map((img, idx) => (
                 <ImageCard
                   key={img.id}
                   image={img}
                   storeId={storeId}
                   onDelete={() => deleteMutation.mutate(img.id)}
                   onSetCover={() => coverMutation.mutate(img.id)}
+                  onMoveUp={() => handleMove(idx, 'up')}
+                  onMoveDown={() => handleMove(idx, 'down')}
                   isDeleting={deletingId === img.id}
                   isSettingCover={coverSettingId === img.id}
+                  isFirst={idx === 0}
+                  isLast={idx === gallery.length - 1}
                 />
               ))}
               {/* Upload tile */}

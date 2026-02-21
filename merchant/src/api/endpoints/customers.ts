@@ -18,6 +18,18 @@ export interface CreateCustomerPayload {
   email?: string
 }
 
+export type UpdateCustomerPayload = Partial<CreateCustomerPayload>
+
+export interface CustomerAnalytics {
+  total_coupon_assignments: number
+  total_transactions: number
+  total_transaction_value: number
+  highest_transaction: number
+  last_visit_date: string | null
+  average_frequency_days: number | null
+  response_rate: number // percentage: redeemed / assigned
+}
+
 type R<T>    = { success: boolean; message: string; data: T }
 type Paged<T> = R<T> & { meta: { total: number; page: number; limit: number; pages: number } }
 
@@ -27,4 +39,13 @@ export const merchantCustomerApi = {
 
   create: (data: CreateCustomerPayload) =>
     apiClient.post<R<MerchantCustomer>>('/merchants/customers', data),
+
+  update: (id: number, data: UpdateCustomerPayload) =>
+    apiClient.put<R<MerchantCustomer>>(`/merchants/customers/${id}`, data),
+
+  get: (id: number) =>
+    apiClient.get<R<MerchantCustomer>>(`/merchants/customers/${id}`),
+
+  getAnalytics: (id: number, params?: { from?: string; to?: string }) =>
+    apiClient.get<R<CustomerAnalytics>>(`/merchants/customers/${id}/analytics`, { params }),
 }

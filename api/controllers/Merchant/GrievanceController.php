@@ -51,7 +51,7 @@ class GrievanceController {
         );
         $countMap = array_column($counts, 'cnt', 'status');
 
-        Response::success($rows, 'OK', [
+        Response::success($rows, 'OK', 200, [
             'counts' => [
                 'open'        => (int)($countMap['open']        ?? 0),
                 'in_progress' => (int)($countMap['in_progress'] ?? 0),

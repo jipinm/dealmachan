@@ -138,7 +138,7 @@ $typeColors = [
         </div>
 
         <!-- Redemption History -->
-        <div class="card border-0 shadow-sm">
+        <div class="card border-0 shadow-sm mb-4">
             <div class="card-header bg-white fw-semibold border-bottom">
                 <i class="fas fa-ticket-alt me-2 text-warning"></i> Recent Coupon Redemptions
             </div>
@@ -178,6 +178,99 @@ $typeColors = [
             </div>
         </div>
 
+        <!-- Transaction History (Sales Registry) -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white fw-semibold border-bottom">
+                <i class="fas fa-shopping-cart me-2 text-info"></i> Recent Transactions
+            </div>
+            <div class="card-body p-0">
+                <?php if (empty($transactions)): ?>
+                <div class="text-center text-muted py-4 small"><i class="fas fa-shopping-bag fa-2x d-block mb-2 opacity-25"></i> No transactions recorded.</div>
+                <?php else: ?>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0 small">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Date</th>
+                                <th>Merchant</th>
+                                <th>Store</th>
+                                <th class="text-end">Amount</th>
+                                <th class="text-end">Discount</th>
+                                <th>Payment</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($transactions as $t): ?>
+                            <tr>
+                                <td><?= formatDateTime($t['transaction_date']) ?></td>
+                                <td>
+                                    <a href="<?= BASE_URL ?>merchants/profile?id=<?= $t['merchant_id'] ?>" class="text-decoration-none">
+                                        <?= escape($t['merchant_name']) ?>
+                                    </a>
+                                </td>
+                                <td><?= escape($t['store_name']) ?></td>
+                                <td class="text-end fw-semibold">₹<?= number_format($t['transaction_amount'], 2) ?></td>
+                                <td class="text-end text-success"><?= $t['discount_amount'] > 0 ? '₹' . number_format($t['discount_amount'], 2) : '—' ?></td>
+                                <td><?= $t['payment_method'] ? ucfirst($t['payment_method']) : '—' ?></td>
+                            </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+                <?php endif; ?>
+            </div>
+        </div>
+
+        <!-- Store Coupons -->
+        <?php if (!empty($storeCoupons)): ?>
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white fw-semibold border-bottom">
+                <i class="fas fa-tags me-2 text-primary"></i> Store Coupons Received
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0 small">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Code</th>
+                                <th>Merchant / Store</th>
+                                <th class="text-center">Discount</th>
+                                <th class="text-center">Redeemed</th>
+                                <th>Gifted At</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($storeCoupons as $sc): ?>
+                            <tr>
+                                <td class="font-monospace fw-semibold">
+                                    <a href="<?= BASE_URL ?>store-coupons/detail?id=<?= $sc['id'] ?>" class="text-decoration-none">
+                                        <?= escape($sc['coupon_code']) ?>
+                                    </a>
+                                </td>
+                                <td>
+                                    <?= escape($sc['merchant_name']) ?>
+                                    <span class="text-muted">/ <?= escape($sc['store_name']) ?></span>
+                                </td>
+                                <td class="text-center text-success fw-semibold">
+                                    <?= $sc['discount_type'] === 'percentage' ? number_format($sc['discount_value'], 0) . '%' : '₹' . number_format($sc['discount_value'], 0) ?>
+                                </td>
+                                <td class="text-center">
+                                    <?php if ($sc['is_redeemed']): ?>
+                                        <span class="badge bg-success-subtle text-success border border-success-subtle"><i class="fas fa-check me-1"></i>Yes</span>
+                                    <?php else: ?>
+                                        <span class="text-muted">No</span>
+                                    <?php endif; ?>
+                                </td>
+                                <td><?= $sc['gifted_at'] ? formatDateTime($sc['gifted_at']) : '—' ?></td>
+                            </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <?php endif; ?>
+
     </div>
 
     <!-- Right Sidebar -->
@@ -207,6 +300,49 @@ $typeColors = [
                 </ul>
             </div>
         </div>
+
+        <!-- Transaction Analytics -->
+        <?php if (!empty($analytics) && $analytics['total_transactions'] > 0): ?>
+        <div class="card border-0 shadow-sm mb-3">
+            <div class="card-header bg-white fw-semibold border-bottom"><i class="fas fa-chart-line me-2 text-success"></i> Transaction Analytics</div>
+            <div class="card-body p-0">
+                <ul class="list-group list-group-flush small">
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        Total Transactions
+                        <span class="fw-semibold"><?= number_format($analytics['total_transactions']) ?></span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        Total Spent
+                        <span class="fw-semibold text-success">₹<?= number_format($analytics['total_spent'], 2) ?></span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        Average Transaction
+                        <span class="fw-semibold">₹<?= number_format($analytics['avg_transaction'], 2) ?></span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        Total Discount Received
+                        <span class="fw-semibold text-info">₹<?= number_format($analytics['total_discount'], 2) ?></span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        Merchants Visited
+                        <span class="badge bg-primary rounded-pill"><?= (int)$analytics['merchant_count'] ?></span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        Stores Visited
+                        <span class="badge bg-secondary rounded-pill"><?= (int)$analytics['store_count'] ?></span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        First Transaction
+                        <span class="small text-muted"><?= $analytics['first_transaction'] ? formatDate($analytics['first_transaction']) : '—' ?></span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        Last Transaction
+                        <span class="small text-muted"><?= $analytics['last_transaction'] ? formatDate($analytics['last_transaction']) : '—' ?></span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+        <?php endif; ?>
 
         <!-- Timestamps -->
         <div class="card border-0 shadow-sm mb-3">

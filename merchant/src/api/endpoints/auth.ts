@@ -20,6 +20,7 @@ export interface MerchantProfile {
   logo_url: string | null
   profile_status: 'pending' | 'approved' | 'rejected'
   subscription_status: 'active' | 'expired' | 'trial'
+  account_type_id?: number | null  // 1=Basic, 2=Standard, 3=Premium, 4=Enterprise
 }
 
 export interface LoginResponse {

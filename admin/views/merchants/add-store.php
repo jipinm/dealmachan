@@ -71,13 +71,45 @@
                         <label class="form-label">Description</label>
                         <textarea name="description" class="form-control" rows="2"><?= escape($_POST['description'] ?? '') ?></textarea>
                     </div>
-                    <div class="mb-4">
+                    <div class="mb-3">
                         <label class="form-label">Status</label>
                         <select name="status" class="form-select">
                             <option value="active"   <?= ($_POST['status'] ?? 'active') === 'active'   ? 'selected' : '' ?>>Active</option>
                             <option value="inactive" <?= ($_POST['status'] ?? '') === 'inactive' ? 'selected' : '' ?>>Inactive</option>
                         </select>
                     </div>
+
+                    <!-- Opening Hours -->
+                    <?php
+                        $days = ['monday'=>'Monday','tuesday'=>'Tuesday','wednesday'=>'Wednesday','thursday'=>'Thursday','friday'=>'Friday','saturday'=>'Saturday','sunday'=>'Sunday'];
+                    ?>
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold"><i class="fas fa-clock me-1 text-muted"></i> Opening Hours</label>
+                        <div class="border rounded p-3">
+                            <?php foreach ($days as $dayKey => $dayLabel): ?>
+                            <div class="row g-2 align-items-center mb-2">
+                                <div class="col-3 col-md-2">
+                                    <label class="form-label mb-0 small fw-semibold"><?= $dayLabel ?></label>
+                                </div>
+                                <div class="col-3 col-md-3">
+                                    <input type="time" name="hours[<?= $dayKey ?>][open]" class="form-control form-control-sm" value="09:00">
+                                </div>
+                                <div class="col-3 col-md-3">
+                                    <input type="time" name="hours[<?= $dayKey ?>][close]" class="form-control form-control-sm" value="21:00">
+                                </div>
+                                <div class="col-3 col-md-4">
+                                    <div class="form-check">
+                                        <input type="checkbox" name="hours[<?= $dayKey ?>][closed]" value="1"
+                                               class="form-check-input" id="closed_<?= $dayKey ?>"
+                                               onchange="toggleDay('<?= $dayKey ?>', this.checked)">
+                                        <label class="form-check-label small" for="closed_<?= $dayKey ?>">Closed</label>
+                                    </div>
+                                </div>
+                            </div>
+                            <?php endforeach; ?>
+                        </div>
+                    </div>
+
                     <button type="submit" class="btn btn-primary"><i class="fas fa-save me-2"></i> Add Store</button>
                 </form>
             </div>
@@ -86,6 +118,12 @@
 </div>
 
 <script>
+function toggleDay(dayKey, isClosed) {
+    const openInput = document.querySelector(`input[name="hours[${dayKey}][open]"]`);
+    const closeInput = document.querySelector(`input[name="hours[${dayKey}][close]"]`);
+    if (openInput) openInput.disabled = isClosed;
+    if (closeInput) closeInput.disabled = isClosed;
+}
 function loadAreas(cityId) {
     const sel = document.getElementById('areaSelect');
     sel.innerHTML = '<option value="">Loading…</option>';

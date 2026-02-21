@@ -1,0 +1,203 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── Global resets for app-like feel ──────────────────────────────────────── */
+* {
+  -webkit-tap-highlight-color: transparent;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overscroll-behavior: none;
+}
+
+body {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  background: #f4f6fb;
+  color: #2d3436;
+}
+
+/* Smooth scroll */
+* { scroll-behavior: smooth; }
+
+/* Remove blue outline on mobile tap */
+button:focus, a:focus { outline: none; }
+
+/* Custom scrollbar (desktop) */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
+
+/* ── Brand gradient helpers ───────────────────────────────────────────────── */
+.gradient-brand {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+.gradient-cta {
+  background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+}
+.text-gradient-brand {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ── Component classes ────────────────────────────────────────────────────── */
+
+/* Text input / select / textarea */
+.input-field {
+  width: 100%;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 0.875rem;
+  padding: 0.75rem 1rem;
+  background-color: #ffffff;
+  color: #111827;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  -webkit-appearance: none;
+  appearance: none;
+  outline: none;
+}
+.input-field::placeholder { color: #9ca3af; }
+.input-field:focus {
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.18);
+}
+.input-field:disabled {
+  background-color: #f9fafb;
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Primary brand button */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.8125rem 1.5rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: #ffffff;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  border-radius: 0.875rem;
+  border: none;
+  cursor: pointer;
+  transition: opacity 0.15s, transform 0.1s, box-shadow 0.15s;
+  white-space: nowrap;
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.btn-primary:hover  { opacity: 0.92; box-shadow: 0 4px 20px rgba(102,126,234,0.35); }
+.btn-primary:active { transform: scale(0.97); }
+.btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
+
+/* CTA (orange-red) button — for Redeem / primary customer action */
+.btn-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.8125rem 1.5rem;
+  background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+  color: #ffffff;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  border-radius: 0.875rem;
+  border: none;
+  cursor: pointer;
+  transition: opacity 0.15s, transform 0.1s, box-shadow 0.15s;
+  white-space: nowrap;
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.btn-cta:hover  { opacity: 0.92; box-shadow: 0 4px 20px rgba(255,107,107,0.35); }
+.btn-cta:active { transform: scale(0.97); }
+.btn-cta:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
+
+/* Ghost / outlined button */
+.btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.25rem;
+  background: transparent;
+  color: #667eea;
+  font-size: 0.875rem;
+  font-weight: 600;
+  border-radius: 0.875rem;
+  border: 1.5px solid #667eea;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  white-space: nowrap;
+  outline: none;
+}
+.btn-ghost:hover  { background: rgba(102,126,234,0.08); }
+.btn-ghost:active { background: rgba(102,126,234,0.15); }
+
+/* ── Card helpers ─────────────────────────────────────────────────────────── */
+.card {
+  background: #ffffff;
+  border-radius: 1rem;
+  box-shadow: 0 2px 16px rgba(0,0,0,0.07);
+}
+.card-hover {
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.card-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 32px rgba(102,126,234,0.18);
+}
+
+/* ── Safe-area utilities ──────────────────────────────────────────────────── */
+.pb-safe { padding-bottom: env(safe-area-inset-bottom, 0px); }
+.pt-safe { padding-top:    env(safe-area-inset-top,    0px); }
+.pl-safe { padding-left:   env(safe-area-inset-left,   0px); }
+.pr-safe { padding-right:  env(safe-area-inset-right,  0px); }
+
+/* ── Skeleton shimmer ─────────────────────────────────────────────────────── */
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position:  200% 0; }
+}
+.skeleton {
+  background: linear-gradient(90deg, #e5e7eb 25%, #f3f4f6 50%, #e5e7eb 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s ease infinite;
+  border-radius: 0.5rem;
+}
+
+/* ── Horizontal scroll list (no scrollbar) ────────────────────────────────── */
+.scroll-x {
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.scroll-x::-webkit-scrollbar { display: none; }
+
+/* ── Frosted glass overlay ────────────────────────────────────────────────── */
+.glass {
+  background: rgba(255,255,255,0.72);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+/* ── Badge ────────────────────────────────────────────────────────────────── */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.125rem 0.5rem;
+  border-radius: 9999px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  line-height: 1.4;
+  white-space: nowrap;
+}

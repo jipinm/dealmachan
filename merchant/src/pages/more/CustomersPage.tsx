@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query'
-import { ChevronLeft, Plus, X, Users, Phone, Mail, CheckCircle } from 'lucide-react'
+import { ChevronLeft, Plus, X, Users, Phone, Mail, CheckCircle, Edit2 } from 'lucide-react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -10,6 +10,7 @@ import {
   merchantCustomerApi,
   type MerchantCustomer,
   type CreateCustomerPayload,
+  type UpdateCustomerPayload,
 } from '@/api/endpoints/customers'
 
 // ── Schema ────────────────────────────────────────────────────────────────────
@@ -97,16 +98,102 @@ function CreateCustomerModal({ onClose }: { onClose: (created?: MerchantCustomer
   )
 }
 
+// ── Edit Modal ────────────────────────────────────────────────────────────────
+
+function EditCustomerModal({ customer, onClose }: { customer: MerchantCustomer; onClose: () => void }) {
+  const qc = useQueryClient()
+
+  const editSchema = z.object({
+    name:  z.string().min(1, 'Name required'),
+    phone: z.string().optional(),
+    email: z.string().email('Invalid email').optional().or(z.literal('')),
+  }).refine(d => d.phone || d.email, {
+    message: 'Phone or email is required',
+    path: ['phone'],
+  })
+
+  const { register, handleSubmit, formState: { errors } } = useForm<z.infer<typeof editSchema>>({
+    resolver: zodResolver(editSchema),
+    defaultValues: {
+      name:  customer.name,
+      phone: customer.phone ?? '',
+      email: customer.email ?? '',
+    },
+  })
+
+  const mutation = useMutation({
+    mutationFn: (data: UpdateCustomerPayload) => merchantCustomerApi.update(customer.id, data),
+    onSuccess: () => {
+      toast.success('Customer updated!')
+      qc.invalidateQueries({ queryKey: ['merchant-customers'] })
+      onClose()
+    },
+    onError: (err: any) => {
+      toast.error(err?.response?.data?.message ?? 'Failed to update customer')
+    },
+  })
+
+  const onSubmit = (values: z.infer<typeof editSchema>) => {
+    mutation.mutate({
+      name:  values.name,
+      phone: values.phone || undefined,
+      email: values.email || undefined,
+    })
+  }
+
+  return (
+    <div className="fixed inset-0 z-[60] flex items-end">
+      <div className="absolute inset-0 bg-black/40" onClick={onClose} />
+      <div className="relative w-full bg-white rounded-t-3xl pb-safe">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+          <h2 className="font-semibold text-gray-800">Edit Customer</h2>
+          <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100">
+            <X size={18} className="text-gray-500" />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit(onSubmit)} className="px-5 py-4 space-y-4">
+          <div>
+            <label className="block text-xs font-medium text-gray-600 mb-1">Full Name *</label>
+            <input {...register('name')} placeholder="Customer name" className="input-field" />
+            {errors.name && <p className="text-xs text-red-500 mt-1">{errors.name.message}</p>}
+          </div>
+
+          <div>
+            <label className="block text-xs font-medium text-gray-600 mb-1">Phone</label>
+            <input {...register('phone')} type="tel" placeholder="+91 98765 43210" className="input-field" />
+            {errors.phone && <p className="text-xs text-red-500 mt-1">{errors.phone.message}</p>}
+          </div>
+
+          <div>
+            <label className="block text-xs font-medium text-gray-600 mb-1">Email</label>
+            <input {...register('email')} type="email" placeholder="customer@email.com" className="input-field" />
+            {errors.email && <p className="text-xs text-red-500 mt-1">{errors.email.message}</p>}
+          </div>
+
+          <button type="submit" disabled={mutation.isPending} className="btn-primary w-full">
+            {mutation.isPending ? 'Saving…' : 'Save Changes'}
+          </button>
+        </form>
+      </div>
+    </div>
+  )
+}
+
 // ── Customer Row ──────────────────────────────────────────────────────────────
 
-function CustomerRow({ customer }: { customer: MerchantCustomer }) {
+function CustomerRow({ customer, onEdit }: { customer: MerchantCustomer; onEdit: () => void }) {
+  const navigate = useNavigate()
   const date = new Date(customer.created_at).toLocaleDateString('en-IN', {
     day: '2-digit', month: 'short', year: 'numeric',
   })
   const initials = customer.name.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase()
 
   return (
-    <div className="flex items-center gap-3 py-3 border-b border-gray-50 last:border-0">
+    <div
+      onClick={() => navigate(`/customers/${customer.id}`)}
+      className="flex items-center gap-3 py-3 border-b border-gray-50 last:border-0 cursor-pointer hover:bg-gray-50"
+    >
       <div className="w-10 h-10 bg-brand-100 rounded-full flex items-center justify-center shrink-0">
         <span className="text-brand-700 text-sm font-bold">{initials}</span>
       </div>
@@ -125,12 +212,20 @@ function CustomerRow({ customer }: { customer: MerchantCustomer }) {
           )}
         </div>
       </div>
-      <div className="text-right shrink-0">
-        <div className="flex items-center gap-1 justify-end">
-          <CheckCircle size={10} className="text-green-500" />
-          <span className="text-xs text-gray-400">{date}</span>
+      <div className="flex items-center gap-2 shrink-0">
+        <button
+          onClick={(e) => { e.stopPropagation(); onEdit() }}
+          className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-400 hover:text-brand-600"
+        >
+          <Edit2 size={14} />
+        </button>
+        <div className="text-right">
+          <div className="flex items-center gap-1 justify-end">
+            <CheckCircle size={10} className="text-green-500" />
+            <span className="text-xs text-gray-400">{date}</span>
+          </div>
+          <span className="text-[10px] text-gray-400 capitalize">{customer.customer_type}</span>
         </div>
-        <span className="text-[10px] text-gray-400 capitalize">{customer.customer_type}</span>
       </div>
     </div>
   )
@@ -142,6 +237,7 @@ export default function CustomersPage() {
   const navigate = useNavigate()
   const [page, setPage]         = useState(1)
   const [showModal, setModal]   = useState(false)
+  const [editingCustomer, setEditingCustomer] = useState<MerchantCustomer | null>(null)
   const [search, setSearch]     = useState('')
   const [debouncedSearch, setDebSearch] = useState('')
 
@@ -203,7 +299,7 @@ export default function CustomersPage() {
             </div>
           ) : (
             <>
-              {customers.map(c => <CustomerRow key={c.id} customer={c} />)}
+              {customers.map(c => <CustomerRow key={c.id} customer={c} onEdit={() => setEditingCustomer(c)} />)}
 
               {meta.pages > 1 && (
                 <div className="flex items-center justify-between py-3 border-t border-gray-100">
@@ -238,6 +334,7 @@ export default function CustomersPage() {
       </button>
 
       {showModal && <CreateCustomerModal onClose={() => setModal(false)} />}
+      {editingCustomer && <EditCustomerModal customer={editingCustomer} onClose={() => setEditingCustomer(null)} />}
     </div>
   )
 }

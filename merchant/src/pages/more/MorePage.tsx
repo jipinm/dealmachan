@@ -13,6 +13,7 @@ import {
   Zap,
   Tag,
   UserPlus,
+  Ticket,
 } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
 
@@ -22,6 +23,7 @@ interface MenuItem {
   description: string
   to: string
   accent: string
+  minAccountType?: number  // minimum account_type_id required (default: 1 = all)
 }
 
 function MenuRow({ item }: { item: MenuItem }) {
@@ -60,6 +62,14 @@ const SECTIONS: Array<{ title: string; items: MenuItem[] }> = [
         description: 'View alerts and updates',
         to: '/notifications',
         accent: 'bg-indigo-500',
+      },
+      {
+        icon: Ticket,
+        label: 'Store Coupons',
+        description: 'Create and assign store-specific coupons',
+        to: '/store-coupons',
+        accent: 'bg-purple-600',
+        minAccountType: 3,
       },
     ],
   },
@@ -131,6 +141,7 @@ const SECTIONS: Array<{ title: string; items: MenuItem[] }> = [
         description: 'Register a new customer account',
         to: '/customers',
         accent: 'bg-teal-500',
+        minAccountType: 3,
       },
     ],
   },
@@ -139,6 +150,7 @@ const SECTIONS: Array<{ title: string; items: MenuItem[] }> = [
 export default function MorePage() {
   const navigate = useNavigate()
   const { merchant, logout } = useAuthStore()
+  const accountType = merchant?.account_type_id ?? 1
 
   const handleLogout = () => {
     logout()
@@ -182,18 +194,24 @@ export default function MorePage() {
         </button>
 
         {/* Menu sections */}
-        {SECTIONS.map((section) => (
-          <div key={section.title} className="bg-white rounded-2xl shadow-sm overflow-hidden">
-            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-4 pt-3 pb-1">
-              {section.title}
-            </p>
-            <div className="divide-y divide-gray-50">
-              {section.items.map((item) => (
-                <MenuRow key={item.to} item={item} />
-              ))}
+        {SECTIONS.map((section) => {
+          const visibleItems = section.items.filter(
+            (item) => !item.minAccountType || accountType >= item.minAccountType
+          )
+          if (visibleItems.length === 0) return null
+          return (
+            <div key={section.title} className="bg-white rounded-2xl shadow-sm overflow-hidden">
+              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-4 pt-3 pb-1">
+                {section.title}
+              </p>
+              <div className="divide-y divide-gray-50">
+                {visibleItems.map((item) => (
+                  <MenuRow key={item.to} item={item} />
+                ))}
+              </div>
             </div>
-          </div>
-        ))}
+          )
+        })}
 
         {/* Sign out */}
         <button

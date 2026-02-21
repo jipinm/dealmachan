@@ -10,6 +10,7 @@ import {
   flashDiscountApi,
   type FlashDiscount,
   type CreateFlashDiscountPayload,
+  type RedeemFlashDiscountPayload,
 } from '@/api/endpoints/flashDiscounts'
 import { storeApi } from '@/api/endpoints/stores'
 
@@ -150,16 +151,107 @@ function FlashDiscountFormModal({
   )
 }
 
+// ── Redeem Modal ──────────────────────────────────────────────────────────────
+
+function RedeemFlashDiscountModal({
+  discount,
+  onClose,
+}: {
+  discount: FlashDiscount
+  onClose: () => void
+}) {
+  const qc = useQueryClient()
+  const [customerPhone, setCustomerPhone] = useState('')
+  const [txAmount, setTxAmount] = useState('')
+
+  const mutation = useMutation({
+    mutationFn: (data: RedeemFlashDiscountPayload) => flashDiscountApi.redeem(discount.id, data),
+    onSuccess: (res) => {
+      const r = res.data.data
+      toast.success(`Redeemed! Discount: ₹${r.discount_amount.toFixed(2)}`)
+      qc.invalidateQueries({ queryKey: ['flash-discounts'] })
+      onClose()
+    },
+    onError: (err: any) => {
+      toast.error(err?.response?.data?.message ?? 'Redemption failed')
+    },
+  })
+
+  const handleRedeem = () => {
+    if (!customerPhone.trim()) { toast.error('Enter customer phone'); return }
+    mutation.mutate({
+      customer_phone: customerPhone.trim(),
+      transaction_amount: txAmount ? parseFloat(txAmount) : undefined,
+      store_id: discount.store_id ?? undefined,
+    })
+  }
+
+  return (
+    <div className="fixed inset-0 z-[60] flex items-end">
+      <div className="absolute inset-0 bg-black/40" onClick={onClose} />
+      <div className="relative w-full bg-white rounded-t-3xl pb-safe">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+          <h2 className="font-semibold text-gray-800">Redeem Flash Discount</h2>
+          <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100">
+            <X size={18} className="text-gray-500" />
+          </button>
+        </div>
+
+        <div className="px-5 py-4 space-y-4">
+          <div className="bg-gradient-to-r from-orange-500 to-rose-500 rounded-xl px-4 py-3 text-center">
+            <p className="text-white font-bold text-lg">{parseFloat(discount.discount_percentage).toFixed(0)}% OFF</p>
+            <p className="text-white/80 text-sm">{discount.title}</p>
+          </div>
+
+          <div>
+            <label className="block text-xs font-medium text-gray-600 mb-1">Customer Phone *</label>
+            <input
+              value={customerPhone}
+              onChange={(e) => setCustomerPhone(e.target.value)}
+              placeholder="10-digit mobile number"
+              type="tel"
+              inputMode="numeric"
+              className="input-field"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-medium text-gray-600 mb-1">Transaction Amount (₹) — optional</label>
+            <input
+              value={txAmount}
+              onChange={(e) => setTxAmount(e.target.value)}
+              placeholder="e.g. 500"
+              type="number"
+              min="0"
+              className="input-field"
+            />
+          </div>
+
+          <button
+            onClick={handleRedeem}
+            disabled={mutation.isPending || !customerPhone.trim()}
+            className="btn-primary w-full"
+          >
+            {mutation.isPending ? 'Processing…' : '✓ Confirm Redemption'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ── Discount Card ─────────────────────────────────────────────────────────────
 
 function DiscountCard({
   item,
   onEdit,
   onDelete,
+  onRedeem,
 }: {
   item: FlashDiscount
   onEdit: () => void
   onDelete: () => void
+  onRedeem: () => void
 }) {
   const now       = new Date()
   const validUntil = item.valid_until ? new Date(item.valid_until) : null
@@ -196,6 +288,11 @@ function DiscountCard({
           )}
         </div>
         <div className="flex gap-2 mt-3">
+          {item.status === 'active' && (
+            <button onClick={onRedeem} className="flex-1 flex items-center justify-center gap-1 py-2 bg-emerald-50 border border-emerald-200 rounded-xl text-xs font-medium text-emerald-600 hover:bg-emerald-100">
+              <Zap size={12} /> Redeem
+            </button>
+          )}
           <button onClick={onEdit} className="flex-1 flex items-center justify-center gap-1 py-2 border border-gray-200 rounded-xl text-xs font-medium text-gray-600 hover:bg-gray-50">
             <Edit2 size={12} /> Edit
           </button>
@@ -215,6 +312,7 @@ export default function FlashDiscountPage() {
   const qc       = useQueryClient()
   const [showModal, setModal]   = useState(false)
   const [editing, setEditing]   = useState<FlashDiscount | null>(null)
+  const [redeeming, setRedeeming] = useState<FlashDiscount | null>(null)
 
   const { data: discounts = [], isLoading } = useQuery({
     queryKey: ['flash-discounts'],
@@ -266,6 +364,7 @@ export default function FlashDiscountPage() {
               item={d}
               onEdit={() => openEdit(d)}
               onDelete={() => window.confirm('Delete this flash discount?') && deleteMutation.mutate(d.id)}
+              onRedeem={() => setRedeeming(d)}
             />
           ))
         )}
@@ -274,6 +373,10 @@ export default function FlashDiscountPage() {
 
       {showModal && (
         <FlashDiscountFormModal editing={editing} onClose={() => setModal(false)} />
+      )}
+
+      {redeeming && (
+        <RedeemFlashDiscountModal discount={redeeming} onClose={() => setRedeeming(null)} />
       )}
     </div>
   )

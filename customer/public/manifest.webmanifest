@@ -1,0 +1,17 @@
+{
+  "name": "Deal Machan",
+  "short_name": "DealMachan",
+  "description": "Discover deals, save coupons, and redeem rewards near you.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#667eea",
+  "theme_color": "#667eea",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

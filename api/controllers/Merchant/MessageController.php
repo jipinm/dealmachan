@@ -45,7 +45,7 @@ class MessageController {
             [$merchantId]
         )['cnt'];
 
-        Response::success($rows, 'OK', ['unread_count' => $unreadCount]);
+        Response::success($rows, 'OK', 200, ['unread_count' => $unreadCount]);
     }
 
     // ── POST /merchants/messages ───────────────────────────────────────────────

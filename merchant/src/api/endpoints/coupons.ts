@@ -83,6 +83,30 @@ export interface RedeemResult {
   transaction_amount: number | null
 }
 
+// ── Customer Lookup types ─────────────────────────────────────────────────────
+
+export interface RedeemableItem {
+  id: number
+  type: 'platform_coupon' | 'store_coupon' | 'flash_discount'
+  title: string
+  description: string | null
+  discount_type: string
+  discount_value: string
+  store_name: string | null
+  valid_until: string | null
+  coupon_code?: string
+}
+
+export interface CustomerLookupResult {
+  customer: {
+    id: number
+    name: string
+    phone: string | null
+    email: string | null
+  }
+  redeemable_items: RedeemableItem[]
+}
+
 export interface CouponListMeta {
   total: number
   page: number
@@ -129,5 +153,10 @@ export const couponApi = {
   manualRedeem: (payload: RedeemPayload) =>
     apiClient.post<{ success: boolean; data: RedeemResult; message: string }>(
       '/merchants/coupons/manual-redeem', payload
+    ),
+
+  lookupCustomer: (search: string) =>
+    apiClient.get<{ success: boolean; data: CustomerLookupResult }>(
+      '/merchants/redemption/customer-lookup', { params: { search } }
     ),
 }

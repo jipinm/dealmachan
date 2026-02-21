@@ -71,7 +71,7 @@ class ReviewController {
             [$merchantId]
         );
 
-        Response::success($rows, 'OK', ['summary' => $summary]);
+        Response::success($rows, 'OK', 200, ['summary' => $summary]);
     }
 
     // ── GET /merchants/reviews/:id ─────────────────────────────────────────────

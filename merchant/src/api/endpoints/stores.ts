@@ -100,6 +100,11 @@ export const storeApi = {
   setCover: (storeId: number, imageId: number) =>
     apiClient.put<{ success: boolean }>(`/merchants/stores/${storeId}/gallery/${imageId}`, {}),
 
+  reorderGallery: (storeId: number, imageIds: number[]) =>
+    apiClient.put<{ success: boolean }>(`/merchants/stores/${storeId}/gallery/reorder`, {
+      image_ids: imageIds,
+    }),
+
   // Master data
   getCities: () =>
     apiClient.get<{ success: boolean; data: City[] }>('/public/cities'),

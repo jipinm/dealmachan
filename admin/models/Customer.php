@@ -129,6 +129,58 @@ class Customer extends Model {
     }
 
     /**
+     * Get transaction analytics from sales_registry for a customer.
+     */
+    public function getTransactionAnalytics($customerId) {
+        $sql = "SELECT
+                    COUNT(*)                                   AS total_transactions,
+                    COALESCE(SUM(sr.transaction_amount), 0)    AS total_spent,
+                    COALESCE(AVG(sr.transaction_amount), 0)    AS avg_transaction,
+                    COALESCE(SUM(sr.discount_amount), 0)       AS total_discount,
+                    MIN(sr.transaction_date)                   AS first_transaction,
+                    MAX(sr.transaction_date)                   AS last_transaction,
+                    COUNT(DISTINCT sr.merchant_id)              AS merchant_count,
+                    COUNT(DISTINCT sr.store_id)                 AS store_count
+                FROM sales_registry sr
+                WHERE sr.customer_id = ?";
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([$customerId]);
+        return $stmt->fetch();
+    }
+
+    /**
+     * Get recent transactions from sales_registry for a customer.
+     */
+    public function getRecentTransactions($customerId, $limit = 10) {
+        $sql = "SELECT sr.*, m.business_name AS merchant_name, s.store_name
+                FROM sales_registry sr
+                JOIN merchants m ON sr.merchant_id = m.id
+                JOIN stores   s ON sr.store_id    = s.id
+                WHERE sr.customer_id = ?
+                ORDER BY sr.transaction_date DESC
+                LIMIT ?";
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([$customerId, $limit]);
+        return $stmt->fetchAll();
+    }
+
+    /**
+     * Get store coupons gifted to a customer.
+     */
+    public function getStoreCoupons($customerId, $limit = 10) {
+        $sql = "SELECT sc.*, m.business_name AS merchant_name, s.store_name
+                FROM store_coupons sc
+                JOIN merchants m ON sc.merchant_id = m.id
+                JOIN stores   s ON sc.store_id    = s.id
+                WHERE sc.gifted_to_customer_id = ?
+                ORDER BY sc.gifted_at DESC
+                LIMIT ?";
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([$customerId, $limit]);
+        return $stmt->fetchAll();
+    }
+
+    /**
      * Aggregate statistics for the listing page header.
      */
     public function getStats() {

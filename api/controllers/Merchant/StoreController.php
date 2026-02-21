@@ -324,6 +324,33 @@ class StoreController {
         Response::success(null, 'Cover image updated');
     }
 
+    // ── PUT /merchants/stores/:id/gallery/reorder ─────────────────────────────
+    public function reorderGallery(int $storeId, array $body): never {
+        $merchant   = AuthMiddleware::user();
+        $merchantId = (int)$merchant['merchant_id'];
+
+        $store = $this->db->queryOne(
+            "SELECT id FROM stores WHERE id = ? AND merchant_id = ? AND deleted_at IS NULL",
+            [$storeId, $merchantId]
+        );
+        if (!$store) Response::notFound('Store not found');
+
+        if (empty($body['image_ids']) || !is_array($body['image_ids'])) {
+            Response::error('image_ids array is required', 400);
+        }
+
+        $imageIds = array_map('intval', $body['image_ids']);
+
+        foreach ($imageIds as $order => $imageId) {
+            $this->db->execute(
+                "UPDATE store_gallery SET display_order = ? WHERE id = ? AND store_id = ?",
+                [$order, $imageId, $storeId]
+            );
+        }
+
+        Response::success(null, 'Gallery reordered');
+    }
+
     // ── Private helpers ───────────────────────────────────────────────────────
 
     private function fetchStoreDetail(int $merchantId, int $storeId): ?array {

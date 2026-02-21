@@ -823,9 +823,9 @@ CREATE TABLE IF NOT EXISTS `coupons` (
   KEY `idx_is_admin_coupon` (`is_admin_coupon`),
   CONSTRAINT `fk_coupons_merchant` FOREIGN KEY (`merchant_id`) REFERENCES `merchants` (`id`) ON DELETE CASCADE,
   CONSTRAINT `fk_coupons_store` FOREIGN KEY (`store_id`) REFERENCES `stores` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=56 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=59 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Dumping data for table deal_machan.coupons: ~55 rows (approximately)
+-- Dumping data for table deal_machan.coupons: ~58 rows (approximately)
 INSERT INTO `coupons` (`id`, `title`, `description`, `coupon_code`, `discount_type`, `discount_value`, `min_purchase_amount`, `max_discount_amount`, `merchant_id`, `store_id`, `valid_from`, `valid_until`, `usage_limit`, `usage_count`, `is_admin_coupon`, `approval_status`, `approved_by_admin_id`, `approved_at`, `status`, `terms_conditions`, `created_by`, `created_at`, `updated_at`) VALUES
 	(1, 'Spice Garden Summer Sale', 'Get 20% off on your dining bill at Spice Garden restaurants.', 'SPICE20', 'percentage', 20.00, 500.00, 300.00, 2, NULL, '2025-03-31 18:30:00', '2025-08-31 18:29:59', 500, 47, 0, 'approved', 1, '2025-04-01 04:30:00', 'active', 'Valid on dine-in only. Cannot be combined with other offers.', 1, '2025-11-21 14:26:46', '2025-11-21 14:26:46'),
 	(2, 'Dine & Save ???100', 'Flat ???100 off on bills above ???700 at Spice Garden.', 'DINE100', 'fixed', 100.00, 700.00, NULL, 2, NULL, '2025-04-30 18:30:00', '2025-12-31 18:29:59', 200, 18, 0, 'approved', 1, '2025-05-01 03:30:00', 'active', 'Valid for dine-in and takeaway. Not valid on holidays.', 1, '2025-12-21 14:26:46', '2025-12-21 14:26:46'),
@@ -881,7 +881,10 @@ INSERT INTO `coupons` (`id`, `title`, `description`, `coupon_code`, `discount_ty
 	(52, 'Biriyani Box Deal', 'Family biriyani box at special price', 'BFAMILY', 'percentage', 15.00, 600.00, 200.00, 9, 10, '2026-01-20 13:51:16', '2026-03-21 13:51:16', 40, 0, 0, 'approved', 1, '2026-02-19 13:51:16', 'active', 'Standard terms apply.', 1, '2026-02-19 13:51:16', '2026-02-19 13:51:16'),
 	(53, 'Gold Coin Offer', '5% off on gold coins above 5g', 'GOLDCOIN5', 'percentage', 5.00, 15000.00, 2000.00, 10, 12, '2026-01-20 13:51:16', '2026-05-20 13:51:16', 20, 0, 0, 'approved', 1, '2026-02-19 13:51:16', 'active', 'Standard terms apply.', 1, '2026-02-19 13:51:16', '2026-02-19 13:51:16'),
 	(54, 'Weekend Getaway', '20% off on weekend packages', 'RESORT20', 'percentage', 20.00, 5000.00, 3000.00, 13, 13, '2026-01-20 13:51:16', '2026-04-20 13:51:16', 10, 0, 0, 'approved', 1, '2026-02-19 13:51:16', 'active', 'Standard terms apply.', 1, '2026-02-19 13:51:16', '2026-02-19 13:51:16'),
-	(55, 'Birthday Cake Offer', '15% off on custom birthday cakes', 'BIRTHDAY15', 'percentage', 15.00, 500.00, 300.00, 14, 14, '2026-01-20 13:51:16', '2026-03-21 13:51:16', 30, 0, 0, 'approved', 1, '2026-02-19 13:51:16', 'active', 'Standard terms apply.', 1, '2026-02-19 13:51:16', '2026-02-19 13:51:16');
+	(55, 'Birthday Cake Offer', '15% off on custom birthday cakes', 'BIRTHDAY15', 'percentage', 15.00, 500.00, 300.00, 14, 14, '2026-01-20 13:51:16', '2026-03-21 13:51:16', 30, 0, 0, 'approved', 1, '2026-02-19 13:51:16', 'active', 'Standard terms apply.', 1, '2026-02-19 13:51:16', '2026-02-19 13:51:16'),
+	(56, 'Welcome Offer - 10% Off', 'Get 10% off on your first order at Spice Garden', 'WELCOME10', 'percentage', 10.00, NULL, NULL, 2, 2, '2026-02-19 18:30:00', '2026-12-30 18:30:00', NULL, 0, 0, 'pending', NULL, NULL, 'active', NULL, 31, '2026-02-21 04:52:24', NULL),
+	(57, 'Festival Special - Rs.200 Off', 'Flat Rs.200 off on orders above Rs.1000 during festival season', 'FEST200', 'fixed', 200.00, NULL, NULL, 2, 2, '2026-02-28 18:30:00', '2026-04-29 18:30:00', NULL, 0, 0, 'pending', NULL, NULL, 'active', NULL, 31, '2026-02-21 04:52:24', NULL),
+	(58, 'MG Road Exclusive - 12% Off', 'Exclusive discount for MG Road branch customers', 'MGEXCL12', 'percentage', 12.00, NULL, NULL, 2, 3, '2026-02-19 18:30:00', '2026-07-30 18:30:00', NULL, 0, 0, 'pending', NULL, NULL, 'active', NULL, 31, '2026-02-21 04:52:24', NULL);
 
 -- Dumping structure for table deal_machan.customers
 CREATE TABLE IF NOT EXISTS `customers` (
@@ -920,9 +923,9 @@ CREATE TABLE IF NOT EXISTS `customers` (
   CONSTRAINT `fk_customers_profession` FOREIGN KEY (`profession_id`) REFERENCES `professions` (`id`) ON DELETE SET NULL,
   CONSTRAINT `fk_customers_referrer` FOREIGN KEY (`referred_by`) REFERENCES `customers` (`id`) ON DELETE SET NULL,
   CONSTRAINT `fk_customers_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=61 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=66 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Dumping data for table deal_machan.customers: ~51 rows (approximately)
+-- Dumping data for table deal_machan.customers: ~56 rows (approximately)
 INSERT INTO `customers` (`id`, `user_id`, `name`, `profile_image`, `date_of_birth`, `gender`, `profession_id`, `job_title_id`, `registration_type`, `customer_type`, `subscription_status`, `subscription_expiry`, `referral_code`, `referred_by`, `is_dealmaker`, `dealmaker_approved_at`, `created_by_admin_id`, `created_by_merchant_id`, `card_id`, `created_at`, `updated_at`) VALUES
 	(1, 2, 'Test Customer', NULL, NULL, NULL, NULL, NULL, 'self_registration', 'standard', 'none', NULL, 'REF000001ABCD', NULL, 0, NULL, NULL, NULL, 1, '2025-10-22 10:06:11', '2026-02-19 18:21:42'),
 	(11, 11, 'Arjun Nair', NULL, '1992-05-14', 'male', 1, NULL, 'self_registration', 'dealmaker', 'active', '2026-11-01', 'REFARJUN001A', NULL, 1, NULL, NULL, NULL, 2, '2025-11-01 03:45:00', '2026-02-19 18:21:42'),
@@ -974,7 +977,12 @@ INSERT INTO `customers` (`id`, `user_id`, `name`, `profile_image`, `date_of_birt
 	(57, 72, 'Navin Krishnan', NULL, '1995-11-17', 'male', 3, 3, '', 'standard', '', NULL, 'DMNAVI0072', NULL, 0, NULL, 8, NULL, 66, '2025-12-09 23:28:36', '2025-12-09 23:28:36'),
 	(58, 73, 'Divya Pillai2', NULL, '1992-02-04', 'female', 4, 9, '', 'standard', '', NULL, 'DMDIVY0073', NULL, 0, NULL, 9, NULL, 67, '2025-12-30 23:28:36', '2025-12-30 23:28:36'),
 	(59, 74, 'Sarath Babu', NULL, '1987-06-28', 'male', 5, 1, '', 'standard', '', NULL, 'DMSARA0074', NULL, 1, NULL, 10, NULL, 68, '2026-02-02 23:28:36', '2026-02-02 23:28:36'),
-	(60, 75, 'Meera Rajan', NULL, '1991-10-11', 'female', 7, 6, '', 'premium', 'active', NULL, 'DMMEER0075', NULL, 0, NULL, 1, NULL, 69, '2026-02-18 23:28:36', '2026-02-18 23:28:36');
+	(60, 75, 'Meera Rajan', NULL, '1991-10-11', 'female', 7, 6, '', 'premium', 'active', NULL, 'DMMEER0075', NULL, 0, NULL, 1, NULL, 69, '2026-02-18 23:28:36', '2026-02-18 23:28:36'),
+	(61, 96, 'Anil Kumar Nair', NULL, NULL, NULL, NULL, NULL, 'merchant_app', 'standard', 'none', NULL, 'REF69993A073F13D', NULL, 0, NULL, NULL, 2, NULL, '2026-02-21 04:52:23', '2026-02-21 05:01:55'),
+	(62, 97, 'Lakshmi Nair', NULL, NULL, NULL, NULL, NULL, 'merchant_app', 'standard', 'none', NULL, 'REF69993A075E398', NULL, 0, NULL, NULL, 2, NULL, '2026-02-21 04:52:23', NULL),
+	(63, 98, 'Rajesh Pillai', NULL, NULL, NULL, NULL, NULL, 'merchant_app', 'standard', 'none', NULL, 'REF69993A07894CA', NULL, 0, NULL, NULL, 2, NULL, '2026-02-21 04:52:23', NULL),
+	(64, 99, 'Sneha Mohan', NULL, NULL, NULL, NULL, NULL, 'merchant_app', 'standard', 'none', NULL, 'REF69993A07B1448', NULL, 0, NULL, NULL, 2, NULL, '2026-02-21 04:52:23', NULL),
+	(65, 100, 'Vijay Kumar', NULL, NULL, NULL, NULL, NULL, 'merchant_app', 'standard', 'none', NULL, 'REF69993A07CF45C', NULL, 0, NULL, NULL, 2, NULL, '2026-02-21 04:52:23', NULL);
 
 -- Dumping structure for table deal_machan.day_types
 CREATE TABLE IF NOT EXISTS `day_types` (
@@ -1081,9 +1089,9 @@ CREATE TABLE IF NOT EXISTS `flash_discounts` (
   KEY `idx_valid_dates` (`valid_from`,`valid_until`),
   CONSTRAINT `fk_flash_discounts_merchant` FOREIGN KEY (`merchant_id`) REFERENCES `merchants` (`id`) ON DELETE CASCADE,
   CONSTRAINT `fk_flash_discounts_store` FOREIGN KEY (`store_id`) REFERENCES `stores` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=19 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=23 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Dumping data for table deal_machan.flash_discounts: ~18 rows (approximately)
+-- Dumping data for table deal_machan.flash_discounts: ~22 rows (approximately)
 INSERT INTO `flash_discounts` (`id`, `merchant_id`, `store_id`, `title`, `description`, `discount_percentage`, `valid_from`, `valid_until`, `max_redemptions`, `current_redemptions`, `status`, `created_at`, `updated_at`) VALUES
 	(1, 1, 1, 'Midnight Hunger Special', '50% off after 10 PM on selected items', 50.00, '2026-02-18 13:54:31', '2026-02-22 13:54:31', 30, 12, 'active', '2026-02-19 13:54:31', '2026-02-19 13:54:31'),
 	(2, 2, 2, 'Flash Lunch Hour', 'Flat 30% on all lunch items 12-2 PM', 30.00, '2026-02-17 13:54:31', '2026-02-24 13:54:31', 50, 20, 'active', '2026-02-19 13:54:31', '2026-02-19 13:54:31'),
@@ -1102,7 +1110,11 @@ INSERT INTO `flash_discounts` (`id`, `merchant_id`, `store_id`, `title`, `descri
 	(15, 2, 3, 'Spice Garden Old Flash', '30% week offer', 30.00, '2026-01-20 13:54:31', '2026-01-27 13:54:31', 50, 50, 'expired', '2026-02-19 13:54:31', '2026-02-19 13:54:31'),
 	(16, 10, 12, 'Gold Week Flash', 'Annual gold saving scheme', 10.00, '2025-12-21 13:54:31', '2025-12-26 13:54:31', 20, 18, 'expired', '2026-02-19 13:54:31', '2026-02-19 13:54:31'),
 	(17, 8, 9, 'Electronics Diwali', 'Diwali 20% electronics', 20.00, '2026-01-05 13:54:31', '2026-01-12 13:54:31', 30, 28, 'expired', '2026-02-19 13:54:31', '2026-02-19 13:54:31'),
-	(18, 13, 13, 'Resort Off Season', 'Off-season special 40%', 40.00, '2025-11-21 13:54:31', '2025-11-28 13:54:31', 8, 6, 'expired', '2026-02-19 13:54:31', '2026-02-19 13:54:31');
+	(18, 13, 13, 'Resort Off Season', 'Off-season special 40%', 40.00, '2025-11-21 13:54:31', '2025-11-28 13:54:31', 8, 6, 'expired', '2026-02-19 13:54:31', '2026-02-19 13:54:31'),
+	(19, 2, 2, 'Weekend Lunch Bonanza', 'Flat 25% off on all weekend lunch combos. Valid Saturday and Sunday 12PM-3PM.', 25.00, '2026-02-19 18:30:00', '2026-03-31 18:29:59', 100, 2, 'active', '2026-02-21 04:52:23', '2026-02-21 05:02:04'),
+	(20, 2, 2, 'Happy Hour Special', 'Get 40% off on selected appetizers and beverages between 4PM-7PM every day.', 40.00, '2026-02-19 18:30:00', '2026-04-30 18:29:59', 200, 0, 'active', '2026-02-21 04:52:23', NULL),
+	(21, 2, 3, 'First Visit Discount', 'New customers get 15% off on their first order at MG Road branch.', 15.00, '2026-02-19 18:30:00', '2026-06-30 18:29:59', 500, 0, 'active', '2026-02-21 04:52:24', NULL),
+	(22, 2, 2, 'Monsoon Special', 'Enjoy traditional Kerala snacks with 30% discount during rainy evenings.', 30.00, '2026-05-31 18:30:00', '2026-09-30 18:29:59', 150, 0, 'active', '2026-02-21 04:52:24', NULL);
 
 -- Dumping structure for table deal_machan.gift_coupons
 CREATE TABLE IF NOT EXISTS `gift_coupons` (
@@ -1491,7 +1503,7 @@ CREATE TABLE IF NOT EXISTS `merchants` (
   KEY `idx_priority_weight` (`priority_weight`),
   CONSTRAINT `fk_merchants_label` FOREIGN KEY (`label_id`) REFERENCES `labels` (`id`) ON DELETE SET NULL,
   CONSTRAINT `fk_merchants_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=29 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=32 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Dumping data for table deal_machan.merchants: ~28 rows (approximately)
 INSERT INTO `merchants` (`id`, `user_id`, `business_name`, `business_logo`, `registration_number`, `gst_number`, `is_premium`, `label_id`, `subscription_status`, `subscription_expiry`, `profile_status`, `priority_weight`, `created_at`, `updated_at`) VALUES
@@ -1522,7 +1534,8 @@ INSERT INTO `merchants` (`id`, `user_id`, `business_name`, `business_logo`, `reg
 	(25, 84, 'Munnar Tea House', NULL, 'KL123464', '29AABCT1234A1Z9', 0, 3, 'trial', NULL, 'approved', 4, '2026-02-08 23:29:03', '2026-02-08 23:29:03'),
 	(26, 85, 'Tattoo Art Studio Kochi', NULL, 'KL123465', '29AABCT1234B0Z0', 0, 4, '', NULL, 'pending', 2, '2026-01-21 23:29:03', '2026-01-21 23:29:03'),
 	(27, 86, 'Alappuzha Houseboat Tours', NULL, 'KL123466', '29AABCT1234B0Z1', 1, 2, 'active', NULL, 'approved', 9, '2026-01-25 23:29:03', '2026-01-25 23:29:03'),
-	(28, 87, 'Kerala Heritage Spices', NULL, 'KL123467', '29AABCT1234B0Z2', 0, 3, 'active', NULL, 'approved', 5, '2025-11-23 23:29:03', '2025-11-23 23:29:03');
+	(28, 87, 'Kerala Heritage Spices', NULL, 'KL123467', '29AABCT1234B0Z2', 0, 3, 'active', NULL, 'approved', 5, '2025-11-23 23:29:03', '2025-11-23 23:29:03'),
+	(31, 95, 'Demo Merchant', NULL, NULL, NULL, 0, NULL, 'active', NULL, 'approved', 0, '2026-02-20 06:28:28', '2026-02-20 06:28:28');
 
 -- Dumping structure for table deal_machan.messages
 CREATE TABLE IF NOT EXISTS `messages` (
@@ -1551,7 +1564,7 @@ INSERT INTO `messages` (`id`, `sender_id`, `sender_type`, `receiver_id`, `receiv
 	(2, 2, 'admin', 1, 'admin', 'New Merchant Approval Request', 'Two new merchants submitted their profiles today. They are awaiting approval.\n\n1. Spice Garden Restaurant – Koramangala\n2. TechZone Mobile Store – Indiranagar\n\nPlease review and approve at your earliest convenience.', NULL, 0, NULL, '2026-02-19 08:08:06'),
 	(3, 2, 'admin', 1, 'admin', 'System Maintenance Schedule', 'Planned maintenance window: Sunday 2:00 AM – 4:00 AM IST.\nAll services will be temporarily unavailable. Users have been notified.', NULL, 1, '2026-02-18 13:08:06', '2026-02-18 12:08:06'),
 	(4, 3, 'admin', 1, 'admin', 'Contest Winner Verification', 'The winners for \'Weekend Deal Hunt\' contest have been verified. All 3 winners have valid entries. Ready to distribute rewards.', NULL, 0, NULL, '2026-02-19 10:08:06'),
-	(5, 1, 'merchant', 1, 'admin', 'Coupon Campaign Query', 'Hello,\n\nI would like to create a special coupon campaign for the upcoming festival season. Could you please guide me on the maximum discount allowed and how to set up the campaign?\n\nThank you,\nTest Restaurant', NULL, 1, '2026-02-19 17:38:21', '2026-02-19 12:38:06'),
+	(5, 1, 'merchant', 1, 'admin', 'Coupon Campaign Query', 'Hello,\n\nI would like to create a special coupon campaign for the upcoming festival season. Could you please guide me on the maximum discount allowed and how to set up the campaign?\n\nThank you,\nTest Restaurant', NULL, 1, '2026-02-20 05:14:57', '2026-02-19 12:38:06'),
 	(6, 1, 'customer', 1, 'admin', 'Unable to redeem coupon', 'Hi Support,\n\nI am trying to redeem a coupon at Spice Garden but the app keeps showing \'already used\'. I have not used this coupon before. Coupon code: SG-FEST-2024. Please help.', NULL, 1, '2026-02-17 13:38:06', '2026-02-17 13:08:06'),
 	(7, 1, 'admin', 2, 'admin', 'Q4 Target Review', 'Hi,\n\nPlease prepare a summary of Q4 targets vs actuals for the upcoming board meeting. Focus on merchant acquisition, coupon redemptions, and customer growth.\n\nThanks', NULL, 1, '2026-02-19 09:08:06', '2026-02-19 07:08:06'),
 	(8, 1, 'admin', 2, 'admin', NULL, 'Thanks for sending over the report. I\'ll review it today and get back to you with feedback.', 1, 1, '2026-02-19 12:08:06', '2026-02-19 12:08:06');
@@ -1735,6 +1748,24 @@ INSERT INTO `referrals` (`id`, `referrer_customer_id`, `referee_customer_id`, `r
 	(29, 19, 60, 'REF-C19-001', 'pending', 0, 0.00, '2026-02-14 13:52:23', NULL),
 	(30, 30, 58, 'REF-C30-001', 'completed', 0, 0.00, '2026-01-05 13:52:23', '2026-01-10 13:52:23');
 
+-- Dumping structure for table deal_machan.refresh_tokens
+CREATE TABLE IF NOT EXISTS `refresh_tokens` (
+  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `user_id` int(10) unsigned NOT NULL,
+  `token_hash` varchar(64) NOT NULL COMMENT 'SHA-256 hash of the refresh token',
+  `expires_at` datetime NOT NULL,
+  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_user` (`user_id`),
+  KEY `idx_token_hash` (`token_hash`),
+  KEY `idx_expires` (`expires_at`)
+) ENGINE=InnoDB AUTO_INCREMENT=81 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Dumping data for table deal_machan.refresh_tokens: ~2 rows (approximately)
+INSERT INTO `refresh_tokens` (`id`, `user_id`, `token_hash`, `expires_at`, `created_at`) VALUES
+	(6, 3, 'd10017a65f44a501e35e72afbb7092a348827e36069b7003dd127da62e56c1ca', '2026-02-27 07:49:37', '2026-02-20 12:19:37'),
+	(71, 31, '90de95a8b08b71fe1c87dea447dfeef21918ad907e8b8e2d4c7efc4331cb12d8', '2026-02-28 05:59:55', '2026-02-21 10:29:55');
+
 -- Dumping structure for table deal_machan.reviews
 CREATE TABLE IF NOT EXISTS `reviews` (
   `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
@@ -1839,9 +1870,9 @@ CREATE TABLE IF NOT EXISTS `sales_registry` (
   CONSTRAINT `fk_sales_customer` FOREIGN KEY (`customer_id`) REFERENCES `customers` (`id`) ON DELETE SET NULL,
   CONSTRAINT `fk_sales_merchant` FOREIGN KEY (`merchant_id`) REFERENCES `merchants` (`id`) ON DELETE CASCADE,
   CONSTRAINT `fk_sales_store` FOREIGN KEY (`store_id`) REFERENCES `stores` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=66 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=75 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Dumping data for table deal_machan.sales_registry: ~65 rows (approximately)
+-- Dumping data for table deal_machan.sales_registry: ~74 rows (approximately)
 INSERT INTO `sales_registry` (`id`, `merchant_id`, `store_id`, `customer_id`, `transaction_amount`, `transaction_date`, `payment_method`, `coupon_used`, `discount_amount`) VALUES
 	(1, 19, 21, 20, 6882.22, '2025-12-31 13:54:31', 'other', 48, 1307.62),
 	(2, 19, 20, 54, 7811.02, '2025-09-03 13:54:31', 'upi', NULL, 0.00),
@@ -1907,7 +1938,16 @@ INSERT INTO `sales_registry` (`id`, `merchant_id`, `store_id`, `customer_id`, `t
 	(62, 14, 48, 29, 859.80, '2025-12-16 13:54:31', 'wallet', NULL, 0.00),
 	(63, 2, 3, 52, 855.01, '2025-09-12 13:54:31', 'card', NULL, 0.00),
 	(64, 14, 48, 48, 2481.92, '2025-10-06 13:54:31', 'upi', NULL, 0.00),
-	(65, 14, 14, 50, 7782.85, '2025-12-12 13:54:31', 'other', 12, 700.46);
+	(65, 14, 14, 50, 7782.85, '2025-12-12 13:54:31', 'other', 12, 700.46),
+	(66, 2, 2, 61, 1500.00, '2026-02-21 00:30:02', 'upi', NULL, 0.00),
+	(67, 2, 2, 61, 2200.00, '2026-02-21 00:30:02', 'card', NULL, 0.00),
+	(68, 2, 3, 61, 800.00, '2026-02-21 00:30:02', 'cash', NULL, 0.00),
+	(69, 2, 2, 62, 3500.00, '2026-02-21 00:30:02', 'upi', NULL, 0.00),
+	(70, 2, 3, 62, 1200.00, '2026-02-21 00:30:02', 'card', NULL, 0.00),
+	(71, 2, 2, 63, 950.00, '2026-02-21 00:30:02', 'cash', NULL, 0.00),
+	(72, 2, 2, 61, 2000.00, '2026-02-21 05:01:54', NULL, 19, 500.00),
+	(73, 2, 2, 61, 1500.00, '2026-02-21 05:01:54', NULL, 15, 300.00),
+	(74, 2, 2, 61, 2000.00, '2026-02-21 05:02:04', NULL, 19, 500.00);
 
 -- Dumping structure for table deal_machan.store_coupons
 CREATE TABLE IF NOT EXISTS `store_coupons` (
@@ -1936,9 +1976,9 @@ CREATE TABLE IF NOT EXISTS `store_coupons` (
   CONSTRAINT `fk_store_coupons_customer` FOREIGN KEY (`gifted_to_customer_id`) REFERENCES `customers` (`id`) ON DELETE SET NULL,
   CONSTRAINT `fk_store_coupons_merchant` FOREIGN KEY (`merchant_id`) REFERENCES `merchants` (`id`) ON DELETE CASCADE,
   CONSTRAINT `fk_store_coupons_store` FOREIGN KEY (`store_id`) REFERENCES `stores` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=15 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=21 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Dumping data for table deal_machan.store_coupons: ~14 rows (approximately)
+-- Dumping data for table deal_machan.store_coupons: ~20 rows (approximately)
 INSERT INTO `store_coupons` (`id`, `merchant_id`, `store_id`, `coupon_code`, `discount_type`, `discount_value`, `valid_from`, `valid_until`, `is_gifted`, `gifted_to_customer_id`, `gifted_at`, `is_redeemed`, `redeemed_at`, `status`, `created_at`, `updated_at`) VALUES
 	(1, 17, 16, 'STOREBTJ10', 'percentage', 10.00, '2023-12-31 18:30:00', '2025-12-31 18:29:59', 0, NULL, NULL, 0, NULL, 'active', '2026-02-19 13:51:16', '2026-02-19 13:51:16'),
 	(2, 18, 18, 'STOREGOLD5', 'percentage', 5.00, '2023-12-31 18:30:00', '2025-12-31 18:29:59', 0, NULL, NULL, 0, NULL, 'active', '2026-02-19 13:51:16', '2026-02-19 13:51:16'),
@@ -1950,10 +1990,16 @@ INSERT INTO `store_coupons` (`id`, `merchant_id`, `store_id`, `coupon_code`, `di
 	(8, 25, 31, 'STORETEA', 'percentage', 12.00, '2024-05-31 18:30:00', '2025-12-31 18:29:59', 0, NULL, NULL, 0, NULL, 'active', '2026-02-19 13:51:16', '2026-02-19 13:51:16'),
 	(9, 27, 34, 'STOREBOAT', 'percentage', 18.00, '2024-05-31 18:30:00', '2025-12-31 18:29:59', 0, NULL, NULL, 0, NULL, 'active', '2026-02-19 13:51:16', '2026-02-19 13:51:16'),
 	(10, 28, 36, 'STORESPICE', 'fixed', 200.00, '2024-05-31 18:30:00', '2025-12-31 18:29:59', 0, NULL, NULL, 0, NULL, 'active', '2026-02-19 13:51:16', '2026-02-19 13:51:16'),
-	(11, 2, 2, 'STORESPG1', 'percentage', 5.00, '2023-12-31 18:30:00', '2025-12-31 18:29:59', 0, NULL, NULL, 0, NULL, 'active', '2026-02-19 13:51:16', '2026-02-19 13:51:16'),
+	(11, 2, 2, 'STORESPG1', 'percentage', 5.00, '2023-12-31 18:30:00', '2025-12-31 18:29:59', 0, NULL, NULL, 0, NULL, 'expired', '2026-02-19 13:51:16', '2026-02-21 04:59:46'),
 	(12, 3, 4, 'STORETXT2', 'percentage', 7.00, '2023-12-31 18:30:00', '2025-12-31 18:29:59', 0, NULL, NULL, 0, NULL, 'active', '2026-02-19 13:51:16', '2026-02-19 13:51:16'),
 	(13, 9, 10, 'STOREBIR1', 'percentage', 10.00, '2023-12-31 18:30:00', '2025-12-31 18:29:59', 0, NULL, NULL, 0, NULL, 'active', '2026-02-19 13:51:16', '2026-02-19 13:51:16'),
-	(14, 10, 12, 'STOREGLD1', 'percentage', 3.00, '2023-12-31 18:30:00', '2025-12-31 18:29:59', 0, NULL, NULL, 0, NULL, 'active', '2026-02-19 13:51:16', '2026-02-19 13:51:16');
+	(14, 10, 12, 'STOREGLD1', 'percentage', 3.00, '2023-12-31 18:30:00', '2025-12-31 18:29:59', 0, NULL, NULL, 0, NULL, 'active', '2026-02-19 13:51:16', '2026-02-19 13:51:16'),
+	(15, 2, 2, 'SPICE20OFF', 'percentage', 20.00, '2026-02-19 18:30:00', '2026-06-30 18:29:59', 1, 61, '2026-02-21 04:59:45', 1, '2026-02-21 05:01:54', 'active', '2026-02-21 04:59:45', '2026-02-21 05:01:54'),
+	(16, 2, 2, 'SPICE100', 'fixed', 100.00, '2026-02-19 18:30:00', '2026-05-31 18:29:59', 0, NULL, NULL, 1, '2026-02-21 05:02:14', 'active', '2026-02-21 04:59:45', '2026-02-21 05:02:14'),
+	(17, 2, 3, 'MGROAD15', 'percentage', 15.00, '2026-02-19 18:30:00', '2026-08-31 18:29:59', 0, NULL, NULL, 0, NULL, 'active', '2026-02-21 04:59:45', NULL),
+	(18, 2, 3, 'MGROAD50', 'fixed', 50.00, '2026-02-19 18:30:00', '2026-04-30 18:29:59', 0, NULL, NULL, 0, NULL, 'active', '2026-02-21 04:59:45', NULL),
+	(19, 2, 2, 'SPICE100-C61', 'fixed', 100.00, '2026-02-19 18:30:00', '2026-05-31 18:29:59', 1, 61, '2026-02-21 04:59:45', 0, NULL, 'active', '2026-02-21 04:59:45', NULL),
+	(20, 2, 2, 'SPICE100-C62', 'fixed', 100.00, '2026-02-19 18:30:00', '2026-05-31 18:29:59', 1, 62, '2026-02-21 04:59:45', 0, NULL, 'active', '2026-02-21 04:59:45', NULL);
 
 -- Dumping structure for table deal_machan.store_gallery
 CREATE TABLE IF NOT EXISTS `store_gallery` (
@@ -1963,6 +2009,8 @@ CREATE TABLE IF NOT EXISTS `store_gallery` (
   `caption` varchar(255) DEFAULT NULL,
   `display_order` int(11) NOT NULL DEFAULT 0,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `is_cover` tinyint(1) NOT NULL DEFAULT 0,
+  `merchant_id` int(10) unsigned DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `idx_store_id` (`store_id`),
   KEY `idx_display_order` (`display_order`),
@@ -1970,126 +2018,126 @@ CREATE TABLE IF NOT EXISTS `store_gallery` (
 ) ENGINE=InnoDB AUTO_INCREMENT=120 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Dumping data for table deal_machan.store_gallery: ~119 rows (approximately)
-INSERT INTO `store_gallery` (`id`, `store_id`, `image_url`, `caption`, `display_order`, `created_at`) VALUES
-	(1, 1, 'https://placehold.co/800x600/4A90D9/ffffff?text=Test+Restaurant', 'Storefront', 1, '2026-02-19 18:20:09'),
-	(2, 1, 'https://placehold.co/800x600/4A90D9/ffffff?text=Test+Restaurant', 'Interior View', 2, '2026-02-19 18:20:09'),
-	(3, 2, 'https://placehold.co/800x600/4A90D9/ffffff?text=Spice+Garden+Ernakulam', 'Storefront', 1, '2026-02-19 18:20:09'),
-	(4, 2, 'https://placehold.co/800x600/4A90D9/ffffff?text=Spice+Garden+Ernakulam', 'Interior View', 2, '2026-02-19 18:20:09'),
-	(5, 2, 'https://placehold.co/800x600/4A90D9/ffffff?text=Spice+Garden+Ernakulam', 'Product Display', 3, '2026-02-19 18:20:09'),
-	(6, 3, 'https://placehold.co/800x600/4A90D9/ffffff?text=Spice+Garden+MG+Rd', 'Storefront', 1, '2026-02-19 18:20:09'),
-	(7, 3, 'https://placehold.co/800x600/4A90D9/ffffff?text=Spice+Garden+MG+Rd', 'Interior View', 2, '2026-02-19 18:20:09'),
-	(8, 3, 'https://placehold.co/800x600/4A90D9/ffffff?text=Spice+Garden+MG+Rd', 'Product Display', 3, '2026-02-19 18:20:09'),
-	(9, 4, 'https://placehold.co/800x600/4A90D9/ffffff?text=Royal+Textiles+Pattom', 'Storefront', 1, '2026-02-19 18:20:09'),
-	(10, 4, 'https://placehold.co/800x600/4A90D9/ffffff?text=Royal+Textiles+Pattom', 'Interior View', 2, '2026-02-19 18:20:09'),
-	(11, 5, 'https://placehold.co/800x600/4A90D9/ffffff?text=Kerala+Sweets+Palayam', 'Storefront', 1, '2026-02-19 18:20:09'),
-	(12, 5, 'https://placehold.co/800x600/4A90D9/ffffff?text=Kerala+Sweets+Palayam', 'Interior View', 2, '2026-02-19 18:20:09'),
-	(13, 5, 'https://placehold.co/800x600/4A90D9/ffffff?text=Kerala+Sweets+Palayam', 'Product Display', 3, '2026-02-19 18:20:09'),
-	(14, 6, 'https://placehold.co/800x600/4A90D9/ffffff?text=FitZone+Kakkanad', 'Storefront', 1, '2026-02-19 18:20:09'),
-	(15, 6, 'https://placehold.co/800x600/4A90D9/ffffff?text=FitZone+Kakkanad', 'Interior View', 2, '2026-02-19 18:20:09'),
-	(16, 7, 'https://placehold.co/800x600/4A90D9/ffffff?text=MedPlus+Thampanoor', 'Storefront', 1, '2026-02-19 18:20:09'),
-	(17, 7, 'https://placehold.co/800x600/4A90D9/ffffff?text=MedPlus+Thampanoor', 'Interior View', 2, '2026-02-19 18:20:09'),
-	(18, 7, 'https://placehold.co/800x600/4A90D9/ffffff?text=MedPlus+Thampanoor', 'Product Display', 3, '2026-02-19 18:20:09'),
-	(19, 8, 'https://placehold.co/800x600/4A90D9/ffffff?text=Cafe+Mocha+Vyttila', 'Storefront', 1, '2026-02-19 18:20:09'),
-	(20, 8, 'https://placehold.co/800x600/4A90D9/ffffff?text=Cafe+Mocha+Vyttila', 'Interior View', 2, '2026-02-19 18:20:09'),
-	(21, 9, 'https://placehold.co/800x600/4A90D9/ffffff?text=Star+Electronics+Ulloor', 'Storefront', 1, '2026-02-19 18:20:09'),
-	(22, 9, 'https://placehold.co/800x600/4A90D9/ffffff?text=Star+Electronics+Ulloor', 'Interior View', 2, '2026-02-19 18:20:09'),
-	(23, 9, 'https://placehold.co/800x600/4A90D9/ffffff?text=Star+Electronics+Ulloor', 'Product Display', 3, '2026-02-19 18:20:09'),
-	(24, 10, 'https://placehold.co/800x600/4A90D9/ffffff?text=Malabar+Biriyani+Mavoor', 'Storefront', 1, '2026-02-19 18:20:09'),
-	(25, 10, 'https://placehold.co/800x600/4A90D9/ffffff?text=Malabar+Biriyani+Mavoor', 'Interior View', 2, '2026-02-19 18:20:09'),
-	(26, 11, 'https://placehold.co/800x600/4A90D9/ffffff?text=Malabar+Biriyani+Hilite', 'Storefront', 1, '2026-02-19 18:20:09'),
-	(27, 11, 'https://placehold.co/800x600/4A90D9/ffffff?text=Malabar+Biriyani+Hilite', 'Interior View', 2, '2026-02-19 18:20:09'),
-	(28, 12, 'https://placehold.co/800x600/4A90D9/ffffff?text=Golden+Jewels+Marine+Drive', 'Storefront', 1, '2026-02-19 18:20:09'),
-	(29, 12, 'https://placehold.co/800x600/4A90D9/ffffff?text=Golden+Jewels+Marine+Drive', 'Interior View', 2, '2026-02-19 18:20:09'),
-	(30, 13, 'https://placehold.co/800x600/4A90D9/ffffff?text=Paradise+Resort', 'Storefront', 1, '2026-02-19 18:20:09'),
-	(31, 13, 'https://placehold.co/800x600/4A90D9/ffffff?text=Paradise+Resort', 'Interior View', 2, '2026-02-19 18:20:09'),
-	(32, 14, 'https://placehold.co/800x600/4A90D9/ffffff?text=Sunrise+Bakers+Beach+Rd', 'Storefront', 1, '2026-02-19 18:20:09'),
-	(33, 14, 'https://placehold.co/800x600/4A90D9/ffffff?text=Sunrise+Bakers+Beach+Rd', 'Interior View', 2, '2026-02-19 18:20:09'),
-	(34, 15, 'https://placehold.co/800x600/4A90D9/ffffff?text=Sunrise+Bakers+Ramanattukara', 'Storefront', 1, '2026-02-19 18:20:09'),
-	(35, 15, 'https://placehold.co/800x600/4A90D9/ffffff?text=Sunrise+Bakers+Ramanattukara', 'Interior View', 2, '2026-02-19 18:20:09'),
-	(36, 16, 'https://placehold.co/800x600/4A90D9/ffffff?text=Kottayam+Rubber+Baker+Junction', 'Storefront', 1, '2026-02-19 18:20:09'),
-	(37, 16, 'https://placehold.co/800x600/4A90D9/ffffff?text=Kottayam+Rubber+Baker+Junction', 'Interior View', 2, '2026-02-19 18:20:09'),
-	(38, 17, 'https://placehold.co/800x600/4A90D9/ffffff?text=Kottayam+Rubber+MC+Road', 'Storefront', 1, '2026-02-19 18:20:09'),
-	(39, 17, 'https://placehold.co/800x600/4A90D9/ffffff?text=Kottayam+Rubber+MC+Road', 'Interior View', 2, '2026-02-19 18:20:09'),
-	(40, 18, 'https://placehold.co/800x600/4A90D9/ffffff?text=Thrissur+Gold+Palace+Swaraj', 'Storefront', 1, '2026-02-19 18:20:09'),
-	(41, 18, 'https://placehold.co/800x600/4A90D9/ffffff?text=Thrissur+Gold+Palace+Swaraj', 'Interior View', 2, '2026-02-19 18:20:09'),
-	(42, 18, 'https://placehold.co/800x600/4A90D9/ffffff?text=Thrissur+Gold+Palace+Swaraj', 'Product Display', 3, '2026-02-19 18:20:09'),
-	(43, 19, 'https://placehold.co/800x600/4A90D9/ffffff?text=Thrissur+Gold+Palace+East+Fort', 'Storefront', 1, '2026-02-19 18:20:09'),
-	(44, 19, 'https://placehold.co/800x600/4A90D9/ffffff?text=Thrissur+Gold+Palace+East+Fort', 'Interior View', 2, '2026-02-19 18:20:09'),
-	(45, 20, 'https://placehold.co/800x600/4A90D9/ffffff?text=Calicut+Heritage+Cafe+Mavoor', 'Storefront', 1, '2026-02-19 18:20:09'),
-	(46, 20, 'https://placehold.co/800x600/4A90D9/ffffff?text=Calicut+Heritage+Cafe+Mavoor', 'Interior View', 2, '2026-02-19 18:20:09'),
-	(47, 20, 'https://placehold.co/800x600/4A90D9/ffffff?text=Calicut+Heritage+Cafe+Mavoor', 'Product Display', 3, '2026-02-19 18:20:09'),
-	(48, 21, 'https://placehold.co/800x600/4A90D9/ffffff?text=Calicut+Heritage+Cafe+Palayam', 'Storefront', 1, '2026-02-19 18:20:09'),
-	(49, 21, 'https://placehold.co/800x600/4A90D9/ffffff?text=Calicut+Heritage+Cafe+Palayam', 'Interior View', 2, '2026-02-19 18:20:09'),
-	(50, 21, 'https://placehold.co/800x600/4A90D9/ffffff?text=Calicut+Heritage+Cafe+Palayam', 'Product Display', 3, '2026-02-19 18:20:09'),
-	(51, 22, 'https://placehold.co/800x600/4A90D9/ffffff?text=Kollam+Sea+Foods+Chinnakada', 'Storefront', 1, '2026-02-19 18:20:09'),
-	(52, 22, 'https://placehold.co/800x600/4A90D9/ffffff?text=Kollam+Sea+Foods+Chinnakada', 'Interior View', 2, '2026-02-19 18:20:09'),
-	(53, 23, 'https://placehold.co/800x600/4A90D9/ffffff?text=Kollam+Sea+Foods+Asramam', 'Storefront', 1, '2026-02-19 18:20:09'),
-	(54, 23, 'https://placehold.co/800x600/4A90D9/ffffff?text=Kollam+Sea+Foods+Asramam', 'Interior View', 2, '2026-02-19 18:20:09'),
-	(55, 24, 'https://placehold.co/800x600/4A90D9/ffffff?text=Kochi+Auto+Parts+Kakkanad', 'Storefront', 1, '2026-02-19 18:20:09'),
-	(56, 24, 'https://placehold.co/800x600/4A90D9/ffffff?text=Kochi+Auto+Parts+Kakkanad', 'Interior View', 2, '2026-02-19 18:20:09'),
-	(57, 25, 'https://placehold.co/800x600/4A90D9/ffffff?text=Kochi+Auto+Parts+Edappally', 'Storefront', 1, '2026-02-19 18:20:09'),
-	(58, 25, 'https://placehold.co/800x600/4A90D9/ffffff?text=Kochi+Auto+Parts+Edappally', 'Interior View', 2, '2026-02-19 18:20:09'),
-	(59, 26, 'https://placehold.co/800x600/4A90D9/ffffff?text=Palace+Furniture+Marine+Drive', 'Storefront', 1, '2026-02-19 18:20:09'),
-	(60, 26, 'https://placehold.co/800x600/4A90D9/ffffff?text=Palace+Furniture+Marine+Drive', 'Interior View', 2, '2026-02-19 18:20:09'),
-	(61, 26, 'https://placehold.co/800x600/4A90D9/ffffff?text=Palace+Furniture+Marine+Drive', 'Product Display', 3, '2026-02-19 18:20:09'),
-	(62, 27, 'https://placehold.co/800x600/4A90D9/ffffff?text=Palace+Furniture+Kaloor', 'Storefront', 1, '2026-02-19 18:20:09'),
-	(63, 27, 'https://placehold.co/800x600/4A90D9/ffffff?text=Palace+Furniture+Kaloor', 'Interior View', 2, '2026-02-19 18:20:09'),
-	(64, 27, 'https://placehold.co/800x600/4A90D9/ffffff?text=Palace+Furniture+Kaloor', 'Product Display', 3, '2026-02-19 18:20:09'),
-	(65, 28, 'https://placehold.co/800x600/4A90D9/ffffff?text=Green+Valley+Pattom', 'Storefront', 1, '2026-02-19 18:20:09'),
-	(66, 28, 'https://placehold.co/800x600/4A90D9/ffffff?text=Green+Valley+Pattom', 'Interior View', 2, '2026-02-19 18:20:09'),
-	(67, 29, 'https://placehold.co/800x600/4A90D9/ffffff?text=Trivandrum+Opticals+Kowdiar', 'Storefront', 1, '2026-02-19 18:20:09'),
-	(68, 29, 'https://placehold.co/800x600/4A90D9/ffffff?text=Trivandrum+Opticals+Kowdiar', 'Interior View', 2, '2026-02-19 18:20:09'),
-	(69, 29, 'https://placehold.co/800x600/4A90D9/ffffff?text=Trivandrum+Opticals+Kowdiar', 'Product Display', 3, '2026-02-19 18:20:09'),
-	(70, 30, 'https://placehold.co/800x600/4A90D9/ffffff?text=Trivandrum+Opticals+Thampanoor', 'Storefront', 1, '2026-02-19 18:20:09'),
-	(71, 30, 'https://placehold.co/800x600/4A90D9/ffffff?text=Trivandrum+Opticals+Thampanoor', 'Interior View', 2, '2026-02-19 18:20:09'),
-	(72, 30, 'https://placehold.co/800x600/4A90D9/ffffff?text=Trivandrum+Opticals+Thampanoor', 'Product Display', 3, '2026-02-19 18:20:09'),
-	(73, 31, 'https://placehold.co/800x600/4A90D9/ffffff?text=Munnar+Tea+House+MG+Road', 'Storefront', 1, '2026-02-19 18:20:09'),
-	(74, 31, 'https://placehold.co/800x600/4A90D9/ffffff?text=Munnar+Tea+House+MG+Road', 'Interior View', 2, '2026-02-19 18:20:09'),
-	(75, 31, 'https://placehold.co/800x600/4A90D9/ffffff?text=Munnar+Tea+House+MG+Road', 'Product Display', 3, '2026-02-19 18:20:09'),
-	(76, 32, 'https://placehold.co/800x600/4A90D9/ffffff?text=Munnar+Tea+House+Ernakulam', 'Storefront', 1, '2026-02-19 18:20:09'),
-	(77, 32, 'https://placehold.co/800x600/4A90D9/ffffff?text=Munnar+Tea+House+Ernakulam', 'Interior View', 2, '2026-02-19 18:20:09'),
-	(78, 32, 'https://placehold.co/800x600/4A90D9/ffffff?text=Munnar+Tea+House+Ernakulam', 'Product Display', 3, '2026-02-19 18:20:09'),
-	(79, 33, 'https://placehold.co/800x600/4A90D9/ffffff?text=Tattoo+Art+Studio+Vyttila', 'Storefront', 1, '2026-02-19 18:20:09'),
-	(80, 33, 'https://placehold.co/800x600/4A90D9/ffffff?text=Tattoo+Art+Studio+Vyttila', 'Interior View', 2, '2026-02-19 18:20:09'),
-	(81, 34, 'https://placehold.co/800x600/4A90D9/ffffff?text=Alappuzha+Boats+Mullakkal', 'Storefront', 1, '2026-02-19 18:20:09'),
-	(82, 34, 'https://placehold.co/800x600/4A90D9/ffffff?text=Alappuzha+Boats+Mullakkal', 'Interior View', 2, '2026-02-19 18:20:09'),
-	(83, 34, 'https://placehold.co/800x600/4A90D9/ffffff?text=Alappuzha+Boats+Mullakkal', 'Product Display', 3, '2026-02-19 18:20:09'),
-	(84, 35, 'https://placehold.co/800x600/4A90D9/ffffff?text=Alappuzha+Boats+Iron+Bridge', 'Storefront', 1, '2026-02-19 18:20:09'),
-	(85, 35, 'https://placehold.co/800x600/4A90D9/ffffff?text=Alappuzha+Boats+Iron+Bridge', 'Interior View', 2, '2026-02-19 18:20:09'),
-	(86, 35, 'https://placehold.co/800x600/4A90D9/ffffff?text=Alappuzha+Boats+Iron+Bridge', 'Product Display', 3, '2026-02-19 18:20:09'),
-	(87, 36, 'https://placehold.co/800x600/4A90D9/ffffff?text=Kerala+Spices+Ernakulam', 'Storefront', 1, '2026-02-19 18:20:09'),
-	(88, 36, 'https://placehold.co/800x600/4A90D9/ffffff?text=Kerala+Spices+Ernakulam', 'Interior View', 2, '2026-02-19 18:20:09'),
-	(89, 36, 'https://placehold.co/800x600/4A90D9/ffffff?text=Kerala+Spices+Ernakulam', 'Product Display', 3, '2026-02-19 18:20:09'),
-	(90, 37, 'https://placehold.co/800x600/4A90D9/ffffff?text=Kerala+Spices+Mavoor+Road', 'Storefront', 1, '2026-02-19 18:20:09'),
-	(91, 37, 'https://placehold.co/800x600/4A90D9/ffffff?text=Kerala+Spices+Mavoor+Road', 'Interior View', 2, '2026-02-19 18:20:09'),
-	(92, 38, 'https://placehold.co/800x600/4A90D9/ffffff?text=Royal+Textiles+MG+Road', 'Storefront', 1, '2026-02-19 18:20:09'),
-	(93, 38, 'https://placehold.co/800x600/4A90D9/ffffff?text=Royal+Textiles+MG+Road', 'Interior View', 2, '2026-02-19 18:20:09'),
-	(94, 38, 'https://placehold.co/800x600/4A90D9/ffffff?text=Royal+Textiles+MG+Road', 'Product Display', 3, '2026-02-19 18:20:09'),
-	(95, 39, 'https://placehold.co/800x600/4A90D9/ffffff?text=Kerala+Sweets+TVM', 'Storefront', 1, '2026-02-19 18:20:09'),
-	(96, 39, 'https://placehold.co/800x600/4A90D9/ffffff?text=Kerala+Sweets+TVM', 'Interior View', 2, '2026-02-19 18:20:09'),
-	(97, 39, 'https://placehold.co/800x600/4A90D9/ffffff?text=Kerala+Sweets+TVM', 'Product Display', 3, '2026-02-19 18:20:09'),
-	(98, 40, 'https://placehold.co/800x600/4A90D9/ffffff?text=Kerala+Sweets+Kochi', 'Storefront', 1, '2026-02-19 18:20:09'),
-	(99, 40, 'https://placehold.co/800x600/4A90D9/ffffff?text=Kerala+Sweets+Kochi', 'Interior View', 2, '2026-02-19 18:20:09'),
-	(100, 40, 'https://placehold.co/800x600/4A90D9/ffffff?text=Kerala+Sweets+Kochi', 'Product Display', 3, '2026-02-19 18:20:09'),
-	(101, 41, 'https://placehold.co/800x600/4A90D9/ffffff?text=FitZone+Pattom', 'Storefront', 1, '2026-02-19 18:20:09'),
-	(102, 41, 'https://placehold.co/800x600/4A90D9/ffffff?text=FitZone+Pattom', 'Interior View', 2, '2026-02-19 18:20:09'),
-	(103, 42, 'https://placehold.co/800x600/4A90D9/ffffff?text=MedPlus+MG+Road+Kochi', 'Storefront', 1, '2026-02-19 18:20:09'),
-	(104, 42, 'https://placehold.co/800x600/4A90D9/ffffff?text=MedPlus+MG+Road+Kochi', 'Interior View', 2, '2026-02-19 18:20:09'),
-	(105, 43, 'https://placehold.co/800x600/4A90D9/ffffff?text=Cafe+Mocha+Marine+Drive', 'Storefront', 1, '2026-02-19 18:20:09'),
-	(106, 43, 'https://placehold.co/800x600/4A90D9/ffffff?text=Cafe+Mocha+Marine+Drive', 'Interior View', 2, '2026-02-19 18:20:09'),
-	(107, 44, 'https://placehold.co/800x600/4A90D9/ffffff?text=Star+Electronics+Kakkanad', 'Storefront', 1, '2026-02-19 18:20:09'),
-	(108, 44, 'https://placehold.co/800x600/4A90D9/ffffff?text=Star+Electronics+Kakkanad', 'Interior View', 2, '2026-02-19 18:20:09'),
-	(109, 45, 'https://placehold.co/800x600/4A90D9/ffffff?text=Star+Electronics+Thrissur', 'Storefront', 1, '2026-02-19 18:20:09'),
-	(110, 45, 'https://placehold.co/800x600/4A90D9/ffffff?text=Star+Electronics+Thrissur', 'Interior View', 2, '2026-02-19 18:20:09'),
-	(111, 45, 'https://placehold.co/800x600/4A90D9/ffffff?text=Star+Electronics+Thrissur', 'Product Display', 3, '2026-02-19 18:20:09'),
-	(112, 46, 'https://placehold.co/800x600/4A90D9/ffffff?text=Malabar+Biriyani+Beach+Road', 'Storefront', 1, '2026-02-19 18:20:09'),
-	(113, 46, 'https://placehold.co/800x600/4A90D9/ffffff?text=Malabar+Biriyani+Beach+Road', 'Interior View', 2, '2026-02-19 18:20:09'),
-	(114, 46, 'https://placehold.co/800x600/4A90D9/ffffff?text=Malabar+Biriyani+Beach+Road', 'Product Display', 3, '2026-02-19 18:20:09'),
-	(115, 47, 'https://placehold.co/800x600/4A90D9/ffffff?text=Golden+Jewels+Thrissur', 'Storefront', 1, '2026-02-19 18:20:09'),
-	(116, 47, 'https://placehold.co/800x600/4A90D9/ffffff?text=Golden+Jewels+Thrissur', 'Interior View', 2, '2026-02-19 18:20:09'),
-	(117, 47, 'https://placehold.co/800x600/4A90D9/ffffff?text=Golden+Jewels+Thrissur', 'Product Display', 3, '2026-02-19 18:20:09'),
-	(118, 48, 'https://placehold.co/800x600/4A90D9/ffffff?text=Sunrise+Bakers+Palayam', 'Storefront', 1, '2026-02-19 18:20:09'),
-	(119, 48, 'https://placehold.co/800x600/4A90D9/ffffff?text=Sunrise+Bakers+Palayam', 'Interior View', 2, '2026-02-19 18:20:09');
+INSERT INTO `store_gallery` (`id`, `store_id`, `image_url`, `caption`, `display_order`, `created_at`, `is_cover`, `merchant_id`) VALUES
+	(1, 1, 'https://placehold.co/800x600/4A90D9/ffffff?text=Test+Restaurant', 'Storefront', 1, '2026-02-19 18:20:09', 0, NULL),
+	(2, 1, 'https://placehold.co/800x600/4A90D9/ffffff?text=Test+Restaurant', 'Interior View', 2, '2026-02-19 18:20:09', 0, NULL),
+	(3, 2, 'https://placehold.co/800x600/4A90D9/ffffff?text=Spice+Garden+Ernakulam', 'Storefront', 1, '2026-02-19 18:20:09', 0, NULL),
+	(4, 2, 'https://placehold.co/800x600/4A90D9/ffffff?text=Spice+Garden+Ernakulam', 'Interior View', 2, '2026-02-19 18:20:09', 0, NULL),
+	(5, 2, 'https://placehold.co/800x600/4A90D9/ffffff?text=Spice+Garden+Ernakulam', 'Product Display', 3, '2026-02-19 18:20:09', 0, NULL),
+	(6, 3, 'https://placehold.co/800x600/4A90D9/ffffff?text=Spice+Garden+MG+Rd', 'Storefront', 1, '2026-02-19 18:20:09', 0, NULL),
+	(7, 3, 'https://placehold.co/800x600/4A90D9/ffffff?text=Spice+Garden+MG+Rd', 'Interior View', 2, '2026-02-19 18:20:09', 0, NULL),
+	(8, 3, 'https://placehold.co/800x600/4A90D9/ffffff?text=Spice+Garden+MG+Rd', 'Product Display', 3, '2026-02-19 18:20:09', 0, NULL),
+	(9, 4, 'https://placehold.co/800x600/4A90D9/ffffff?text=Royal+Textiles+Pattom', 'Storefront', 1, '2026-02-19 18:20:09', 0, NULL),
+	(10, 4, 'https://placehold.co/800x600/4A90D9/ffffff?text=Royal+Textiles+Pattom', 'Interior View', 2, '2026-02-19 18:20:09', 0, NULL),
+	(11, 5, 'https://placehold.co/800x600/4A90D9/ffffff?text=Kerala+Sweets+Palayam', 'Storefront', 1, '2026-02-19 18:20:09', 0, NULL),
+	(12, 5, 'https://placehold.co/800x600/4A90D9/ffffff?text=Kerala+Sweets+Palayam', 'Interior View', 2, '2026-02-19 18:20:09', 0, NULL),
+	(13, 5, 'https://placehold.co/800x600/4A90D9/ffffff?text=Kerala+Sweets+Palayam', 'Product Display', 3, '2026-02-19 18:20:09', 0, NULL),
+	(14, 6, 'https://placehold.co/800x600/4A90D9/ffffff?text=FitZone+Kakkanad', 'Storefront', 1, '2026-02-19 18:20:09', 0, NULL),
+	(15, 6, 'https://placehold.co/800x600/4A90D9/ffffff?text=FitZone+Kakkanad', 'Interior View', 2, '2026-02-19 18:20:09', 0, NULL),
+	(16, 7, 'https://placehold.co/800x600/4A90D9/ffffff?text=MedPlus+Thampanoor', 'Storefront', 1, '2026-02-19 18:20:09', 0, NULL),
+	(17, 7, 'https://placehold.co/800x600/4A90D9/ffffff?text=MedPlus+Thampanoor', 'Interior View', 2, '2026-02-19 18:20:09', 0, NULL),
+	(18, 7, 'https://placehold.co/800x600/4A90D9/ffffff?text=MedPlus+Thampanoor', 'Product Display', 3, '2026-02-19 18:20:09', 0, NULL),
+	(19, 8, 'https://placehold.co/800x600/4A90D9/ffffff?text=Cafe+Mocha+Vyttila', 'Storefront', 1, '2026-02-19 18:20:09', 0, NULL),
+	(20, 8, 'https://placehold.co/800x600/4A90D9/ffffff?text=Cafe+Mocha+Vyttila', 'Interior View', 2, '2026-02-19 18:20:09', 0, NULL),
+	(21, 9, 'https://placehold.co/800x600/4A90D9/ffffff?text=Star+Electronics+Ulloor', 'Storefront', 1, '2026-02-19 18:20:09', 0, NULL),
+	(22, 9, 'https://placehold.co/800x600/4A90D9/ffffff?text=Star+Electronics+Ulloor', 'Interior View', 2, '2026-02-19 18:20:09', 0, NULL),
+	(23, 9, 'https://placehold.co/800x600/4A90D9/ffffff?text=Star+Electronics+Ulloor', 'Product Display', 3, '2026-02-19 18:20:09', 0, NULL),
+	(24, 10, 'https://placehold.co/800x600/4A90D9/ffffff?text=Malabar+Biriyani+Mavoor', 'Storefront', 1, '2026-02-19 18:20:09', 0, NULL),
+	(25, 10, 'https://placehold.co/800x600/4A90D9/ffffff?text=Malabar+Biriyani+Mavoor', 'Interior View', 2, '2026-02-19 18:20:09', 0, NULL),
+	(26, 11, 'https://placehold.co/800x600/4A90D9/ffffff?text=Malabar+Biriyani+Hilite', 'Storefront', 1, '2026-02-19 18:20:09', 0, NULL),
+	(27, 11, 'https://placehold.co/800x600/4A90D9/ffffff?text=Malabar+Biriyani+Hilite', 'Interior View', 2, '2026-02-19 18:20:09', 0, NULL),
+	(28, 12, 'https://placehold.co/800x600/4A90D9/ffffff?text=Golden+Jewels+Marine+Drive', 'Storefront', 1, '2026-02-19 18:20:09', 0, NULL),
+	(29, 12, 'https://placehold.co/800x600/4A90D9/ffffff?text=Golden+Jewels+Marine+Drive', 'Interior View', 2, '2026-02-19 18:20:09', 0, NULL),
+	(30, 13, 'https://placehold.co/800x600/4A90D9/ffffff?text=Paradise+Resort', 'Storefront', 1, '2026-02-19 18:20:09', 0, NULL),
+	(31, 13, 'https://placehold.co/800x600/4A90D9/ffffff?text=Paradise+Resort', 'Interior View', 2, '2026-02-19 18:20:09', 0, NULL),
+	(32, 14, 'https://placehold.co/800x600/4A90D9/ffffff?text=Sunrise+Bakers+Beach+Rd', 'Storefront', 1, '2026-02-19 18:20:09', 0, NULL),
+	(33, 14, 'https://placehold.co/800x600/4A90D9/ffffff?text=Sunrise+Bakers+Beach+Rd', 'Interior View', 2, '2026-02-19 18:20:09', 0, NULL),
+	(34, 15, 'https://placehold.co/800x600/4A90D9/ffffff?text=Sunrise+Bakers+Ramanattukara', 'Storefront', 1, '2026-02-19 18:20:09', 0, NULL),
+	(35, 15, 'https://placehold.co/800x600/4A90D9/ffffff?text=Sunrise+Bakers+Ramanattukara', 'Interior View', 2, '2026-02-19 18:20:09', 0, NULL),
+	(36, 16, 'https://placehold.co/800x600/4A90D9/ffffff?text=Kottayam+Rubber+Baker+Junction', 'Storefront', 1, '2026-02-19 18:20:09', 0, NULL),
+	(37, 16, 'https://placehold.co/800x600/4A90D9/ffffff?text=Kottayam+Rubber+Baker+Junction', 'Interior View', 2, '2026-02-19 18:20:09', 0, NULL),
+	(38, 17, 'https://placehold.co/800x600/4A90D9/ffffff?text=Kottayam+Rubber+MC+Road', 'Storefront', 1, '2026-02-19 18:20:09', 0, NULL),
+	(39, 17, 'https://placehold.co/800x600/4A90D9/ffffff?text=Kottayam+Rubber+MC+Road', 'Interior View', 2, '2026-02-19 18:20:09', 0, NULL),
+	(40, 18, 'https://placehold.co/800x600/4A90D9/ffffff?text=Thrissur+Gold+Palace+Swaraj', 'Storefront', 1, '2026-02-19 18:20:09', 0, NULL),
+	(41, 18, 'https://placehold.co/800x600/4A90D9/ffffff?text=Thrissur+Gold+Palace+Swaraj', 'Interior View', 2, '2026-02-19 18:20:09', 0, NULL),
+	(42, 18, 'https://placehold.co/800x600/4A90D9/ffffff?text=Thrissur+Gold+Palace+Swaraj', 'Product Display', 3, '2026-02-19 18:20:09', 0, NULL),
+	(43, 19, 'https://placehold.co/800x600/4A90D9/ffffff?text=Thrissur+Gold+Palace+East+Fort', 'Storefront', 1, '2026-02-19 18:20:09', 0, NULL),
+	(44, 19, 'https://placehold.co/800x600/4A90D9/ffffff?text=Thrissur+Gold+Palace+East+Fort', 'Interior View', 2, '2026-02-19 18:20:09', 0, NULL),
+	(45, 20, 'https://placehold.co/800x600/4A90D9/ffffff?text=Calicut+Heritage+Cafe+Mavoor', 'Storefront', 1, '2026-02-19 18:20:09', 0, NULL),
+	(46, 20, 'https://placehold.co/800x600/4A90D9/ffffff?text=Calicut+Heritage+Cafe+Mavoor', 'Interior View', 2, '2026-02-19 18:20:09', 0, NULL),
+	(47, 20, 'https://placehold.co/800x600/4A90D9/ffffff?text=Calicut+Heritage+Cafe+Mavoor', 'Product Display', 3, '2026-02-19 18:20:09', 0, NULL),
+	(48, 21, 'https://placehold.co/800x600/4A90D9/ffffff?text=Calicut+Heritage+Cafe+Palayam', 'Storefront', 1, '2026-02-19 18:20:09', 0, NULL),
+	(49, 21, 'https://placehold.co/800x600/4A90D9/ffffff?text=Calicut+Heritage+Cafe+Palayam', 'Interior View', 2, '2026-02-19 18:20:09', 0, NULL),
+	(50, 21, 'https://placehold.co/800x600/4A90D9/ffffff?text=Calicut+Heritage+Cafe+Palayam', 'Product Display', 3, '2026-02-19 18:20:09', 0, NULL),
+	(51, 22, 'https://placehold.co/800x600/4A90D9/ffffff?text=Kollam+Sea+Foods+Chinnakada', 'Storefront', 1, '2026-02-19 18:20:09', 0, NULL),
+	(52, 22, 'https://placehold.co/800x600/4A90D9/ffffff?text=Kollam+Sea+Foods+Chinnakada', 'Interior View', 2, '2026-02-19 18:20:09', 0, NULL),
+	(53, 23, 'https://placehold.co/800x600/4A90D9/ffffff?text=Kollam+Sea+Foods+Asramam', 'Storefront', 1, '2026-02-19 18:20:09', 0, NULL),
+	(54, 23, 'https://placehold.co/800x600/4A90D9/ffffff?text=Kollam+Sea+Foods+Asramam', 'Interior View', 2, '2026-02-19 18:20:09', 0, NULL),
+	(55, 24, 'https://placehold.co/800x600/4A90D9/ffffff?text=Kochi+Auto+Parts+Kakkanad', 'Storefront', 1, '2026-02-19 18:20:09', 0, NULL),
+	(56, 24, 'https://placehold.co/800x600/4A90D9/ffffff?text=Kochi+Auto+Parts+Kakkanad', 'Interior View', 2, '2026-02-19 18:20:09', 0, NULL),
+	(57, 25, 'https://placehold.co/800x600/4A90D9/ffffff?text=Kochi+Auto+Parts+Edappally', 'Storefront', 1, '2026-02-19 18:20:09', 0, NULL),
+	(58, 25, 'https://placehold.co/800x600/4A90D9/ffffff?text=Kochi+Auto+Parts+Edappally', 'Interior View', 2, '2026-02-19 18:20:09', 0, NULL),
+	(59, 26, 'https://placehold.co/800x600/4A90D9/ffffff?text=Palace+Furniture+Marine+Drive', 'Storefront', 1, '2026-02-19 18:20:09', 0, NULL),
+	(60, 26, 'https://placehold.co/800x600/4A90D9/ffffff?text=Palace+Furniture+Marine+Drive', 'Interior View', 2, '2026-02-19 18:20:09', 0, NULL),
+	(61, 26, 'https://placehold.co/800x600/4A90D9/ffffff?text=Palace+Furniture+Marine+Drive', 'Product Display', 3, '2026-02-19 18:20:09', 0, NULL),
+	(62, 27, 'https://placehold.co/800x600/4A90D9/ffffff?text=Palace+Furniture+Kaloor', 'Storefront', 1, '2026-02-19 18:20:09', 0, NULL),
+	(63, 27, 'https://placehold.co/800x600/4A90D9/ffffff?text=Palace+Furniture+Kaloor', 'Interior View', 2, '2026-02-19 18:20:09', 0, NULL),
+	(64, 27, 'https://placehold.co/800x600/4A90D9/ffffff?text=Palace+Furniture+Kaloor', 'Product Display', 3, '2026-02-19 18:20:09', 0, NULL),
+	(65, 28, 'https://placehold.co/800x600/4A90D9/ffffff?text=Green+Valley+Pattom', 'Storefront', 1, '2026-02-19 18:20:09', 0, NULL),
+	(66, 28, 'https://placehold.co/800x600/4A90D9/ffffff?text=Green+Valley+Pattom', 'Interior View', 2, '2026-02-19 18:20:09', 0, NULL),
+	(67, 29, 'https://placehold.co/800x600/4A90D9/ffffff?text=Trivandrum+Opticals+Kowdiar', 'Storefront', 1, '2026-02-19 18:20:09', 0, NULL),
+	(68, 29, 'https://placehold.co/800x600/4A90D9/ffffff?text=Trivandrum+Opticals+Kowdiar', 'Interior View', 2, '2026-02-19 18:20:09', 0, NULL),
+	(69, 29, 'https://placehold.co/800x600/4A90D9/ffffff?text=Trivandrum+Opticals+Kowdiar', 'Product Display', 3, '2026-02-19 18:20:09', 0, NULL),
+	(70, 30, 'https://placehold.co/800x600/4A90D9/ffffff?text=Trivandrum+Opticals+Thampanoor', 'Storefront', 1, '2026-02-19 18:20:09', 0, NULL),
+	(71, 30, 'https://placehold.co/800x600/4A90D9/ffffff?text=Trivandrum+Opticals+Thampanoor', 'Interior View', 2, '2026-02-19 18:20:09', 0, NULL),
+	(72, 30, 'https://placehold.co/800x600/4A90D9/ffffff?text=Trivandrum+Opticals+Thampanoor', 'Product Display', 3, '2026-02-19 18:20:09', 0, NULL),
+	(73, 31, 'https://placehold.co/800x600/4A90D9/ffffff?text=Munnar+Tea+House+MG+Road', 'Storefront', 1, '2026-02-19 18:20:09', 0, NULL),
+	(74, 31, 'https://placehold.co/800x600/4A90D9/ffffff?text=Munnar+Tea+House+MG+Road', 'Interior View', 2, '2026-02-19 18:20:09', 0, NULL),
+	(75, 31, 'https://placehold.co/800x600/4A90D9/ffffff?text=Munnar+Tea+House+MG+Road', 'Product Display', 3, '2026-02-19 18:20:09', 0, NULL),
+	(76, 32, 'https://placehold.co/800x600/4A90D9/ffffff?text=Munnar+Tea+House+Ernakulam', 'Storefront', 1, '2026-02-19 18:20:09', 0, NULL),
+	(77, 32, 'https://placehold.co/800x600/4A90D9/ffffff?text=Munnar+Tea+House+Ernakulam', 'Interior View', 2, '2026-02-19 18:20:09', 0, NULL),
+	(78, 32, 'https://placehold.co/800x600/4A90D9/ffffff?text=Munnar+Tea+House+Ernakulam', 'Product Display', 3, '2026-02-19 18:20:09', 0, NULL),
+	(79, 33, 'https://placehold.co/800x600/4A90D9/ffffff?text=Tattoo+Art+Studio+Vyttila', 'Storefront', 1, '2026-02-19 18:20:09', 0, NULL),
+	(80, 33, 'https://placehold.co/800x600/4A90D9/ffffff?text=Tattoo+Art+Studio+Vyttila', 'Interior View', 2, '2026-02-19 18:20:09', 0, NULL),
+	(81, 34, 'https://placehold.co/800x600/4A90D9/ffffff?text=Alappuzha+Boats+Mullakkal', 'Storefront', 1, '2026-02-19 18:20:09', 0, NULL),
+	(82, 34, 'https://placehold.co/800x600/4A90D9/ffffff?text=Alappuzha+Boats+Mullakkal', 'Interior View', 2, '2026-02-19 18:20:09', 0, NULL),
+	(83, 34, 'https://placehold.co/800x600/4A90D9/ffffff?text=Alappuzha+Boats+Mullakkal', 'Product Display', 3, '2026-02-19 18:20:09', 0, NULL),
+	(84, 35, 'https://placehold.co/800x600/4A90D9/ffffff?text=Alappuzha+Boats+Iron+Bridge', 'Storefront', 1, '2026-02-19 18:20:09', 0, NULL),
+	(85, 35, 'https://placehold.co/800x600/4A90D9/ffffff?text=Alappuzha+Boats+Iron+Bridge', 'Interior View', 2, '2026-02-19 18:20:09', 0, NULL),
+	(86, 35, 'https://placehold.co/800x600/4A90D9/ffffff?text=Alappuzha+Boats+Iron+Bridge', 'Product Display', 3, '2026-02-19 18:20:09', 0, NULL),
+	(87, 36, 'https://placehold.co/800x600/4A90D9/ffffff?text=Kerala+Spices+Ernakulam', 'Storefront', 1, '2026-02-19 18:20:09', 0, NULL),
+	(88, 36, 'https://placehold.co/800x600/4A90D9/ffffff?text=Kerala+Spices+Ernakulam', 'Interior View', 2, '2026-02-19 18:20:09', 0, NULL),
+	(89, 36, 'https://placehold.co/800x600/4A90D9/ffffff?text=Kerala+Spices+Ernakulam', 'Product Display', 3, '2026-02-19 18:20:09', 0, NULL),
+	(90, 37, 'https://placehold.co/800x600/4A90D9/ffffff?text=Kerala+Spices+Mavoor+Road', 'Storefront', 1, '2026-02-19 18:20:09', 0, NULL),
+	(91, 37, 'https://placehold.co/800x600/4A90D9/ffffff?text=Kerala+Spices+Mavoor+Road', 'Interior View', 2, '2026-02-19 18:20:09', 0, NULL),
+	(92, 38, 'https://placehold.co/800x600/4A90D9/ffffff?text=Royal+Textiles+MG+Road', 'Storefront', 1, '2026-02-19 18:20:09', 0, NULL),
+	(93, 38, 'https://placehold.co/800x600/4A90D9/ffffff?text=Royal+Textiles+MG+Road', 'Interior View', 2, '2026-02-19 18:20:09', 0, NULL),
+	(94, 38, 'https://placehold.co/800x600/4A90D9/ffffff?text=Royal+Textiles+MG+Road', 'Product Display', 3, '2026-02-19 18:20:09', 0, NULL),
+	(95, 39, 'https://placehold.co/800x600/4A90D9/ffffff?text=Kerala+Sweets+TVM', 'Storefront', 1, '2026-02-19 18:20:09', 0, NULL),
+	(96, 39, 'https://placehold.co/800x600/4A90D9/ffffff?text=Kerala+Sweets+TVM', 'Interior View', 2, '2026-02-19 18:20:09', 0, NULL),
+	(97, 39, 'https://placehold.co/800x600/4A90D9/ffffff?text=Kerala+Sweets+TVM', 'Product Display', 3, '2026-02-19 18:20:09', 0, NULL),
+	(98, 40, 'https://placehold.co/800x600/4A90D9/ffffff?text=Kerala+Sweets+Kochi', 'Storefront', 1, '2026-02-19 18:20:09', 0, NULL),
+	(99, 40, 'https://placehold.co/800x600/4A90D9/ffffff?text=Kerala+Sweets+Kochi', 'Interior View', 2, '2026-02-19 18:20:09', 0, NULL),
+	(100, 40, 'https://placehold.co/800x600/4A90D9/ffffff?text=Kerala+Sweets+Kochi', 'Product Display', 3, '2026-02-19 18:20:09', 0, NULL),
+	(101, 41, 'https://placehold.co/800x600/4A90D9/ffffff?text=FitZone+Pattom', 'Storefront', 1, '2026-02-19 18:20:09', 0, NULL),
+	(102, 41, 'https://placehold.co/800x600/4A90D9/ffffff?text=FitZone+Pattom', 'Interior View', 2, '2026-02-19 18:20:09', 0, NULL),
+	(103, 42, 'https://placehold.co/800x600/4A90D9/ffffff?text=MedPlus+MG+Road+Kochi', 'Storefront', 1, '2026-02-19 18:20:09', 0, NULL),
+	(104, 42, 'https://placehold.co/800x600/4A90D9/ffffff?text=MedPlus+MG+Road+Kochi', 'Interior View', 2, '2026-02-19 18:20:09', 0, NULL),
+	(105, 43, 'https://placehold.co/800x600/4A90D9/ffffff?text=Cafe+Mocha+Marine+Drive', 'Storefront', 1, '2026-02-19 18:20:09', 0, NULL),
+	(106, 43, 'https://placehold.co/800x600/4A90D9/ffffff?text=Cafe+Mocha+Marine+Drive', 'Interior View', 2, '2026-02-19 18:20:09', 0, NULL),
+	(107, 44, 'https://placehold.co/800x600/4A90D9/ffffff?text=Star+Electronics+Kakkanad', 'Storefront', 1, '2026-02-19 18:20:09', 0, NULL),
+	(108, 44, 'https://placehold.co/800x600/4A90D9/ffffff?text=Star+Electronics+Kakkanad', 'Interior View', 2, '2026-02-19 18:20:09', 0, NULL),
+	(109, 45, 'https://placehold.co/800x600/4A90D9/ffffff?text=Star+Electronics+Thrissur', 'Storefront', 1, '2026-02-19 18:20:09', 0, NULL),
+	(110, 45, 'https://placehold.co/800x600/4A90D9/ffffff?text=Star+Electronics+Thrissur', 'Interior View', 2, '2026-02-19 18:20:09', 0, NULL),
+	(111, 45, 'https://placehold.co/800x600/4A90D9/ffffff?text=Star+Electronics+Thrissur', 'Product Display', 3, '2026-02-19 18:20:09', 0, NULL),
+	(112, 46, 'https://placehold.co/800x600/4A90D9/ffffff?text=Malabar+Biriyani+Beach+Road', 'Storefront', 1, '2026-02-19 18:20:09', 0, NULL),
+	(113, 46, 'https://placehold.co/800x600/4A90D9/ffffff?text=Malabar+Biriyani+Beach+Road', 'Interior View', 2, '2026-02-19 18:20:09', 0, NULL),
+	(114, 46, 'https://placehold.co/800x600/4A90D9/ffffff?text=Malabar+Biriyani+Beach+Road', 'Product Display', 3, '2026-02-19 18:20:09', 0, NULL),
+	(115, 47, 'https://placehold.co/800x600/4A90D9/ffffff?text=Golden+Jewels+Thrissur', 'Storefront', 1, '2026-02-19 18:20:09', 0, NULL),
+	(116, 47, 'https://placehold.co/800x600/4A90D9/ffffff?text=Golden+Jewels+Thrissur', 'Interior View', 2, '2026-02-19 18:20:09', 0, NULL),
+	(117, 47, 'https://placehold.co/800x600/4A90D9/ffffff?text=Golden+Jewels+Thrissur', 'Product Display', 3, '2026-02-19 18:20:09', 0, NULL),
+	(118, 48, 'https://placehold.co/800x600/4A90D9/ffffff?text=Sunrise+Bakers+Palayam', 'Storefront', 1, '2026-02-19 18:20:09', 0, NULL),
+	(119, 48, 'https://placehold.co/800x600/4A90D9/ffffff?text=Sunrise+Bakers+Palayam', 'Interior View', 2, '2026-02-19 18:20:09', 0, NULL);
 
 -- Dumping structure for table deal_machan.stores
 CREATE TABLE IF NOT EXISTS `stores` (
@@ -2109,6 +2157,7 @@ CREATE TABLE IF NOT EXISTS `stores` (
   `status` enum('active','inactive') NOT NULL DEFAULT 'active',
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NULL DEFAULT NULL ON UPDATE current_timestamp(),
+  `deleted_at` timestamp NULL DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `idx_merchant_id` (`merchant_id`),
   KEY `idx_city_id` (`city_id`),
@@ -2123,55 +2172,55 @@ CREATE TABLE IF NOT EXISTS `stores` (
 ) ENGINE=InnoDB AUTO_INCREMENT=49 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Dumping data for table deal_machan.stores: ~48 rows (approximately)
-INSERT INTO `stores` (`id`, `merchant_id`, `store_name`, `address`, `city_id`, `area_id`, `location_id`, `phone`, `email`, `latitude`, `longitude`, `opening_hours`, `description`, `status`, `created_at`, `updated_at`) VALUES
-	(1, 1, 'Test Restaurant - Andheri', '123 Main Street, Andheri West', 1, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'active', '2025-10-22 10:06:11', NULL),
-	(2, 2, 'Spice Garden - Ernakulam', '12 Market Road, Ernakulam', 2, 11, NULL, '9400200001', 'ernakulam@spicegarden.com', NULL, NULL, NULL, NULL, 'active', '2025-08-01 04:30:00', NULL),
-	(3, 2, 'Spice Garden - MG Road', '45 MG Road, Kochi', 2, 12, NULL, '9400200002', 'mgroad@spicegarden.com', NULL, NULL, NULL, NULL, 'active', '2025-08-10 04:30:00', NULL),
-	(4, 3, 'Royal Textiles - Pattom', '78 Pattom Main Road, TVM', 1, 1, NULL, '9400200003', NULL, NULL, NULL, NULL, NULL, 'active', '2025-08-05 05:30:00', NULL),
-	(5, 4, 'Kerala Sweets - Palayam', '30 Palayam, Kozhikode', 3, 24, NULL, '9400200004', NULL, NULL, NULL, NULL, NULL, 'active', '2025-08-10 06:30:00', NULL),
-	(6, 5, 'FitZone - Kakkanad', '88 Info Park Road, Kakkanad, Kochi', 2, 13, NULL, '9400200005', 'kakkanad@fitzone.com', NULL, NULL, NULL, NULL, 'active', '2025-08-15 04:30:00', NULL),
-	(7, 6, 'MedPlus - Thampanoor', '15 Thampanoor, TVM', 1, 5, NULL, '9400200006', NULL, NULL, NULL, NULL, NULL, 'active', '2025-08-20 09:30:00', NULL),
-	(8, 7, 'Cafe Mocha - Vyttila', '22 Vyttila Hub, Kochi', 2, 16, NULL, '9400200007', NULL, NULL, NULL, NULL, NULL, 'active', '2025-09-01 03:30:00', '2026-02-20 03:54:50'),
-	(9, 8, 'Star Electronics - Ulloor', '55 Ulloor, TVM', 1, 9, NULL, '9400200008', NULL, NULL, NULL, NULL, NULL, 'active', '2025-09-05 05:30:00', NULL),
-	(10, 9, 'Malabar Biriyani - Mavoor', '18 Mavoor Road, Kozhikode', 3, 23, NULL, '9400200009', NULL, NULL, NULL, NULL, NULL, 'active', '2025-09-10 07:30:00', NULL),
-	(11, 9, 'Malabar Biriyani - Hilite', 'Hilite Mall, Kozhikode', 3, 25, NULL, '9400200010', NULL, NULL, NULL, NULL, NULL, 'active', '2025-09-12 03:30:00', NULL),
-	(12, 10, 'Golden Jewels - Marine Drive', '14 Marine Drive, Kochi', 2, 18, NULL, '9400200011', 'info@goldenjewels.com', NULL, NULL, NULL, NULL, 'active', '2025-09-15 04:30:00', NULL),
-	(13, 13, 'Paradise Resort - Alleppey', 'Near Alappuzha Jetty, Alleppey', 7, 0, NULL, '9400200012', 'info@paradiseresort.com', NULL, NULL, NULL, NULL, 'active', '2025-10-05 04:30:00', NULL),
-	(14, 14, 'Sunrise Bakers - Beach Road', '5 Beach Road, Kozhikode', 3, 29, NULL, '9400200013', NULL, NULL, NULL, NULL, NULL, 'active', '2025-10-10 03:30:00', NULL),
-	(15, 14, 'Sunrise Bakers - Ramanattukara', '12 Ramanattukara, Kozhikode', 3, 27, NULL, '9400200014', NULL, NULL, NULL, NULL, NULL, 'active', '2025-10-12 03:30:00', NULL),
-	(16, 17, 'Kottayam Rubber - Baker Junction', '28, Baker Junction Rd, Kottayam', 6, 44, NULL, '04812401001', NULL, 9.59000000, 76.52000000, NULL, 'Leading rubber products store in Kottayam.', 'active', '2026-02-19 13:46:50', NULL),
-	(17, 17, 'Kottayam Rubber - MC Road', 'MC Road, Kottayam', 6, 45, NULL, '04812401002', NULL, 9.60000000, 76.52000000, NULL, 'Branch outlet on MC Road.', 'active', '2026-02-19 13:46:50', NULL),
-	(18, 18, 'Thrissur Gold Palace - Swaraj', 'Swaraj Round, Thrissur', 4, 31, NULL, '04872401001', NULL, 10.52000000, 76.22000000, NULL, 'Premium jewellery showroom.', 'active', '2026-02-19 13:46:50', NULL),
-	(19, 18, 'Thrissur Gold Palace - East Fort', 'East Fort, Thrissur', 4, 32, NULL, '04872401002', NULL, 10.52000000, 76.21000000, NULL, 'Branch jewellery store.', 'active', '2026-02-19 13:46:50', NULL),
-	(20, 19, 'Calicut Heritage Cafe - Mavoor', 'Mavoor Road, Kozhikode', 3, 23, NULL, '04952401001', NULL, 11.25000000, 75.78000000, NULL, 'Authentic Kerala cuisine.', 'active', '2026-02-19 13:46:50', NULL),
-	(21, 19, 'Calicut Heritage Cafe - Palayam', 'Palayam, Kozhikode', 3, 24, NULL, '04952401002', NULL, 11.25000000, 75.78000000, NULL, 'City centre cafe.', 'active', '2026-02-19 13:46:50', NULL),
-	(22, 20, 'Kollam Sea Foods - Chinnakada', 'Chinnakada, Kollam', 5, 38, NULL, '04742401001', NULL, 8.88000000, 76.59000000, NULL, 'Fresh seafood market & restaurant.', 'active', '2026-02-19 13:46:50', NULL),
-	(23, 20, 'Kollam Sea Foods - Asramam', 'Asramam, Kollam', 5, 39, NULL, '04742401002', NULL, 8.87000000, 76.60000000, NULL, 'Asramam branch.', 'active', '2026-02-19 13:46:50', NULL),
-	(24, 21, 'Kochi Auto Parts - Kakkanad', 'Kakkanad, Kochi', 2, 13, NULL, '04842401001', NULL, 10.00000000, 76.35000000, NULL, 'Auto spare parts.', 'active', '2026-02-19 13:46:50', NULL),
-	(25, 21, 'Kochi Auto Parts - Edappally', 'Edappally Junction, Kochi', 2, 14, NULL, '04842401002', NULL, 10.02000000, 76.31000000, NULL, 'Edappally branch.', 'active', '2026-02-19 13:46:50', NULL),
-	(26, 22, 'Palace Furniture - Marine Drive', 'Marine Drive, Kochi', 2, 18, NULL, '04842402001', NULL, 9.97000000, 76.28000000, NULL, 'Premium furniture showroom.', 'active', '2026-02-19 13:46:50', NULL),
-	(27, 22, 'Palace Furniture - Kaloor', 'Kaloor, Kochi', 2, 19, NULL, '04842402002', NULL, 9.99000000, 76.29000000, NULL, 'Kaloor branch.', 'active', '2026-02-19 13:46:50', NULL),
-	(28, 23, 'Green Valley - Pattom', 'Pattom, Thiruvananthapuram', 1, 1, NULL, '04712401001', NULL, 8.51000000, 76.94000000, NULL, 'Organic produce outlet.', 'active', '2026-02-19 13:46:50', NULL),
-	(29, 24, 'Trivandrum Opticals - Kowdiar', 'Kowdiar, Thiruvananthapuram', 1, 2, NULL, '04712402001', NULL, 8.51000000, 76.94000000, NULL, 'Eye care & optical store.', 'active', '2026-02-19 13:46:50', NULL),
-	(30, 24, 'Trivandrum Opticals - Thampanoor', 'Thampanoor, Thiruvananthapuram', 1, 5, NULL, '04712402002', NULL, 8.49000000, 76.95000000, NULL, 'Station area branch.', 'active', '2026-02-19 13:46:50', NULL),
-	(31, 25, 'Munnar Tea House - MG Road', 'MG Road, Kochi', 2, 12, NULL, '04842403001', NULL, 9.97000000, 76.29000000, NULL, 'Premium tea & spice shop.', 'active', '2026-02-19 13:46:50', NULL),
-	(32, 25, 'Munnar Tea House - Ernakulam', 'Ernakulam, Kochi', 2, 11, NULL, '04842403002', NULL, 9.98000000, 76.28000000, NULL, 'Ernakulam branch.', 'active', '2026-02-19 13:46:50', NULL),
-	(33, 26, 'Tattoo Art Studio - Vyttila', 'Vyttila Hub, Kochi', 2, 16, NULL, '04842404001', NULL, 9.96000000, 76.31000000, NULL, 'Premier tattoo studio.', 'active', '2026-02-19 13:46:50', NULL),
-	(34, 27, 'Alappuzha Boats - Mullakkal', 'Mullakkal, Alappuzha', 7, 50, NULL, '04772401001', NULL, 9.50000000, 76.34000000, NULL, 'Houseboat booking office.', 'active', '2026-02-19 13:46:50', NULL),
-	(35, 27, 'Alappuzha Boats - Iron Bridge', 'Iron Bridge Jetty, Alappuzha', 7, 52, NULL, '04772401002', NULL, 9.49000000, 76.33000000, NULL, 'Boat jetty pickup point.', 'active', '2026-02-19 13:46:50', NULL),
-	(36, 28, 'Kerala Spices - Ernakulam', 'Ernakulam, Kochi', 2, 11, NULL, '04842405001', NULL, 9.98000000, 76.28000000, NULL, 'Spice retail store.', 'active', '2026-02-19 13:46:50', NULL),
-	(37, 28, 'Kerala Spices - Mavoor Road', 'Mavoor Road, Kozhikode', 3, 23, NULL, '04952402001', NULL, 11.25000000, 75.78000000, NULL, 'Kozhikode spice hub.', 'active', '2026-02-19 13:46:50', NULL),
-	(38, 3, 'Royal Textiles - MG Road', 'MG Road, Kochi', 2, 12, NULL, '04842301001', NULL, 9.97000000, 76.29000000, NULL, 'Kochi saree showroom.', 'active', '2026-02-19 13:46:50', NULL),
-	(39, 4, 'Kerala Sweets - TVM', 'Pattom, Thiruvananthapuram', 1, 1, NULL, '04712304001', NULL, 8.51000000, 76.94000000, NULL, 'TVM sweets outlet.', 'active', '2026-02-19 13:46:50', NULL),
-	(40, 4, 'Kerala Sweets - Kochi', 'MG Road, Kochi', 2, 12, NULL, '04842304001', NULL, 9.97000000, 76.29000000, NULL, 'Kochi sweet shop.', 'active', '2026-02-19 13:46:50', NULL),
-	(41, 5, 'FitZone - Pattom', 'Pattom, Thiruvananthapuram', 1, 1, NULL, '04712305001', NULL, 8.51000000, 76.94000000, NULL, 'TVM fitness centre.', 'active', '2026-02-19 13:46:50', NULL),
-	(42, 6, 'MedPlus - MG Road Kochi', 'MG Road, Kochi', 2, 12, NULL, '04842306001', NULL, 9.97000000, 76.29000000, NULL, 'Kochi pharmacy.', 'active', '2026-02-19 13:46:50', NULL),
-	(43, 7, 'Cafe Mocha - Marine Drive', 'Marine Drive, Kochi', 2, 18, NULL, '04842307001', NULL, 9.97000000, 76.28000000, NULL, 'Coffee with a view.', 'active', '2026-02-19 13:46:50', NULL),
-	(44, 8, 'Star Electronics - Kakkanad', 'Kakkanad, Kochi', 2, 13, NULL, '04842308001', NULL, 10.00000000, 76.35000000, NULL, 'Electronics & gadgets.', 'active', '2026-02-19 13:46:50', NULL),
-	(45, 8, 'Star Electronics - Thrissur', 'Swaraj Round, Thrissur', 4, 31, NULL, '04872308001', NULL, 10.52000000, 76.22000000, NULL, 'Thrissur electronics store.', 'active', '2026-02-19 13:46:50', NULL),
-	(46, 9, 'Malabar Biriyani - Beach Road', 'Beach Road, Kozhikode', 3, 29, NULL, '04952309001', NULL, 11.25000000, 75.79000000, NULL, 'Beach location eatery.', 'active', '2026-02-19 13:46:50', NULL),
-	(47, 10, 'Golden Jewels - Thrissur', 'Swaraj Round, Thrissur', 4, 31, NULL, '04872310001', NULL, 10.52000000, 76.22000000, NULL, 'Thrissur gold store.', 'active', '2026-02-19 13:46:50', NULL),
-	(48, 14, 'Sunrise Bakers - Palayam', 'Palayam, Kozhikode', 3, 24, NULL, '04952314001', NULL, 11.25000000, 75.78000000, NULL, 'New Palayam bakery.', 'active', '2026-02-19 13:46:50', NULL);
+INSERT INTO `stores` (`id`, `merchant_id`, `store_name`, `address`, `city_id`, `area_id`, `location_id`, `phone`, `email`, `latitude`, `longitude`, `opening_hours`, `description`, `status`, `created_at`, `updated_at`, `deleted_at`) VALUES
+	(1, 1, 'Test Restaurant - Andheri', '123 Main Street, Andheri West', 1, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'active', '2025-10-22 10:06:11', NULL, NULL),
+	(2, 2, 'Spice Garden - Ernakulam', '12 Market Road, Ernakulam', 2, 11, NULL, '9400200001', 'ernakulam@spicegarden.com', NULL, NULL, '{"Monday":{"open":"09:00","close":"22:00"},"Tuesday":{"open":"09:00","close":"22:00"},"Wednesday":{"open":"09:00","close":"22:00"},"Thursday":{"open":"09:00","close":"22:00"},"Friday":{"open":"09:00","close":"23:00"},"Saturday":{"open":"10:00","close":"23:00"},"Sunday":{"open":"10:00","close":"21:00"}}', 'Authentic Kerala cuisine in the heart of Ernakulam. Specializing in traditional spice-rich dishes and fresh seafood.', 'active', '2025-08-01 04:30:00', '2026-02-21 04:51:13', NULL),
+	(3, 2, 'Spice Garden - MG Road', '45 MG Road, Kochi', 2, 12, NULL, '9400200002', 'mgroad@spicegarden.com', NULL, NULL, '{"Monday":{"open":"10:00","close":"22:30"},"Tuesday":{"open":"10:00","close":"22:30"},"Wednesday":{"open":"10:00","close":"22:30"},"Thursday":{"open":"10:00","close":"22:30"},"Friday":{"open":"10:00","close":"23:30"},"Saturday":{"open":"09:00","close":"23:30"},"Sunday":{"open":"closed","close":"closed"}}', 'Premium dining experience on MG Road. Enjoy our signature Kerala thali and weekend brunch specials.', 'active', '2025-08-10 04:30:00', '2026-02-21 04:52:23', NULL),
+	(4, 3, 'Royal Textiles - Pattom', '78 Pattom Main Road, TVM', 1, 1, NULL, '9400200003', NULL, NULL, NULL, NULL, NULL, 'active', '2025-08-05 05:30:00', NULL, NULL),
+	(5, 4, 'Kerala Sweets - Palayam', '30 Palayam, Kozhikode', 3, 24, NULL, '9400200004', NULL, NULL, NULL, NULL, NULL, 'active', '2025-08-10 06:30:00', NULL, NULL),
+	(6, 5, 'FitZone - Kakkanad', '88 Info Park Road, Kakkanad, Kochi', 2, 13, NULL, '9400200005', 'kakkanad@fitzone.com', NULL, NULL, NULL, NULL, 'active', '2025-08-15 04:30:00', NULL, NULL),
+	(7, 6, 'MedPlus - Thampanoor', '15 Thampanoor, TVM', 1, 5, NULL, '9400200006', NULL, NULL, NULL, NULL, NULL, 'active', '2025-08-20 09:30:00', NULL, NULL),
+	(8, 7, 'Cafe Mocha - Vyttila', '22 Vyttila Hub, Kochi', 2, 16, NULL, '9400200007', NULL, NULL, NULL, NULL, NULL, 'active', '2025-09-01 03:30:00', '2026-02-20 03:54:50', NULL),
+	(9, 8, 'Star Electronics - Ulloor', '55 Ulloor, TVM', 1, 9, NULL, '9400200008', NULL, NULL, NULL, NULL, NULL, 'active', '2025-09-05 05:30:00', NULL, NULL),
+	(10, 9, 'Malabar Biriyani - Mavoor', '18 Mavoor Road, Kozhikode', 3, 23, NULL, '9400200009', NULL, NULL, NULL, NULL, NULL, 'active', '2025-09-10 07:30:00', NULL, NULL),
+	(11, 9, 'Malabar Biriyani - Hilite', 'Hilite Mall, Kozhikode', 3, 25, NULL, '9400200010', NULL, NULL, NULL, NULL, NULL, 'active', '2025-09-12 03:30:00', NULL, NULL),
+	(12, 10, 'Golden Jewels - Marine Drive', '14 Marine Drive, Kochi', 2, 18, NULL, '9400200011', 'info@goldenjewels.com', NULL, NULL, NULL, NULL, 'active', '2025-09-15 04:30:00', NULL, NULL),
+	(13, 13, 'Paradise Resort - Alleppey', 'Near Alappuzha Jetty, Alleppey', 7, 0, NULL, '9400200012', 'info@paradiseresort.com', NULL, NULL, NULL, NULL, 'active', '2025-10-05 04:30:00', NULL, NULL),
+	(14, 14, 'Sunrise Bakers - Beach Road', '5 Beach Road, Kozhikode', 3, 29, NULL, '9400200013', NULL, NULL, NULL, NULL, NULL, 'active', '2025-10-10 03:30:00', NULL, NULL),
+	(15, 14, 'Sunrise Bakers - Ramanattukara', '12 Ramanattukara, Kozhikode', 3, 27, NULL, '9400200014', NULL, NULL, NULL, NULL, NULL, 'active', '2025-10-12 03:30:00', NULL, NULL),
+	(16, 17, 'Kottayam Rubber - Baker Junction', '28, Baker Junction Rd, Kottayam', 6, 44, NULL, '04812401001', NULL, 9.59000000, 76.52000000, NULL, 'Leading rubber products store in Kottayam.', 'active', '2026-02-19 13:46:50', NULL, NULL),
+	(17, 17, 'Kottayam Rubber - MC Road', 'MC Road, Kottayam', 6, 45, NULL, '04812401002', NULL, 9.60000000, 76.52000000, NULL, 'Branch outlet on MC Road.', 'active', '2026-02-19 13:46:50', NULL, NULL),
+	(18, 18, 'Thrissur Gold Palace - Swaraj', 'Swaraj Round, Thrissur', 4, 31, NULL, '04872401001', NULL, 10.52000000, 76.22000000, NULL, 'Premium jewellery showroom.', 'active', '2026-02-19 13:46:50', NULL, NULL),
+	(19, 18, 'Thrissur Gold Palace - East Fort', 'East Fort, Thrissur', 4, 32, NULL, '04872401002', NULL, 10.52000000, 76.21000000, NULL, 'Branch jewellery store.', 'active', '2026-02-19 13:46:50', NULL, NULL),
+	(20, 19, 'Calicut Heritage Cafe - Mavoor', 'Mavoor Road, Kozhikode', 3, 23, NULL, '04952401001', NULL, 11.25000000, 75.78000000, NULL, 'Authentic Kerala cuisine.', 'active', '2026-02-19 13:46:50', NULL, NULL),
+	(21, 19, 'Calicut Heritage Cafe - Palayam', 'Palayam, Kozhikode', 3, 24, NULL, '04952401002', NULL, 11.25000000, 75.78000000, NULL, 'City centre cafe.', 'active', '2026-02-19 13:46:50', NULL, NULL),
+	(22, 20, 'Kollam Sea Foods - Chinnakada', 'Chinnakada, Kollam', 5, 38, NULL, '04742401001', NULL, 8.88000000, 76.59000000, NULL, 'Fresh seafood market & restaurant.', 'active', '2026-02-19 13:46:50', NULL, NULL),
+	(23, 20, 'Kollam Sea Foods - Asramam', 'Asramam, Kollam', 5, 39, NULL, '04742401002', NULL, 8.87000000, 76.60000000, NULL, 'Asramam branch.', 'active', '2026-02-19 13:46:50', NULL, NULL),
+	(24, 21, 'Kochi Auto Parts - Kakkanad', 'Kakkanad, Kochi', 2, 13, NULL, '04842401001', NULL, 10.00000000, 76.35000000, NULL, 'Auto spare parts.', 'active', '2026-02-19 13:46:50', NULL, NULL),
+	(25, 21, 'Kochi Auto Parts - Edappally', 'Edappally Junction, Kochi', 2, 14, NULL, '04842401002', NULL, 10.02000000, 76.31000000, NULL, 'Edappally branch.', 'active', '2026-02-19 13:46:50', NULL, NULL),
+	(26, 22, 'Palace Furniture - Marine Drive', 'Marine Drive, Kochi', 2, 18, NULL, '04842402001', NULL, 9.97000000, 76.28000000, NULL, 'Premium furniture showroom.', 'active', '2026-02-19 13:46:50', NULL, NULL),
+	(27, 22, 'Palace Furniture - Kaloor', 'Kaloor, Kochi', 2, 19, NULL, '04842402002', NULL, 9.99000000, 76.29000000, NULL, 'Kaloor branch.', 'active', '2026-02-19 13:46:50', NULL, NULL),
+	(28, 23, 'Green Valley - Pattom', 'Pattom, Thiruvananthapuram', 1, 1, NULL, '04712401001', NULL, 8.51000000, 76.94000000, NULL, 'Organic produce outlet.', 'active', '2026-02-19 13:46:50', NULL, NULL),
+	(29, 24, 'Trivandrum Opticals - Kowdiar', 'Kowdiar, Thiruvananthapuram', 1, 2, NULL, '04712402001', NULL, 8.51000000, 76.94000000, NULL, 'Eye care & optical store.', 'active', '2026-02-19 13:46:50', NULL, NULL),
+	(30, 24, 'Trivandrum Opticals - Thampanoor', 'Thampanoor, Thiruvananthapuram', 1, 5, NULL, '04712402002', NULL, 8.49000000, 76.95000000, NULL, 'Station area branch.', 'active', '2026-02-19 13:46:50', NULL, NULL),
+	(31, 25, 'Munnar Tea House - MG Road', 'MG Road, Kochi', 2, 12, NULL, '04842403001', NULL, 9.97000000, 76.29000000, NULL, 'Premium tea & spice shop.', 'active', '2026-02-19 13:46:50', NULL, NULL),
+	(32, 25, 'Munnar Tea House - Ernakulam', 'Ernakulam, Kochi', 2, 11, NULL, '04842403002', NULL, 9.98000000, 76.28000000, NULL, 'Ernakulam branch.', 'active', '2026-02-19 13:46:50', NULL, NULL),
+	(33, 26, 'Tattoo Art Studio - Vyttila', 'Vyttila Hub, Kochi', 2, 16, NULL, '04842404001', NULL, 9.96000000, 76.31000000, NULL, 'Premier tattoo studio.', 'active', '2026-02-19 13:46:50', NULL, NULL),
+	(34, 27, 'Alappuzha Boats - Mullakkal', 'Mullakkal, Alappuzha', 7, 50, NULL, '04772401001', NULL, 9.50000000, 76.34000000, NULL, 'Houseboat booking office.', 'active', '2026-02-19 13:46:50', NULL, NULL),
+	(35, 27, 'Alappuzha Boats - Iron Bridge', 'Iron Bridge Jetty, Alappuzha', 7, 52, NULL, '04772401002', NULL, 9.49000000, 76.33000000, NULL, 'Boat jetty pickup point.', 'active', '2026-02-19 13:46:50', NULL, NULL),
+	(36, 28, 'Kerala Spices - Ernakulam', 'Ernakulam, Kochi', 2, 11, NULL, '04842405001', NULL, 9.98000000, 76.28000000, NULL, 'Spice retail store.', 'active', '2026-02-19 13:46:50', NULL, NULL),
+	(37, 28, 'Kerala Spices - Mavoor Road', 'Mavoor Road, Kozhikode', 3, 23, NULL, '04952402001', NULL, 11.25000000, 75.78000000, NULL, 'Kozhikode spice hub.', 'active', '2026-02-19 13:46:50', NULL, NULL),
+	(38, 3, 'Royal Textiles - MG Road', 'MG Road, Kochi', 2, 12, NULL, '04842301001', NULL, 9.97000000, 76.29000000, NULL, 'Kochi saree showroom.', 'active', '2026-02-19 13:46:50', NULL, NULL),
+	(39, 4, 'Kerala Sweets - TVM', 'Pattom, Thiruvananthapuram', 1, 1, NULL, '04712304001', NULL, 8.51000000, 76.94000000, NULL, 'TVM sweets outlet.', 'active', '2026-02-19 13:46:50', NULL, NULL),
+	(40, 4, 'Kerala Sweets - Kochi', 'MG Road, Kochi', 2, 12, NULL, '04842304001', NULL, 9.97000000, 76.29000000, NULL, 'Kochi sweet shop.', 'active', '2026-02-19 13:46:50', NULL, NULL),
+	(41, 5, 'FitZone - Pattom', 'Pattom, Thiruvananthapuram', 1, 1, NULL, '04712305001', NULL, 8.51000000, 76.94000000, NULL, 'TVM fitness centre.', 'active', '2026-02-19 13:46:50', NULL, NULL),
+	(42, 6, 'MedPlus - MG Road Kochi', 'MG Road, Kochi', 2, 12, NULL, '04842306001', NULL, 9.97000000, 76.29000000, NULL, 'Kochi pharmacy.', 'active', '2026-02-19 13:46:50', NULL, NULL),
+	(43, 7, 'Cafe Mocha - Marine Drive', 'Marine Drive, Kochi', 2, 18, NULL, '04842307001', NULL, 9.97000000, 76.28000000, NULL, 'Coffee with a view.', 'active', '2026-02-19 13:46:50', NULL, NULL),
+	(44, 8, 'Star Electronics - Kakkanad', 'Kakkanad, Kochi', 2, 13, NULL, '04842308001', NULL, 10.00000000, 76.35000000, NULL, 'Electronics & gadgets.', 'active', '2026-02-19 13:46:50', NULL, NULL),
+	(45, 8, 'Star Electronics - Thrissur', 'Swaraj Round, Thrissur', 4, 31, NULL, '04872308001', NULL, 10.52000000, 76.22000000, NULL, 'Thrissur electronics store.', 'active', '2026-02-19 13:46:50', NULL, NULL),
+	(46, 9, 'Malabar Biriyani - Beach Road', 'Beach Road, Kozhikode', 3, 29, NULL, '04952309001', NULL, 11.25000000, 75.79000000, NULL, 'Beach location eatery.', 'active', '2026-02-19 13:46:50', NULL, NULL),
+	(47, 10, 'Golden Jewels - Thrissur', 'Swaraj Round, Thrissur', 4, 31, NULL, '04872310001', NULL, 10.52000000, 76.22000000, NULL, 'Thrissur gold store.', 'active', '2026-02-19 13:46:50', NULL, NULL),
+	(48, 14, 'Sunrise Bakers - Palayam', 'Palayam, Kozhikode', 3, 24, NULL, '04952314001', NULL, 11.25000000, 75.78000000, NULL, 'New Palayam bakery.', 'active', '2026-02-19 13:46:50', NULL, NULL);
 
 -- Dumping structure for table deal_machan.subscriptions
 CREATE TABLE IF NOT EXISTS `subscriptions` (
@@ -2296,7 +2345,7 @@ CREATE TABLE IF NOT EXISTS `surveys` (
   CONSTRAINT `fk_surveys_admin` FOREIGN KEY (`created_by_admin_id`) REFERENCES `admins` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Dumping data for table deal_machan.surveys: ~3 rows (approximately)
+-- Dumping data for table deal_machan.surveys: ~2 rows (approximately)
 INSERT INTO `surveys` (`id`, `title`, `description`, `questions_json`, `status`, `created_by_admin_id`, `active_from`, `active_until`, `created_at`, `updated_at`) VALUES
 	(1, 'Customer Satisfaction Q1 2026', 'Tell us about your experience with Deal Machan during Jan-Mar 2026.', '[{"id":1,"type":"rating","question":"How satisfied are you with Deal Machan overall?","required":true,"scale":5},{"id":2,"type":"radio","question":"How often do you use Deal Machan coupons?","required":true,"options":["Daily","Weekly","Monthly","Rarely"]},{"id":3,"type":"checkbox","question":"Which features do you use most?","required":false,"options":["Coupons","Cards","Deals","Mystery Shopping"]},{"id":4,"type":"textarea","question":"Any suggestions for improvement?","required":false}]', 'active', 1, '2025-12-31 18:30:00', '2026-03-31 18:29:59', '2026-02-19 15:12:12', NULL),
 	(2, 'Merchant Partner Feedback', 'We value feedback from our merchant partners to improve our platform.', '[{"id":1,"type":"radio","question":"How would you rate our admin support?","required":true,"options":["Excellent","Good","Average","Poor"]},{"id":2,"type":"rating","question":"Rate the ease of using Deal Machan merchant portal","required":true,"scale":5},{"id":3,"type":"text","question":"Which feature would you like us to add?","required":false},{"id":4,"type":"select","question":"How long have you been a Deal Machan partner?","required":true,"options":["Less than 3 months","3-6 months","6-12 months","Over 1 year"]}]', 'closed', 2, '2025-09-30 18:30:00', '2025-12-31 18:29:59', '2026-02-19 15:12:12', NULL),
@@ -2368,13 +2417,13 @@ CREATE TABLE IF NOT EXISTS `users` (
   UNIQUE KEY `uk_phone` (`phone`),
   KEY `idx_user_type` (`user_type`),
   KEY `idx_status` (`status`)
-) ENGINE=InnoDB AUTO_INCREMENT=88 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=101 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Dumping data for table deal_machan.users: ~87 rows (approximately)
+-- Dumping data for table deal_machan.users: ~93 rows (approximately)
 INSERT INTO `users` (`id`, `email`, `phone`, `password_hash`, `user_type`, `status`, `otp_code`, `otp_expiry`, `last_login`, `created_at`, `updated_at`) VALUES
-	(1, 'admin@dealmachan.com', '9999999999', '$2y$10$qJNuJFXJqot86pOK37iijeb0SUTFXxyUzStvNAj..pa.Cayx1ZeFO', 'admin', 'active', NULL, NULL, '2026-02-20 03:50:28', '2025-10-22 10:06:11', '2026-02-19 23:49:48'),
-	(2, 'customer@test.com', '9876543210', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'customer', 'active', NULL, NULL, NULL, '2025-10-22 10:06:11', NULL),
-	(3, 'merchant@test.com', '9876543211', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'merchant', 'active', NULL, NULL, NULL, '2025-10-22 10:06:11', NULL),
+	(1, 'admin@dealmachan.com', '9999999999', '$2y$10$qJNuJFXJqot86pOK37iijeb0SUTFXxyUzStvNAj..pa.Cayx1ZeFO', 'admin', 'active', NULL, NULL, '2026-02-21 05:25:54', '2025-10-22 10:06:11', '2026-02-21 05:25:54'),
+	(2, 'customer@test.com', '9876543210', '\\.GFZR5ze', 'customer', 'active', NULL, NULL, NULL, '2025-10-22 10:06:11', '2026-02-20 06:28:10'),
+	(3, 'merchant@test.com', '9876543211', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'merchant', 'active', NULL, NULL, '2026-02-20 06:49:37', '2025-10-22 10:06:11', '2026-02-20 06:49:37'),
 	(4, 'city.kochi@dealmachan.com', '+91-9876543001', '$2y$10$Bi6W4ufe7vrtvOBNV8DWWeENlP98WUqorlP1fJVi5gHmgxU6AcFOm', 'admin', 'active', NULL, NULL, NULL, '2026-02-19 10:58:20', NULL),
 	(5, 'city.kozhikode@dealmachan.com', '+91-9876543002', '$2y$10$Bi6W4ufe7vrtvOBNV8DWWeENlP98WUqorlP1fJVi5gHmgxU6AcFOm', 'admin', 'active', NULL, NULL, NULL, '2026-02-19 10:58:20', NULL),
 	(6, 'sales.kochi@dealmachan.com', '+91-9876543003', '$2y$10$Bi6W4ufe7vrtvOBNV8DWWeENlP98WUqorlP1fJVi5gHmgxU6AcFOm', 'admin', 'active', NULL, NULL, NULL, '2026-02-19 10:58:20', NULL),
@@ -2402,7 +2451,7 @@ INSERT INTO `users` (`id`, `email`, `phone`, `password_hash`, `user_type`, `stat
 	(28, 'sindhu.raj@yahoo.com', '9847001018', '$2y$10$vQZ3oUV8.gWZ8PLqU4nP5eTArk4eIwziTG8Uvf9mMPzZwLGVRNhqS', 'customer', 'active', NULL, NULL, NULL, '2025-12-12 04:00:00', NULL),
 	(29, 'anil.chandran@gmail.com', '9847001019', '$2y$10$vQZ3oUV8.gWZ8PLqU4nP5eTArk4eIwziTG8Uvf9mMPzZwLGVRNhqS', 'customer', 'active', NULL, NULL, NULL, '2025-12-15 05:30:00', NULL),
 	(30, 'lekha.pillai@gmail.com', '9847001020', '$2y$10$vQZ3oUV8.gWZ8PLqU4nP5eTArk4eIwziTG8Uvf9mMPzZwLGVRNhqS', 'customer', 'active', NULL, NULL, NULL, '2025-12-18 09:00:00', NULL),
-	(31, 'spice.garden@kochi.com', '9400100031', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'merchant', 'active', NULL, NULL, NULL, '2025-08-01 03:30:00', NULL),
+	(31, 'spice.garden@kochi.com', '9400100031', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'merchant', 'active', NULL, NULL, '2026-02-21 04:59:54', '2025-08-01 03:30:00', '2026-02-21 04:59:54'),
 	(32, 'royal.textiles@tvm.com', '9400100032', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'merchant', 'active', NULL, NULL, NULL, '2025-08-05 05:00:00', NULL),
 	(33, 'kerala.sweets@kozhikode.com', '9400100033', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'merchant', 'active', NULL, NULL, NULL, '2025-08-10 05:30:00', NULL),
 	(34, 'fitness.zone@kochi.com', '9400100034', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'merchant', 'active', NULL, NULL, NULL, '2025-08-15 04:15:00', NULL),
@@ -2458,7 +2507,13 @@ INSERT INTO `users` (`id`, `email`, `phone`, `password_hash`, `user_type`, `stat
 	(84, 'munnar.tea@gmail.com', '9400200009', '$2y$10$sUdPPRQenw1FeE3DGuN3neyscaGJ54873T1W.tjOPEWnotITxkt9q', 'merchant', 'active', NULL, NULL, NULL, '2026-02-08 23:29:03', '2026-02-08 23:29:03'),
 	(85, 'tattoo.kochi@gmail.com', '9400200010', '$2y$10$sUdPPRQenw1FeE3DGuN3neyscaGJ54873T1W.tjOPEWnotITxkt9q', 'merchant', 'active', NULL, NULL, NULL, '2026-01-21 23:29:03', '2026-01-21 23:29:03'),
 	(86, 'alappuzha.boats@gmail.com', '9400200011', '$2y$10$sUdPPRQenw1FeE3DGuN3neyscaGJ54873T1W.tjOPEWnotITxkt9q', 'merchant', 'active', NULL, NULL, NULL, '2026-01-25 23:29:03', '2026-01-25 23:29:03'),
-	(87, 'kerala.spices@gmail.com', '9400200012', '$2y$10$sUdPPRQenw1FeE3DGuN3neyscaGJ54873T1W.tjOPEWnotITxkt9q', 'merchant', 'active', NULL, NULL, NULL, '2025-11-23 23:29:03', '2025-11-23 23:29:03');
+	(87, 'kerala.spices@gmail.com', '9400200012', '$2y$10$sUdPPRQenw1FeE3DGuN3neyscaGJ54873T1W.tjOPEWnotITxkt9q', 'merchant', 'active', NULL, NULL, NULL, '2025-11-23 23:29:03', '2025-11-23 23:29:03'),
+	(95, 'admin@example.com', NULL, '$2y$10$a.kZcommfs/F.LngZ09ZZut2XE8aqEZ9eWuJy./2xg/.4yB3K/Ye2', 'merchant', 'active', NULL, NULL, '2026-02-21 04:41:33', '2026-02-20 06:28:28', '2026-02-21 04:41:33'),
+	(96, 'anil.kumarr@test.com', '9876500001', '$2y$10$oLiclXHq0Wh/4yW3y9f9z.5B3mXMn2bDbAuIzy1jO1bG8MUJ47IYW', 'customer', 'active', NULL, NULL, NULL, '2026-02-21 04:52:23', '2026-02-21 05:01:55'),
+	(97, 'lakshmi.nair@test.com', '9876500002', '$2y$10$z2PftgUYDYtvdEiF.phFmuk0MGkGWLv8OfJ1TA1thWk4jV7zcZ8sy', 'customer', 'active', NULL, NULL, NULL, '2026-02-21 04:52:23', NULL),
+	(98, 'rajesh.pillai@test.com', '9876500003', '$2y$10$bBVcXW1jVnmjmeYiQOKj6OWPxp3URBzoG.TGWllzktXUXAqZk3c2W', 'customer', 'active', NULL, NULL, NULL, '2026-02-21 04:52:23', NULL),
+	(99, 'sneha.mohan@test.com', '9876500004', '$2y$10$WtAH.qmph5WdQG2kxWnIUuaKgWIXPFnd/l7rJg1sqkIFa8dl61keO', 'customer', 'active', NULL, NULL, NULL, '2026-02-21 04:52:23', NULL),
+	(100, 'vijay.kumar@test.com', '9876500005', '$2y$10$znm3ByeonykBbHlviAA9QuMNaF9JtYcFtB19nisuA88rYNChr.4C6', 'customer', 'active', NULL, NULL, NULL, '2026-02-21 04:52:23', NULL);
 
 /*!40103 SET TIME_ZONE=IFNULL(@OLD_TIME_ZONE, 'system') */;
 /*!40101 SET SQL_MODE=IFNULL(@OLD_SQL_MODE, '') */;

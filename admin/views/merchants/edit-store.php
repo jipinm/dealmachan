@@ -74,13 +74,57 @@
                         <label class="form-label">Description</label>
                         <textarea name="description" class="form-control" rows="2"><?= escape($_POST['description'] ?? $store['description']) ?></textarea>
                     </div>
-                    <div class="mb-4">
+                    <div class="mb-3">
                         <label class="form-label">Status</label>
                         <select name="status" class="form-select">
                             <option value="active"   <?= ($store['status'] === 'active')   ? 'selected' : '' ?>>Active</option>
                             <option value="inactive" <?= ($store['status'] === 'inactive') ? 'selected' : '' ?>>Inactive</option>
                         </select>
                     </div>
+
+                    <!-- Opening Hours -->
+                    <?php
+                        $openingHours = [];
+                        if (!empty($store['opening_hours'])) {
+                            $openingHours = is_string($store['opening_hours']) ? json_decode($store['opening_hours'], true) : $store['opening_hours'];
+                        }
+                        if (!is_array($openingHours)) $openingHours = [];
+                        $days = ['monday'=>'Monday','tuesday'=>'Tuesday','wednesday'=>'Wednesday','thursday'=>'Thursday','friday'=>'Friday','saturday'=>'Saturday','sunday'=>'Sunday'];
+                    ?>
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold"><i class="fas fa-clock me-1 text-muted"></i> Opening Hours</label>
+                        <div class="border rounded p-3">
+                            <?php foreach ($days as $dayKey => $dayLabel): ?>
+                            <?php
+                                $dayData = $openingHours[$dayKey] ?? ['open'=>'09:00','close'=>'21:00','closed'=>false];
+                                $isClosed = !empty($dayData['closed']);
+                            ?>
+                            <div class="row g-2 align-items-center mb-2">
+                                <div class="col-3 col-md-2">
+                                    <label class="form-label mb-0 small fw-semibold"><?= $dayLabel ?></label>
+                                </div>
+                                <div class="col-3 col-md-3">
+                                    <input type="time" name="hours[<?= $dayKey ?>][open]" class="form-control form-control-sm"
+                                           value="<?= escape($dayData['open'] ?? '09:00') ?>" <?= $isClosed ? 'disabled' : '' ?>>
+                                </div>
+                                <div class="col-3 col-md-3">
+                                    <input type="time" name="hours[<?= $dayKey ?>][close]" class="form-control form-control-sm"
+                                           value="<?= escape($dayData['close'] ?? '21:00') ?>" <?= $isClosed ? 'disabled' : '' ?>>
+                                </div>
+                                <div class="col-3 col-md-4">
+                                    <div class="form-check">
+                                        <input type="checkbox" name="hours[<?= $dayKey ?>][closed]" value="1"
+                                               class="form-check-input" id="closed_<?= $dayKey ?>"
+                                               <?= $isClosed ? 'checked' : '' ?>
+                                               onchange="toggleDay('<?= $dayKey ?>', this.checked)">
+                                        <label class="form-check-label small" for="closed_<?= $dayKey ?>">Closed</label>
+                                    </div>
+                                </div>
+                            </div>
+                            <?php endforeach; ?>
+                        </div>
+                    </div>
+
                     <button type="submit" class="btn btn-primary"><i class="fas fa-save me-2"></i> Save Changes</button>
                 </form>
             </div>
@@ -89,6 +133,12 @@
 </div>
 
 <script>
+function toggleDay(dayKey, isClosed) {
+    const openInput = document.querySelector(`input[name="hours[${dayKey}][open]"]`);
+    const closeInput = document.querySelector(`input[name="hours[${dayKey}][close]"]`);
+    if (openInput) openInput.disabled = isClosed;
+    if (closeInput) closeInput.disabled = isClosed;
+}
 function loadAreas(cityId, selectedId) {
     const sel = document.getElementById('areaSelect');
     if (!cityId) return;
