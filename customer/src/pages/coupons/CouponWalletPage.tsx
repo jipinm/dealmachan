@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import React, { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { QRCodeSVG } from 'qrcode.react'
 import { Bookmark, Gift, Clock, X, CheckCircle, XCircle, Loader2, Share2 } from 'lucide-react'
@@ -86,7 +86,7 @@ function QrModal({ coupon, onClose }: { coupon: WalletCoupon | GiftCoupon; onClo
 function SavedCouponCard({ coupon, onRedeem }: { coupon: WalletCoupon; onRedeem: () => void }) {
   const qc = useQueryClient()
   const removeMutation = useMutation({
-    mutationFn: () => couponsApi.unsaveCoupon(coupon.coupon_id ?? (coupon as any).id),
+    mutationFn: () => couponsApi.unsaveCoupon(coupon.id),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['wallet'] })
       toast.success('Removed from wallet')
@@ -227,11 +227,11 @@ export default function CouponWalletPage() {
   const historyPages: number    = (historyData as any)?.pagination?.pages ?? 1
   const pendingGifts            = gifts.filter((g) => g.acceptance_status === 'pending').length
 
-  const tabs = [
-    { key: 'saved',   label: 'Saved',       icon: Bookmark, count: saved.length },
-    { key: 'gifts',   label: 'Gifts',        icon: Gift,     count: pendingGifts, badge: pendingGifts > 0 },
-    { key: 'history', label: 'History',      icon: Clock,    count: null },
-  ] as const
+  const tabs: Array<{ key: WalletTab; label: string; icon: React.ElementType; count: number | null; badge?: boolean }> = [
+    { key: 'saved',   label: 'Saved',   icon: Bookmark, count: saved.length },
+    { key: 'gifts',   label: 'Gifts',   icon: Gift,     count: pendingGifts, badge: pendingGifts > 0 },
+    { key: 'history', label: 'History', icon: Clock,    count: null },
+  ]
 
   return (
     <div className="max-w-2xl mx-auto pb-8">

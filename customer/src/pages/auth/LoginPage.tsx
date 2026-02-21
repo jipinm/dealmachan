@@ -11,7 +11,7 @@ export default function LoginPage() {
   const navigate = useNavigate()
   const location = useLocation()
   const { setAuth } = useAuthStore()
-  const from = (location.state as { from?: { pathname: string } })?.from?.pathname || '/'
+  const from = (location.state as { from?: { pathname: string } })?.from?.pathname || '/dashboard'
 
   const [login, setLogin] = useState('')
   const [password, setPassword] = useState('')
@@ -20,8 +20,8 @@ export default function LoginPage() {
   const { mutate, isPending } = useMutation({
     mutationFn: () => authApi.login({ login, password }),
     onSuccess: (res) => {
-      const { customer, access_token, refresh_token } = res.data.data!
-      setAuth(customer, access_token, refresh_token)
+      const { customer, tokens } = res.data.data!
+      setAuth(customer, tokens.access_token, tokens.refresh_token)
       if (customer.is_new_user) {
         navigate('/onboarding', { replace: true })
       } else {

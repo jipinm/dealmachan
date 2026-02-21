@@ -91,14 +91,14 @@ export default function TopBar() {
                 {citiesData?.map((city) => (
                   <button
                     key={city.id}
-                    onClick={() => setLocation(city.id, city.name)}
+                    onClick={() => setLocation(city.id, city.city_name)}
                     className={`px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${
                       cityId === city.id
                         ? 'bg-brand-600 text-white'
                         : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                     }`}
                   >
-                    {city.name}
+                    {city.city_name}
                   </button>
                 ))}
               </div>
@@ -110,12 +110,12 @@ export default function TopBar() {
                       <button
                         key={area.id}
                         onClick={() => {
-                          setLocation(cityId, cityName!, area.id, area.name)
+                          setLocation(cityId, cityName!, area.id, area.area_name)
                           setShowLocationMenu(false)
                         }}
                         className="px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700 hover:bg-brand-50 hover:text-brand-700 transition-colors"
                       >
-                        {area.name}
+                        {area.area_name}
                       </button>
                     ))}
                   </div>

@@ -25,16 +25,6 @@ interface Props {
   compact?: boolean
 }
 
-function discountLabel(type: CouponCardData['discount_type'], value: number): string {
-  switch (type) {
-    case 'percentage': return `${value}% OFF`
-    case 'flat':       return `₹${value} OFF`
-    case 'free_item':  return 'FREE ITEM'
-    case 'bogo':       return 'BOGO'
-    default:           return `${value}% OFF`
-  }
-}
-
 function daysLeft(until: string): number {
   return Math.max(0, Math.ceil((new Date(until).getTime() - Date.now()) / 86_400_000))
 }

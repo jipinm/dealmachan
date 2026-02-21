@@ -9,14 +9,15 @@ import toast from 'react-hot-toast'
 export default function ResetPasswordPage() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
-  const token = searchParams.get('token') || ''
+  const token = searchParams.get('token') || searchParams.get('otp') || ''
+  const phone = searchParams.get('phone') || ''
 
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState('')
   const [showPassword, setShowPassword] = useState(false)
 
   const { mutate, isPending } = useMutation({
-    mutationFn: () => authApi.resetPassword({ token, password }),
+    mutationFn: () => authApi.resetPassword({ otp: token, phone, new_password: password }),
     onSuccess: () => {
       toast.success('Password updated! Please sign in.')
       navigate('/login', { replace: true })

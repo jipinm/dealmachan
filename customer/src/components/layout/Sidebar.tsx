@@ -21,8 +21,8 @@ interface NavSection {
 const NAV_SECTIONS: NavSection[] = [
   {
     items: [
-      { to: '/',         icon: Home,    label: 'Home',       exact: true },
-      { to: '/explore',  icon: Compass, label: 'Explore'    },
+      { to: '/dashboard', icon: Home,    label: 'Home',       exact: true },
+      { to: '/explore',   icon: Compass, label: 'Explore'    },
     ],
   },
   {

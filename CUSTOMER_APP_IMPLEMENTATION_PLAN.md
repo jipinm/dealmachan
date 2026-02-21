@@ -1,9 +1,36 @@
 # Deal Machan — Customer Application: Consolidated Implementation Plan
 
-> **Version:** 2.0 | **Date:** February 2026
+> **Version:** 3.0 | **Date:** February 2026 — **Full Restart**
 > **Stack:** Vite + React 18 + TypeScript + TailwindCSS + TanStack Query v5 + Zustand
 > **Backend:** PHP 8.1 REST API (JWT-authenticated) + MySQL
 > **Runs at:** `http://localhost:5174`
+
+---
+
+## ⚠️ Restart Notice (v3.0)
+
+The v1/v2 implementation was **scrapped and rebuilt from scratch** because:
+
+- The app was structured as a **dashboard** (everything behind `AuthGuard`), forcing login before any content could be viewed.
+- Unauthenticated users saw a login page identical to the Merchant app — completely wrong for a customer-facing website.
+- The layout, UX patterns, and visual design were not appropriate for a public coupons/deals platform.
+
+**New direction:** The Customer App is now a **public-first website**, not a dashboard:
+
+| Old Approach | New Approach |
+|---|---|
+| Dashboard behind login | Public website — browse without account |
+| Auth-gated home feed | Full homepage accessible to everyone |
+| App-style nav (bottom tabs only) | Website nav: sticky header + footer (public); sidebar/bottom-nav for personal sections |
+| Cards with user-greeting | Marketing-style hero + search + category grid |
+| Login required to view any content | Login required only for: subscribe, wallet, wishlist, profile, etc. |
+
+**Architecture split:**
+- `GuestShell` — public pages (logo + nav header + footer)
+- `AppShell` — personal/authenticated pages (sidebar desktop, bottom nav mobile)
+- `AuthGuard` — only wraps routes that require login
+
+---
 
 ---
 

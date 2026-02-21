@@ -29,16 +29,16 @@ export default function OtpVerifyPage() {
   const { mutate: verify, isPending } = useMutation({
     mutationFn: () => authApi.verifyOtp({ phone, otp: otp.join('') }),
     onSuccess: (res) => {
-      const { customer, access_token, refresh_token } = res.data.data!
-      setAuth(customer, access_token, refresh_token)
+      const { customer, tokens } = res.data.data!
+      setAuth(customer, tokens.access_token, tokens.refresh_token)
       toast.success('Phone verified!')
-      navigate(customer.is_new_user ? '/onboarding' : '/', { replace: true })
+      navigate(customer.is_new_user ? '/onboarding' : '/dashboard', { replace: true })
     },
     onError: (err) => toast.error(getApiError(err)),
   })
 
   const { mutate: resend, isPending: isResending } = useMutation({
-    mutationFn: () => authApi.resendOtp({ phone }),
+    mutationFn: () => authApi.resendOtp(phone),
     onSuccess: () => {
       toast.success('New OTP sent!')
       setCountdown(60)

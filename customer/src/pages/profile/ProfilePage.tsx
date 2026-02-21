@@ -2,7 +2,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import {
   LogOut, ChevronRight, User, Shield, Bell, HelpCircle, Gift,
-  CreditCard, Star, Bookmark, CheckCircle, Loader2,
+  CreditCard, Star, Bookmark, CheckCircle,
 } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
 import { profileApi } from '@/api/endpoints/profile'

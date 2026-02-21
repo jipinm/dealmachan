@@ -2,31 +2,38 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ── Global resets for app-like feel ──────────────────────────────────────── */
+/* ── Global resets — website-first ───────────────────────────────────────── */
 * {
   -webkit-tap-highlight-color: transparent;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-html, body, #root {
-  height: 100%;
-  margin: 0;
-  padding: 0;
-  overscroll-behavior: none;
+html {
+  scroll-behavior: smooth;
 }
 
 body {
+  margin: 0;
+  padding: 0;
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
-  background: #f4f6fb;
-  color: #2d3436;
+  background: #f8f9fc;
+  color: #1e293b;
+  line-height: 1.6;
 }
 
-/* Smooth scroll */
-* { scroll-behavior: smooth; }
+#root {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
 
 /* Remove blue outline on mobile tap */
 button:focus, a:focus { outline: none; }
+button:focus-visible, a:focus-visible {
+  outline: 2px solid #667eea;
+  outline-offset: 2px;
+}
 
 /* Custom scrollbar (desktop) */
 ::-webkit-scrollbar { width: 4px; height: 4px; }
@@ -201,3 +208,70 @@ button:focus, a:focus { outline: none; }
   line-height: 1.4;
   white-space: nowrap;
 }
+
+/* ── Website layout helpers ───────────────────────────────────────────────── */
+.site-container {
+  width: 100%;
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+@media (min-width: 640px) {
+  .site-container { padding-left: 1.5rem; padding-right: 1.5rem; }
+}
+@media (min-width: 1024px) {
+  .site-container { padding-left: 2rem; padding-right: 2rem; }
+}
+
+/* Hero section gradient background */
+.hero-gradient {
+  background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 50%, #a21caf 100%);
+}
+
+/* Section heading */
+.section-heading {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1e293b;
+  letter-spacing: -0.02em;
+}
+@media (min-width: 768px) {
+  .section-heading { font-size: 1.875rem; }
+}
+
+/* Coupon/deal card badge */
+.badge-discount {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.625rem;
+  background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+  color: #ffffff;
+  border-radius: 0.5rem;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.badge-new {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.125rem 0.5rem;
+  background: #dcfce7;
+  color: #16a34a;
+  border-radius: 9999px;
+  font-size: 0.6875rem;
+  font-weight: 700;
+}
+
+/* Nav link active state */
+.nav-link {
+  position: relative;
+  color: #475569;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  transition: color 0.15s;
+  text-decoration: none;
+}
+.nav-link:hover { color: #6366f1; }
+.nav-link.active { color: #6366f1; font-weight: 600; }

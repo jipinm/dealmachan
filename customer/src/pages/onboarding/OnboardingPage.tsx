@@ -42,7 +42,7 @@ export default function OnboardingPage() {
       if (res.data.data) setCustomer(res.data.data as any)
       setLocation(selectedCityId!, selectedCityName, selectedAreaId ?? undefined, selectedAreaName || undefined)
       toast.success(`Welcome to Deal Machan, ${selectedCityName}!`)
-      navigate('/', { replace: true })
+      navigate('/dashboard', { replace: true })
     },
     onError: (err) => toast.error(getApiError(err)),
   })
@@ -87,7 +87,7 @@ export default function OnboardingPage() {
               {cities?.map((city) => (
                 <button
                   key={city.id}
-                  onClick={() => handleCitySelect(city.id, city.name)}
+                  onClick={() => handleCitySelect(city.id, city.city_name)}
                   className={`flex items-center gap-1.5 px-3.5 py-2 rounded-full text-sm font-medium transition-all ${
                     selectedCityId === city.id
                       ? 'bg-white text-brand-700 shadow-lg scale-105'
@@ -95,7 +95,7 @@ export default function OnboardingPage() {
                   }`}
                 >
                   {selectedCityId === city.id && <CheckCircle2 size={13} />}
-                  {city.name}
+                  {city.city_name}
                 </button>
               ))}
             </div>
@@ -113,14 +113,14 @@ export default function OnboardingPage() {
               {areas.map((area) => (
                 <button
                   key={area.id}
-                  onClick={() => handleAreaSelect(area.id, area.name)}
+                  onClick={() => handleAreaSelect(area.id, area.area_name)}
                   className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
                     selectedAreaId === area.id
                       ? 'bg-white text-brand-700 shadow scale-105'
                       : 'bg-white/20 text-white hover:bg-white/30'
                   }`}
                 >
-                  {area.name}
+                  {area.area_name}
                 </button>
               ))}
             </div>
@@ -138,7 +138,7 @@ export default function OnboardingPage() {
         </button>
 
         <button
-          onClick={() => navigate('/', { replace: true })}
+          onClick={() => navigate('/dashboard', { replace: true })}
           className="text-white/50 text-sm text-center mt-4 hover:text-white/80 transition-colors"
         >
           Skip for now

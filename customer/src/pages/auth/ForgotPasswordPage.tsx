@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { Loader2, ArrowLeft } from 'lucide-react'
 import { useMutation } from '@tanstack/react-query'
 import { authApi } from '@/api/endpoints/auth'
@@ -7,11 +7,10 @@ import { getApiError } from '@/api/client'
 import toast from 'react-hot-toast'
 
 export default function ForgotPasswordPage() {
-  const navigate = useNavigate()
   const [email, setEmail] = useState('')
 
   const { mutate, isPending, isSuccess } = useMutation({
-    mutationFn: () => authApi.forgotPassword({ email }),
+    mutationFn: () => authApi.forgotPassword(email),
     onSuccess: () => {
       toast.success('Reset link sent to your email!')
     },

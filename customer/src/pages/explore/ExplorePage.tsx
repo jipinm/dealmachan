@@ -11,11 +11,7 @@ import SkeletonCard, { SkeletonRow } from '@/components/ui/SkeletonCard'
 type TabType = 'merchants' | 'coupons'
 type DiscountFilter = 'all' | 'percentage' | 'flat' | 'free_item'
 
-const SORT_OPTIONS = [
-  { value: 'popular',  label: 'Popular' },
-  { value: 'newest',   label: 'Newest'  },
-  { value: 'expiring', label: 'Expiring Soon' },
-]
+// SORT_OPTIONS reserved for future use
 
 export default function ExplorePage() {
   const [searchParams, setSearchParams] = useSearchParams()
