@@ -68,14 +68,17 @@ class HomeController {
             "SELECT m.id, m.business_name, m.business_logo,
                     COALESCE(m.avg_rating,    0.00) AS avg_rating,
                     COALESCE(m.total_reviews,    0) AS total_reviews,
-                    NULL AS area_name,
-                    NULL AS city_name,
+                    MIN(ar.area_name)              AS area_name,
+                    MIN(ci.city_name)              AS city_name,
                     COUNT(DISTINCT c.id)           AS active_coupons_count,
                     IF(m.subscription_status = 'premium', 1, 0) AS is_premium
              FROM merchants m
+             LEFT JOIN stores s2 ON s2.merchant_id = m.id AND s2.status = 'active'
+             LEFT JOIN areas  ar ON ar.id = s2.area_id
+             LEFT JOIN cities ci ON ci.id = s2.city_id
              LEFT JOIN coupons c ON c.merchant_id = m.id AND c.status = 'active' AND c.valid_until >= CURDATE()
              WHERE m.profile_status = 'approved'
-               AND m.subscription_status = 'active'
+               AND m.subscription_status IN ('active', 'trial')
                {$mWhere}
              GROUP BY m.id
              ORDER BY active_coupons_count DESC, m.created_at DESC

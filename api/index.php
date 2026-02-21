@@ -231,14 +231,14 @@ if (matchRoute('PUT', 'merchants/stores/:id/gallery/reorder', $path)) {
 // ---------- Public: Master Data ----------
 if (matchRoute('GET', 'public/cities', $path)) {
     $db = Database::getInstance();
-    $cities = $db->query("SELECT id, city_name AS name, state FROM cities WHERE status='active' ORDER BY city_name");
+    $cities = $db->query("SELECT id, city_name, state FROM cities WHERE status='active' ORDER BY city_name");
     Response::success($cities);
 }
 if (matchRoute('GET', 'public/areas', $path)) {
     $db     = Database::getInstance();
     $cityId = !empty($_GET['city_id']) ? (int)$_GET['city_id'] : null;
     $where  = $cityId ? "WHERE status='active' AND city_id = {$cityId}" : "WHERE status='active'";
-    $areas  = $db->query("SELECT id, area_name AS name, city_id FROM areas {$where} ORDER BY area_name");
+    $areas  = $db->query("SELECT id, area_name, city_id FROM areas {$where} ORDER BY area_name");
     Response::success($areas);
 }
 if (matchRoute('GET', 'public/home', $path)) {

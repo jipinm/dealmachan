@@ -7,6 +7,7 @@ import {
 import { useAuthStore } from '@/store/authStore'
 import { useLocationStore } from '@/store/locationStore'
 import Footer from './Footer'
+import LocationModal from '@/components/ui/LocationModal'
 
 const NAV_LINKS = [
   { to: '/deals',        label: 'Deals',        icon: Tag },
@@ -17,12 +18,16 @@ const NAV_LINKS = [
 
 export default function GuestShell() {
   const { customer, isAuthenticated, logout } = useAuthStore()
-  const { cityName } = useLocationStore()
+  const { cityName, areaName, modalOpen: locationOpen, openLocationModal, closeLocationModal } = useLocationStore()
   const navigate = useNavigate()
 
   const [mobileOpen, setMobileOpen] = useState(false)
   const [userMenuOpen, setUserMenuOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
+
+  const locationLabel = areaName
+    ? `${areaName}, ${cityName}`
+    : cityName || 'Set location'
 
   function handleSearch(e: React.FormEvent) {
     e.preventDefault()
@@ -89,13 +94,15 @@ export default function GuestShell() {
               />
             </form>
 
-            {/* Location badge */}
-            {cityName && (
-              <div className="hidden lg:flex items-center gap-1 text-sm text-slate-500 flex-shrink-0">
-                <MapPin size={13} className="text-cta-500" />
-                <span className="max-w-[100px] truncate">{cityName}</span>
-              </div>
-            )}
+            {/* Location badge — clickable */}
+            <button
+              onClick={openLocationModal}
+              className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm text-slate-600 hover:bg-slate-50 border border-slate-200 transition-colors flex-shrink-0"
+            >
+              <MapPin size={14} className={cityName ? 'text-cta-500' : 'text-slate-400'} />
+              <span className="max-w-[120px] truncate font-medium">{locationLabel}</span>
+              <ChevronDown size={13} className="text-slate-400" />
+            </button>
 
             {/* Auth area */}
             <div className="ml-auto flex items-center gap-2">
@@ -204,6 +211,15 @@ export default function GuestShell() {
                 </button>
               </form>
 
+              {/* Mobile location selector */}
+              <button
+                onClick={() => { openLocationModal(); setMobileOpen(false) }}
+                className="flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors w-full"
+              >
+                <MapPin size={17} className={cityName ? 'text-cta-500' : 'text-slate-400'} />
+                {locationLabel}
+              </button>
+
               {/* Mobile nav links */}
               {NAV_LINKS.map(({ to, label, icon: Icon }) => (
                 <NavLink
@@ -253,6 +269,9 @@ export default function GuestShell() {
 
       {/* ─── Footer ─────────────────────────────────────────────────────── */}
       <Footer />
+
+      {/* ─── Location Modal ──────────────────────────────────────────────── */}
+      <LocationModal open={locationOpen} onClose={closeLocationModal} />
     </div>
   )
 }

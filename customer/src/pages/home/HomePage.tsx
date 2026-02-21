@@ -197,7 +197,7 @@ function FlashDealCard({ deal }: { deal: FlashDiscount }) {
 // Main Page
 // ─────────────────────────────────────────────────────────────────────────────
 export default function HomePage() {
-  const { cityId } = useLocationStore()
+  const { cityId, cityName, areaName, openLocationModal } = useLocationStore()
   const { isAuthenticated } = useAuthStore()
   const navigate = useNavigate()
   const [searchQuery, setSearchQuery] = useState('')
@@ -282,6 +282,48 @@ export default function HomePage() {
           </svg>
         </div>
       </section>
+
+      {/* ═══ LOCATION PROMPT ════════════════════════════════════════════════ */}
+      {!cityId ? (
+        <section className="bg-gradient-to-r from-brand-50 to-indigo-50 border-b border-brand-100">
+          <div className="site-container py-4">
+            <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-4">
+              <div className="flex items-center gap-2.5 flex-1 min-w-0">
+                <div className="w-9 h-9 rounded-xl bg-brand-100 flex items-center justify-center shrink-0">
+                  <MapPin size={17} className="text-brand-600" />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-slate-800">Set your location</p>
+                  <p className="text-xs text-slate-500">Choose a city to see deals and stores near you</p>
+                </div>
+              </div>
+              <button
+                onClick={openLocationModal}
+                className="btn-primary !py-2.5 !px-5 !text-sm !rounded-xl shrink-0"
+              >
+                Choose City
+              </button>
+            </div>
+          </div>
+        </section>
+      ) : (
+        <section className="bg-white border-b border-slate-100">
+          <div className="site-container py-2">
+            <div className="flex items-center gap-2 text-sm text-slate-600">
+              <MapPin size={14} className="text-cta-500" />
+              <span>
+                Showing deals in <strong className="text-slate-800">{areaName ? `${areaName}, ${cityName}` : cityName}</strong>
+              </span>
+              <button
+                onClick={openLocationModal}
+                className="text-brand-600 hover:text-brand-700 font-medium ml-1 transition-colors"
+              >
+                Change
+              </button>
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* ═══ STATS ═══════════════════════════════════════════════════════════ */}
       <section className="bg-white border-b border-slate-100">

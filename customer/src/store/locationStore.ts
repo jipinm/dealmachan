@@ -6,12 +6,16 @@ export interface LocationState {
   cityName: string | null
   areaId: number | null
   areaName: string | null
+  /** Whether the location picker modal is open */
+  modalOpen: boolean
 }
 
 interface LocationActions {
   setLocation(cityId: number, cityName: string, areaId?: number | null, areaName?: string | null): void
   setArea(areaId: number | null, areaName: string | null): void
   clearLocation(): void
+  openLocationModal(): void
+  closeLocationModal(): void
 }
 
 export const useLocationStore = create<LocationState & LocationActions>()(
@@ -21,6 +25,7 @@ export const useLocationStore = create<LocationState & LocationActions>()(
       cityName: null,
       areaId:   null,
       areaName: null,
+      modalOpen: false,
 
       setLocation: (cityId, cityName, areaId = null, areaName = null) => {
         set({ cityId, cityName, areaId, areaName })
@@ -33,9 +38,18 @@ export const useLocationStore = create<LocationState & LocationActions>()(
       clearLocation: () => {
         set({ cityId: null, cityName: null, areaId: null, areaName: null })
       },
+
+      openLocationModal: () => set({ modalOpen: true }),
+      closeLocationModal: () => set({ modalOpen: false }),
     }),
     {
       name: 'dm-customer-location',
+      partialize: (state) => ({
+        cityId: state.cityId,
+        cityName: state.cityName,
+        areaId: state.areaId,
+        areaName: state.areaName,
+      }),
     },
   ),
 )
