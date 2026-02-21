@@ -41,9 +41,14 @@ class HomeController {
             ? "AND EXISTS (SELECT 1 FROM stores st WHERE st.id = fd.store_id AND st.city_id = {$cityId})"
             : '';
         $flashDiscounts = $this->db->query(
-            "SELECT fd.id, fd.name, fd.discount_percentage, fd.starts_at, fd.ends_at,
-                    m.business_name, m.business_logo,
-                    s.name AS store_name
+            "SELECT fd.id,
+                    fd.name            AS title,
+                    fd.discount_percentage,
+                    fd.ends_at         AS valid_until,
+                    fd.merchant_id,
+                    m.business_name    AS merchant_name,
+                    m.business_logo    AS merchant_logo,
+                    s.name             AS store_name
              FROM flash_discounts fd
              JOIN merchants m ON m.id = fd.merchant_id
              LEFT JOIN stores s ON s.id = fd.store_id
@@ -60,15 +65,20 @@ class HomeController {
             ? "AND EXISTS (SELECT 1 FROM stores st WHERE st.merchant_id = m.id AND st.city_id = {$cityId} AND st.status='active')"
             : '';
         $merchants = $this->db->query(
-            "SELECT m.id, m.business_name, m.business_logo, m.business_category,
-                    COUNT(DISTINCT c.id) AS coupon_count
+            "SELECT m.id, m.business_name, m.business_logo,
+                    COALESCE(m.avg_rating,    0.00) AS avg_rating,
+                    COALESCE(m.total_reviews,    0) AS total_reviews,
+                    NULL AS area_name,
+                    NULL AS city_name,
+                    COUNT(DISTINCT c.id)           AS active_coupons_count,
+                    IF(m.subscription_status = 'premium', 1, 0) AS is_premium
              FROM merchants m
              LEFT JOIN coupons c ON c.merchant_id = m.id AND c.status = 'active' AND c.valid_until >= CURDATE()
              WHERE m.profile_status = 'approved'
                AND m.subscription_status = 'active'
                {$mWhere}
              GROUP BY m.id
-             ORDER BY coupon_count DESC, m.created_at DESC
+             ORDER BY active_coupons_count DESC, m.created_at DESC
              LIMIT {$limit}"
         );
 
@@ -77,9 +87,11 @@ class HomeController {
             ? "AND EXISTS (SELECT 1 FROM stores st WHERE st.id = c.store_id AND st.city_id = {$cityId})"
             : '';
         $coupons = $this->db->query(
-            "SELECT c.id, c.title, c.description, c.discount_type, c.discount_value,
-                    c.min_purchase, c.max_discount, c.valid_until, c.coupon_code,
-                    m.business_name, m.business_logo,
+            "SELECT c.id, c.title, c.coupon_code, c.discount_type, c.discount_value,
+                    c.valid_until, c.banner_image,
+                    c.merchant_id,
+                    m.business_name AS merchant_name,
+                    m.business_logo AS merchant_logo,
                     COUNT(cs.id) AS save_count
              FROM coupons c
              JOIN merchants m ON m.id = c.merchant_id
@@ -106,11 +118,12 @@ class HomeController {
         );
 
         Response::success([
-            'advertisements'  => $ads,
-            'flash_discounts' => $flashDiscounts,
-            'merchants'       => $merchants,
-            'top_coupons'     => $coupons,
-            'tags'            => $tags,
+            'advertisements'   => $ads,
+            'flash_discounts'  => $flashDiscounts,
+            'featured_merchants' => $merchants,
+            'top_coupons'      => $coupons,
+            'new_merchants'    => [],   // populated in future by recency-sorted query
+            'tags'             => $tags,
         ]);
     }
 }

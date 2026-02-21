@@ -1,38 +1,70 @@
 # Deal Machan — Customer Application: Consolidated Implementation Plan
 
-> **Version:** 3.0 | **Date:** February 2026 — **Full Restart**
+> **Version:** 3.1 | **Date:** February 2026
 > **Stack:** Vite + React 18 + TypeScript + TailwindCSS + TanStack Query v5 + Zustand
 > **Backend:** PHP 8.1 REST API (JWT-authenticated) + MySQL
 > **Runs at:** `http://localhost:5174`
 
 ---
 
-## ⚠️ Restart Notice (v3.0)
+## ✅ Completed Progress (v3.1 — February 2026)
 
-The v1/v2 implementation was **scrapped and rebuilt from scratch** because:
+### What Has Been Built
 
-- The app was structured as a **dashboard** (everything behind `AuthGuard`), forcing login before any content could be viewed.
-- Unauthenticated users saw a login page identical to the Merchant app — completely wrong for a customer-facing website.
-- The layout, UX patterns, and visual design were not appropriate for a public coupons/deals platform.
+| Area | Status | Notes |
+|------|--------|-------|
+| **GuestShell** — sticky header + footer for all public routes | ✅ Done | `components/layout/GuestShell.tsx` |
+| **Footer** — newsletter + links + social + legal | ✅ Done | `components/layout/Footer.tsx` |
+| **AuthLayout** — split-screen auth wrapper (brand panel left, form right) | ✅ Done | `components/layout/AuthLayout.tsx` |
+| **router.tsx** — public/protected split | ✅ Done | Public: GuestShell; Protected: AuthGuard→AppShell |
+| **Homepage** — hero + categories + flash deals + coupons + merchants + CTA | ✅ Done | `pages/home/HomePage.tsx` |
+| **Login page** — modern AuthLayout design | ✅ Done | `pages/auth/LoginPage.tsx` |
+| **Register page** — modern AuthLayout design | ✅ Done | `pages/auth/RegisterPage.tsx` |
+| **OTP Verify page** — modern AuthLayout design | ✅ Done | `pages/auth/OtpVerifyPage.tsx` |
+| **Forgot Password page** — modern AuthLayout design | ✅ Done | `pages/auth/ForgotPasswordPage.tsx` |
+| **Reset Password page** — modern AuthLayout design | ✅ Done | `pages/auth/ResetPasswordPage.tsx` |
+| **DealsPage** — browse all coupons | ✅ Done | `pages/deals/DealsPage.tsx` |
+| **DealDetailPage** — single deal view | ✅ Done | `pages/deals/DealDetailPage.tsx` |
+| **StoresPage** — merchant directory | ✅ Done | `pages/stores/StoresPage.tsx` |
+| **StoreDetailPage** — merchant profile | ✅ Done | `pages/stores/StoreDetailPage.tsx` |
+| **FlashDealsPage** — flash discount listing | ✅ Done | `pages/flash-deals/FlashDealsPage.tsx` |
+| **BlogListPage** — blog post grid | ✅ Done | `pages/blog/BlogListPage.tsx` |
+| **BlogDetailPage** — single post | ✅ Done | `pages/blog/BlogDetailPage.tsx` |
+| **CategoriesPage** — category grid | ✅ Done | `pages/categories/CategoriesPage.tsx` |
+| **Static pages** — About, Contact, Business Signup | ✅ Done | `pages/static/` |
+| **DashboardPage** (protected, `/dashboard`) | ✅ Done | `pages/dashboard/DashboardPage.tsx` |
+| **WishlistPage stub** | ✅ Done | `pages/wishlist/WishlistPage.tsx` |
+| **LoyaltyCardsPage stub** | ✅ Done | `pages/loyalty/LoyaltyCardsPage.tsx` |
+| **ImportantDaysPage stub** | ✅ Done | `pages/important-days/ImportantDaysPage.tsx` |
+| **CORS** — allow ports 5173, 5174, 5175 + all localhost in dev | ✅ Done | `api/config/constants.php` |
+| **HomeController** — field aliases match TypeScript types | ✅ Done | `featured_merchants`, `merchant_name`, `valid_until` |
+| **Auth API types** — `AuthResponse` flat tokens, correct `resetPassword` body | ✅ Done | `api/endpoints/auth.ts` |
+| **index.css** — website-first scrollable layout + helper classes | ✅ Done | — |
 
-**New direction:** The Customer App is now a **public-first website**, not a dashboard:
+### What Is Not Yet Built (Next Phases)
 
-| Old Approach | New Approach |
-|---|---|
-| Dashboard behind login | Public website — browse without account |
-| Auth-gated home feed | Full homepage accessible to everyone |
-| App-style nav (bottom tabs only) | Website nav: sticky header + footer (public); sidebar/bottom-nav for personal sections |
-| Cards with user-greeting | Marketing-style hero + search + category grid |
-| Login required to view any content | Login required only for: subscribe, wallet, wishlist, profile, etc. |
-
-**Architecture split:**
-- `GuestShell` — public pages (logo + nav header + footer)
-- `AppShell` — personal/authenticated pages (sidebar desktop, bottom nav mobile)
-- `AuthGuard` — only wraps routes that require login
+| Area | Priority | Notes |
+|------|----------|-------|
+| LocationModal — city/area picker | P1 | Needed for browse filtering |
+| CouponDetailPage — subscribe flow + AuthModal blur | P1 | Core conversion feature |
+| FlashDealDetailPage | P2 | Currently stub |
+| Coupon subscribe API + business rule validation | P1 | `POST /customers/coupons/:id/subscribe` |
+| Wishlist (real API) — save/remove stores | P2 | `POST/DELETE /customers/favourites` |
+| Loyalty card selection | P2 | `/loyalty-cards` |
+| CouponWalletPage — full QR redeem flow | P2 | Exists but needs polish |
+| Important Days (real API) | P3 | — |
+| Grievances pages | P3 | — |
+| Notifications page | P3 | — |
+| Profile / Edit profile | P3 | — |
+| Blog API — `GET /public/blog` | P2 | Controller needed |
+| Public areas API — `GET /public/areas?city_id=` | P1 | Needed by location modal |
+| Merchant browse API — `GET /public/merchants` | P1 | Needed by StoresPage |
+| Flash discounts public API — `GET /public/flash-discounts` | P1 | Needed by FlashDealsPage |
+| Onboarding page | ✅ Exists | Minor: update city_name display |
+| AuthModal (inline auth on deal detail) | P2 | Modal to avoid page redirect |
 
 ---
 
----
 
 ## Table of Contents
 

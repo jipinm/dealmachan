@@ -22,13 +22,12 @@ export interface OtpVerifyRequest {
 }
 
 export interface AuthResponse {
+  // The API returns tokens at the same level as customer (not nested)
   data: {
     customer: CustomerProfile
-    tokens: {
-      access_token: string
-      refresh_token: string
-      expires_in: number
-    }
+    access_token: string
+    refresh_token: string
+    expires_in: number
   }
 }
 
@@ -59,12 +58,12 @@ export const authApi = {
   resendOtp: (phone: string) =>
     apiClient.post('/auth/customer/resend-otp', { phone }),
 
-  /** Request a password-reset OTP */
-  forgotPassword: (login: string) =>
-    apiClient.post('/auth/customer/forgot-password', { login }),
+  /** Request a password-reset link (sent to email) */
+  forgotPassword: (email: string) =>
+    apiClient.post('/auth/customer/forgot-password', { email }),
 
-  /** Reset password using OTP */
-  resetPassword: (body: { otp: string; phone: string; new_password: string }) =>
+  /** Reset password using the JWT token from the reset email link */
+  resetPassword: (body: { token: string; password: string }) =>
     apiClient.post('/auth/customer/reset-password', body),
 
   /** Refresh access token — returns new token pair */

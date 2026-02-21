@@ -19,10 +19,13 @@ define('DB_PASS',    getenv('DB_PASSWORD') ?: '');
 define('DB_CHARSET', 'utf8mb4');
 
 // CORS — allowed origins (admin panel, merchant app, customer app)
+// Dev note: CorsMiddleware also allows any localhost:* origin in development mode
 define('CORS_ORIGINS', [
-    getenv('ADMIN_URL')    ?: 'http://dealmachan-admin.local',
-    getenv('MERCHANT_URL') ?: 'http://localhost:5173',
-    getenv('CUSTOMER_URL') ?: 'http://localhost:5174',
+    getenv('ADMIN_URL')         ?: 'http://dealmachan-admin.local',
+    getenv('MERCHANT_URL')      ?: 'http://localhost:5173',
+    getenv('CUSTOMER_URL')      ?: 'http://localhost:5174',
+    // Customer app alternate port (Vite may use 5175 if 5174 is taken)
+    'http://localhost:5175',
 ]);
 
 // Upload

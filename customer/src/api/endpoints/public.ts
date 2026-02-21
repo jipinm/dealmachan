@@ -13,11 +13,11 @@ export interface Advertisement {
 
 export interface FlashDiscount {
   id: number
-  title: string
+  title: string           // API returns fd.name aliased as title
   discount_percentage: number
-  valid_until: string
+  valid_until: string     // API returns fd.ends_at aliased as valid_until
   merchant_id: number
-  merchant_name: string
+  merchant_name: string   // API returns m.business_name aliased as merchant_name
   merchant_logo: string | null
 }
 
@@ -27,9 +27,9 @@ export interface FeaturedMerchant {
   business_logo: string | null
   avg_rating: number
   total_reviews: number
-  area_name: string | null
-  city_name: string | null
-  labels: Array<{ id: number; label_name: string; label_icon: string | null }>
+  area_name?: string | null
+  city_name?: string | null
+  labels?: Array<{ id: number; label_name: string; label_icon: string | null }>
   active_coupons_count: number
   is_premium: boolean
 }
@@ -47,7 +47,7 @@ export interface TopCoupon {
   id: number
   title: string
   coupon_code: string
-  discount_type: 'percentage' | 'fixed'
+  discount_type: 'percentage' | 'flat' | 'fixed' | 'free_item' | 'bogo'
   discount_value: number
   valid_until: string | null
   banner_image: string | null
