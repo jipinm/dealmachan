@@ -1,9 +1,8 @@
 // ── AuthLayout — shared split-screen wrapper for all auth pages ───────────────
-// Desktop: brand gradient panel (left) + form panel (right)
-// Mobile:  thin brand top-bar  + form below
+// Desktop: brand gradient panel (left, sticky) + scrollable form panel (right)
+// Mobile:  form fills full width — header/footer provided by GuestShell
 import type { ReactNode } from 'react'
-import { Link } from 'react-router-dom'
-import { Tag, Percent, Store, Zap, Gift, ArrowLeft } from 'lucide-react'
+import { Percent, Store, Zap, Gift } from 'lucide-react'
 
 const BENEFITS = [
   { icon: Percent, text: '5,000+ active deals & coupons' },
@@ -20,18 +19,11 @@ interface AuthLayoutProps {
 
 export default function AuthLayout({ title, subtitle, children }: AuthLayoutProps) {
   return (
-    <div className="min-h-screen flex flex-col lg:flex-row">
+    <div className="flex flex-col lg:flex-row">
 
       {/* ── Left brand panel — desktop only ─────────────────────── */}
-      <div className="hidden lg:flex flex-col justify-between w-[420px] xl:w-[480px] gradient-brand p-10 text-white shrink-0 sticky top-0 h-screen">
+      <div className="hidden lg:flex flex-col justify-between w-[420px] xl:w-[480px] gradient-brand p-10 text-white shrink-0 sticky top-16 h-[calc(100vh-4rem)]">
         <div>
-          <Link to="/" className="flex items-center gap-2.5 mb-14">
-            <div className="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center">
-              <Tag size={18} className="text-white" />
-            </div>
-            <span className="font-heading font-bold text-xl tracking-tight">DealMachan</span>
-          </Link>
-
           <h2 className="font-heading font-bold text-[1.875rem] leading-tight mb-3">
             Discover Amazing<br />Deals Near You
           </h2>
@@ -67,34 +59,11 @@ export default function AuthLayout({ title, subtitle, children }: AuthLayoutProp
       </div>
 
       {/* ── Right form panel ─────────────────────────────────────── */}
-      <div className="flex-1 flex flex-col bg-[#f8f9fc] min-h-screen">
+      <div className="flex-1 flex flex-col bg-[#f8f9fc]">
 
-        {/* Mobile: thin brand bar with logo + home link */}
-        <div className="lg:hidden gradient-brand px-4 py-3.5 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2 text-white">
-            <div className="w-7 h-7 rounded-lg bg-white/20 flex items-center justify-center">
-              <Tag size={14} className="text-white" />
-            </div>
-            <span className="font-heading font-bold tracking-tight">DealMachan</span>
-          </Link>
-          <Link to="/" className="flex items-center gap-1 text-white/80 text-sm">
-            <ArrowLeft size={13} />
-            Home
-          </Link>
-        </div>
-
-        {/* Scrollable form area */}
-        <div className="flex-1 overflow-y-auto px-5 py-8 lg:px-10 lg:py-12">
+        {/* Form area */}
+        <div className="flex-1 px-5 py-8 lg:px-10 lg:py-12">
           <div className="max-w-md mx-auto lg:mx-0 xl:ml-14">
-
-            {/* Desktop back link */}
-            <Link
-              to="/"
-              className="hidden lg:inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-brand-600 mb-8 transition-colors"
-            >
-              <ArrowLeft size={14} />
-              Back to DealMachan
-            </Link>
 
             <h1 className="font-heading font-bold text-[1.625rem] text-slate-900 mb-1">{title}</h1>
             {subtitle && <p className="text-slate-500 text-sm mb-7 leading-relaxed">{subtitle}</p>}

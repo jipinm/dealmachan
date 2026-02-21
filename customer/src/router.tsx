@@ -81,18 +81,15 @@ export const router = createBrowserRouter([
       { path: 'about',            element: <Lazy element={<AboutPage />} /> },
       { path: 'contact',          element: <Lazy element={<ContactPage />} /> },
       { path: 'business-signup',  element: <Lazy element={<BusinessSignupPage />} /> },
+
+      // ── Auth pages — inside GuestShell so they share the site header + footer
+      { path: 'login',            element: <LoginPage /> },
+      { path: 'register',         element: <RegisterPage /> },
+      { path: 'otp-verify',       element: <OtpVerifyPage /> },
+      { path: 'forgot-password',  element: <ForgotPasswordPage /> },
+      { path: 'reset-password',   element: <ResetPasswordPage /> },
     ],
   },
-
-  // ═══════════════════════════════════════════════════════════════════════════
-  // AUTH PAGES — standalone (no shell, no footer)
-  // These show only on unauthenticated visit scenarios
-  // ═══════════════════════════════════════════════════════════════════════════
-  { path: '/login',           element: <LoginPage /> },
-  { path: '/register',        element: <RegisterPage /> },
-  { path: '/otp-verify',      element: <OtpVerifyPage /> },
-  { path: '/forgot-password', element: <ForgotPasswordPage /> },
-  { path: '/reset-password',  element: <ResetPasswordPage /> },
 
   // Onboarding (auth required, but bypasses new-user check inside)
   {
