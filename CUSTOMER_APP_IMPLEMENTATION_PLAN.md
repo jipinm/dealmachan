@@ -1,13 +1,13 @@
 # Deal Machan — Customer Application: Consolidated Implementation Plan
 
-> **Version:** 3.1 | **Date:** February 2026
+> **Version:** 3.2 | **Date:** February 2026
 > **Stack:** Vite + React 18 + TypeScript + TailwindCSS + TanStack Query v5 + Zustand
 > **Backend:** PHP 8.1 REST API (JWT-authenticated) + MySQL
 > **Runs at:** `http://localhost:5174`
 
 ---
 
-## ✅ Completed Progress (v3.1 — February 2026)
+## ✅ Completed Progress (v3.2 — February 2026)
 
 ### What Has Been Built
 
@@ -39,13 +39,17 @@
 | **CORS** — allow ports 5173, 5174, 5175 + all localhost in dev | ✅ Done | `api/config/constants.php` |
 | **HomeController** — field aliases match TypeScript types | ✅ Done | `featured_merchants`, `merchant_name`, `valid_until` |
 | **Auth API types** — `AuthResponse` flat tokens, correct `resetPassword` body | ✅ Done | `api/endpoints/auth.ts` |
+| **LocationModal** — city search + city/area pills, opens from header or homepage | ✅ Done | `components/ui/LocationModal.tsx` |
+| **GuestShell** location badge — clickable (desktop + mobile menu) | ✅ Done | Opens LocationModal |
+| **HomePage** location prompt — "Set your location" banner + "Change" link | ✅ Done | Shows when no city / has city |
+| **API: cities/areas** — field names match TypeScript types (`city_name`, `area_name`) | ✅ Done | `api/index.php` |
+| **HomeController** — merchants JOIN stores→areas→cities for real location data | ✅ Done | Also includes `trial` subscription |
 | **index.css** — website-first scrollable layout + helper classes | ✅ Done | — |
 
 ### What Is Not Yet Built (Next Phases)
 
 | Area | Priority | Notes |
 |------|----------|-------|
-| LocationModal — city/area picker | P1 | Needed for browse filtering |
 | CouponDetailPage — subscribe flow + AuthModal blur | P1 | Core conversion feature |
 | FlashDealDetailPage | P2 | Currently stub |
 | Coupon subscribe API + business rule validation | P1 | `POST /customers/coupons/:id/subscribe` |
@@ -57,9 +61,6 @@
 | Notifications page | P3 | — |
 | Profile / Edit profile | P3 | — |
 | Blog API — `GET /public/blog` | P2 | Controller needed |
-| Public areas API — `GET /public/areas?city_id=` | P1 | Needed by location modal |
-| Merchant browse API — `GET /public/merchants` | P1 | Needed by StoresPage |
-| Flash discounts public API — `GET /public/flash-discounts` | P1 | Needed by FlashDealsPage |
 | Onboarding page | ✅ Exists | Minor: update city_name display |
 | AuthModal (inline auth on deal detail) | P2 | Modal to avoid page redirect |
 
