@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Zap, Clock, ChevronRight } from 'lucide-react'
 import { publicApi, type FlashDiscount } from '@/api/endpoints/public'
 import { useLocationStore } from '@/store/locationStore'
+import { slugify } from '@/lib/slugify'
 
 function timeLeft(until: string): string {
   const diff = new Date(until).getTime() - Date.now()
@@ -13,33 +14,53 @@ function timeLeft(until: string): string {
   return h > 0 ? `${h}h ${m}m left` : `${m}m left`
 }
 
+import { getImageUrl } from '@/lib/imageUrl'
+import { Helmet } from 'react-helmet-async'
+
 function imgSrc(path: string | null): string {
-  if (!path) return ''
-  if (path.startsWith('http')) return path
-  return `${import.meta.env.VITE_API_BASE_URL?.replace('/api', '') ?? 'http://localhost:8000'}${path}`
+  return getImageUrl(path)
 }
 
 function FlashDealCard({ deal }: { deal: FlashDiscount }) {
   return (
-    <Link to={`/flash-deals/${deal.id}`} className="card card-hover group overflow-hidden block">
-      <div className="relative h-44 bg-gradient-cta overflow-hidden flex items-center justify-center">
-        {deal.merchant_logo ? (
-          <img
-            src={imgSrc(deal.merchant_logo)}
-            alt={deal.merchant_name}
-            className="w-20 h-20 object-contain rounded-2xl bg-white p-2 shadow"
-          />
-        ) : (
-          <Zap size={48} className="text-white/60" />
-        )}
-        <div className="absolute top-3 right-3 w-16 h-16 rounded-full bg-white/20 backdrop-blur flex flex-col items-center justify-center">
-          <span className="font-black text-2xl text-white leading-none">{deal.discount_percentage}%</span>
-          <span className="text-white/70 text-xs">OFF</span>
+    <Link to={`/flash-deals/${deal.id}/${slugify(deal.title)}`} className="card card-hover group overflow-hidden block">
+      {/* Banner image */}
+      <div className="relative h-44 bg-slate-100 overflow-hidden">
+        <img
+          src={deal.banner_image ?? imgSrc(null)}
+          alt={deal.title}
+          loading="lazy"
+          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+          onError={(e) => { (e.target as HTMLImageElement).src = 'https://via.placeholder.com/400x200?text=Flash+Deal' }}
+        />
+        {/* Gradient overlay for readability */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
+        {/* Discount badge */}
+        <div className="absolute top-3 right-3 w-14 h-14 rounded-full bg-cta-500/90 backdrop-blur flex flex-col items-center justify-center shadow-lg">
+          <span className="font-black text-lg text-white leading-none">{deal.discount_percentage}%</span>
+          <span className="text-white/80 text-[10px] font-semibold">OFF</span>
         </div>
+        {/* Flash badge */}
+        <span className="absolute top-3 left-3 inline-flex items-center gap-1 bg-black/40 backdrop-blur-sm text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
+          <Zap size={9} className="fill-yellow-300 text-yellow-300" /> FLASH
+        </span>
       </div>
       <div className="p-4">
-        <h3 className="font-semibold text-slate-800 text-sm leading-snug line-clamp-2 mb-1">{deal.title}</h3>
-        <p className="text-xs text-slate-500 mb-3">{deal.merchant_name}</p>
+        <div className="flex items-center gap-2 mb-1.5">
+          {deal.merchant_logo ? (
+            <img
+              src={imgSrc(deal.merchant_logo)}
+              alt={deal.merchant_name}
+              loading="lazy"
+              className="w-5 h-5 rounded-full object-cover bg-slate-100 border border-slate-200"
+              onError={(e) => { (e.target as HTMLImageElement).src = 'https://via.placeholder.com/40?text=M' }}
+            />
+          ) : (
+            <Zap size={14} className="text-cta-500" />
+          )}
+          <span className="text-xs text-slate-500 truncate">{deal.merchant_name}</span>
+        </div>
+        <h3 className="font-semibold text-slate-800 text-sm leading-snug line-clamp-2 mb-2">{deal.title}</h3>
         <div className="flex items-center gap-1.5 text-xs text-cta-500 font-bold">
           <Clock size={12} /> {timeLeft(deal.valid_until)}
         </div>
@@ -60,6 +81,10 @@ export default function FlashDealsPage() {
 
   return (
     <div>
+      <Helmet>
+        <title>Flash Deals – Limited Time Discounts | Deal Machan</title>
+        <meta name="description" content="Grab time-sensitive flash deals and massive discounts from local merchants before they expire on Deal Machan." />
+      </Helmet>
       {/* Page header */}
       <div className="py-12" style={{ background: 'linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%)' }}>
         <div className="site-container text-center">

@@ -59,13 +59,20 @@ class PublicCouponController {
         );
         $total = (int)($countRow['cnt'] ?? 0);
 
+        // Check if user is authenticated (optional — public route)
+        $isAuthenticated = AuthMiddleware::optional();
+
         $limitParams = array_merge($params, [$perPage, $offset]);
         $coupons = $this->db->query(
             "SELECT c.id, c.title, c.description, c.discount_type, c.discount_value,
-                    c.min_purchase, c.max_discount, c.valid_until, c.coupon_code,
-                    c.terms_conditions, c.banner_image,
-                    m.id AS merchant_id, m.business_name, m.business_logo,
-                    m.business_category
+                    c.min_purchase_amount, c.max_discount_amount, c.valid_until,
+                    c.coupon_code,
+                    c.terms_conditions,
+                    c.banner_image,
+                    m.id AS merchant_id,
+                    m.business_name AS merchant_name,
+                    m.business_logo AS merchant_logo,
+                    m.is_premium
              FROM coupons c
              JOIN merchants m ON m.id = c.merchant_id AND m.profile_status = 'approved'
              WHERE {$whereSQL}
@@ -73,6 +80,17 @@ class PublicCouponController {
              LIMIT ? OFFSET ?",
             $limitParams
         );
+
+        // Hide coupon code for unauthenticated / guest users
+        if (!$isAuthenticated) {
+            foreach ($coupons as &$c) {
+                $c['coupon_code'] = null;
+            }
+            unset($c);
+        }
+
+        imageUrlField($coupons, 'merchant_logo');
+        imageUrlField($coupons, 'banner_image');
 
         Response::success([
             'data'       => $coupons,
@@ -87,14 +105,14 @@ class PublicCouponController {
 
     // ── GET /api/public/coupons/:id ───────────────────────────────────────────
     public function show(int $id): never {
+        $isAuthenticated = AuthMiddleware::optional();
+
         $coupon = $this->db->queryOne(
             "SELECT c.id, c.title, c.description, c.discount_type, c.discount_value,
-                    c.min_purchase AS min_purchase_amount, c.max_discount AS max_discount_amount,
-                    c.valid_until AS expiry_date, c.coupon_code, c.terms_conditions,
+                    c.min_purchase_amount, c.max_discount_amount,
+                    c.valid_until, c.coupon_code, c.terms_conditions,
                     c.banner_image,
-                    m.id AS merchant_id, m.business_name, m.business_logo, m.business_category,
-                    m.business_description, m.website_url,
-                    m.subscription_status
+                    m.id AS merchant_id, m.business_name, m.business_logo, m.is_premium
              FROM coupons c
              JOIN merchants m ON m.id = c.merchant_id AND m.profile_status = 'approved'
              WHERE c.id = ? AND c.status = 'active'",
@@ -103,33 +121,37 @@ class PublicCouponController {
 
         if (!$coupon) Response::notFound('Coupon not found.');
 
+        // Hide coupon code for unauthenticated / guest users
+        if (!$isAuthenticated) {
+            $coupon['coupon_code'] = null;
+        }
+
         // Merchant's stores where this coupon is valid
         $stores = $this->db->query(
-            "SELECT s.id, s.name AS store_name, s.address, s.phone,
+            "SELECT s.id, s.store_name, s.address, s.phone,
                     ci.city_name, a.area_name
              FROM stores s
              LEFT JOIN cities ci ON ci.id = s.city_id
              LEFT JOIN areas   a ON a.id  = s.area_id
              WHERE s.merchant_id = ? AND s.status = 'active'
-             ORDER BY s.name",
+             ORDER BY s.store_name",
             [$coupon['merchant_id']]
         );
 
         // Separate merchant object
         $merchant = [
-            'id'                   => $coupon['merchant_id'],
-            'business_name'        => $coupon['business_name'],
-            'business_logo'        => $coupon['business_logo'],
-            'business_category'    => $coupon['business_category'],
-            'business_description' => $coupon['business_description'],
-            'website_url'          => $coupon['website_url'],
+            'id'            => $coupon['merchant_id'],
+            'business_name' => $coupon['business_name'],
+            'business_logo' => imageUrl($coupon['business_logo']),
+            'is_premium'    => (bool)$coupon['is_premium'],
         ];
 
         unset(
-            $coupon['merchant_id'], $coupon['business_name'], $coupon['business_logo'],
-            $coupon['business_category'], $coupon['business_description'], $coupon['website_url'],
-            $coupon['subscription_status']
+            $coupon['merchant_id'], $coupon['business_name'],
+            $coupon['business_logo'], $coupon['is_premium']
         );
+
+        $coupon['banner_image'] = imageUrl($coupon['banner_image']);
 
         Response::success([
             'coupon'   => $coupon,
@@ -142,27 +164,60 @@ class PublicCouponController {
     public function flashDiscounts(array $query): never {
         $cityId = !empty($query['city_id']) ? (int)$query['city_id'] : null;
 
-        $where  = ["c.status = 'active'", "c.valid_until >= CURDATE()", "c.is_flash_deal = 1"];
+        $where  = ["fd.status = 'active'", "fd.valid_until >= NOW()"];
         $params = [];
 
         if ($cityId) {
-            $where[]  = "EXISTS (SELECT 1 FROM stores s WHERE s.merchant_id = c.merchant_id AND s.city_id = ? AND s.status='active')";
+            $where[]  = "(fd.store_id IS NULL OR EXISTS (SELECT 1 FROM stores s WHERE s.id = fd.store_id AND s.city_id = ? AND s.status='active'))";
             $params[] = $cityId;
         }
 
         $whereSQL = implode(' AND ', $where);
 
         $deals = $this->db->query(
-            "SELECT c.id, c.title, c.discount_type, c.discount_value, c.valid_until,
+            "SELECT fd.id, fd.title, fd.discount_percentage, fd.valid_until,
+                    fd.banner_image,
                     m.id AS merchant_id, m.business_name AS merchant_name, m.business_logo AS merchant_logo
-             FROM coupons c
-             JOIN merchants m ON m.id = c.merchant_id AND m.profile_status = 'approved'
+             FROM flash_discounts fd
+             JOIN merchants m ON m.id = fd.merchant_id AND m.profile_status = 'approved'
              WHERE {$whereSQL}
-             ORDER BY c.valid_until ASC
-             LIMIT 20",
+             ORDER BY fd.valid_until ASC
+             LIMIT 30",
             $params
         );
 
+        imageUrlField($deals, 'merchant_logo');
+        imageUrlField($deals, 'banner_image');
+
         Response::success($deals);
+    }
+
+    // ── GET /api/public/flash-discounts/:id ───────────────────────────────────
+    public function flashDiscountDetail(int $id): never {
+        $deal = $this->db->queryOne(
+            "SELECT fd.id, fd.title, fd.description, fd.discount_percentage,
+                    fd.valid_from, fd.valid_until,
+                    fd.max_redemptions, fd.current_redemptions, fd.status,
+                    fd.banner_image,
+                    m.id AS merchant_id, m.business_name AS merchant_name,
+                    m.business_logo AS merchant_logo,
+                    s.id AS store_id, s.store_name,
+                    s.address AS store_address, s.phone AS store_phone,
+                    ci.city_name, a.area_name
+             FROM flash_discounts fd
+             JOIN merchants m ON m.id = fd.merchant_id AND m.profile_status = 'approved'
+             LEFT JOIN stores s  ON s.id = fd.store_id
+             LEFT JOIN cities ci ON ci.id = s.city_id
+             LEFT JOIN areas  a  ON a.id  = s.area_id
+             WHERE fd.id = ? AND fd.status = 'active' AND fd.valid_until >= NOW()",
+            [$id]
+        );
+
+        if (!$deal) Response::notFound('Flash deal not found or has expired.');
+
+        $deal['merchant_logo'] = imageUrl($deal['merchant_logo']);
+        $deal['banner_image']  = imageUrl($deal['banner_image']);
+
+        Response::success($deal);
     }
 }

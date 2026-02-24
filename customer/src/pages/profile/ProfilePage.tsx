@@ -7,6 +7,7 @@ import {
 import { useAuthStore } from '@/store/authStore'
 import { profileApi } from '@/api/endpoints/profile'
 import { couponsApi } from '@/api/endpoints/coupons'
+import { Helmet } from 'react-helmet-async'
 
 interface MenuSection {
   title?: string
@@ -73,12 +74,22 @@ export default function ProfilePage() {
   ]
 
   return (
-    <div className="max-w-lg mx-auto px-4 py-6">
+    <div className="max-w-[1200px] mx-auto px-4 py-6">
+      <Helmet>
+        <title>My Profile | Deal Machan</title>
+      </Helmet>
+
+      {/* Desktop 2-column layout */}
+      <div className="lg:grid lg:grid-cols-[320px,1fr] lg:gap-8">
+
+        {/* ── Left column — Avatar + quick stats + menu ─────────────────── */}
+        <div className="space-y-4">
+
       {/* ── Avatar + name ─────────────────────────────────────────────── */}
       <div className="card p-5 flex items-center gap-4 mb-4">
         <div className="relative w-16 h-16 rounded-2xl shrink-0">
           {profile?.profile_image ? (
-            <img src={profile.profile_image} alt={profile.name} className="w-16 h-16 rounded-2xl object-cover" />
+            <img src={profile.profile_image} alt={profile.name} loading="lazy" className="w-16 h-16 rounded-2xl object-cover" />
           ) : (
             <div className="w-16 h-16 rounded-2xl gradient-brand flex items-center justify-center shadow-brand">
               <span className="text-white font-bold text-2xl">{profile?.name?.charAt(0).toUpperCase() ?? '?'}</span>
@@ -128,7 +139,7 @@ export default function ProfilePage() {
         <Link to="/profile/card" className="block mb-4">
           <div className="rounded-2xl overflow-hidden shadow-brand relative h-28">
             {card.card_image ? (
-              <img src={card.card_image} alt="My Card" className="w-full h-full object-cover" />
+              <img src={card.card_image} alt="My Card" loading="lazy" className="w-full h-full object-cover" />
             ) : (
               <div className="w-full h-full gradient-brand flex flex-col justify-between p-4">
                 <p className="text-white/60 text-[10px] uppercase tracking-widest">Deal Machan</p>
@@ -194,6 +205,66 @@ export default function ProfilePage() {
       {customer?.referral_code && (
         <p className="text-center text-[10px] text-gray-300 mt-4">Referral code: {customer.referral_code}</p>
       )}
+
+        </div>{/* /left column */}
+
+        {/* ── Right column — Card visual + menu links grid (desktop) ──── */}
+        <div className="hidden lg:block space-y-4 mt-0">
+          {/* Quick action grid */}
+          <div className="card p-6">
+            <h2 className="font-heading font-bold text-base text-gray-800 mb-4">Quick Actions</h2>
+            <div className="grid grid-cols-2 gap-3">
+              {[
+                { to: '/wallet',              icon: Bookmark,   label: 'My Wallet',       desc: 'Saved coupons & gifts' },
+                { to: '/referrals',           icon: Gift,       label: 'Refer & Earn',    desc: 'Invite friends for rewards' },
+                { to: '/profile/card',        icon: CreditCard, label: 'My Card',         desc: 'View loyalty card' },
+                { to: '/profile/subscription',icon: Star,       label: 'Subscription',    desc: 'Manage your plan' },
+                { to: '/notifications',       icon: Bell,       label: 'Notifications',   desc: 'Alerts & updates' },
+                { to: '/grievances',          icon: HelpCircle, label: 'Help & Support',  desc: 'Issues & complaints' },
+              ].map(({ to, icon: Icon, label, desc }) => (
+                <Link
+                  key={to}
+                  to={to}
+                  className="flex items-start gap-3 p-4 rounded-2xl border border-slate-100 hover:border-brand-200 hover:bg-brand-50/40 transition-all group"
+                >
+                  <span className="w-10 h-10 rounded-xl bg-brand-50 group-hover:bg-brand-100 flex items-center justify-center shrink-0 mt-0.5 transition-colors">
+                    <Icon size={18} className="text-brand-600" />
+                  </span>
+                  <div>
+                    <p className="text-sm font-semibold text-gray-800">{label}</p>
+                    <p className="text-xs text-gray-400 mt-0.5 leading-tight">{desc}</p>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+
+          {/* Card preview (if exists) */}
+          {card && (
+            <Link to="/profile/card" className="block">
+              <div className="card p-5">
+                <h2 className="font-heading font-bold text-base text-gray-800 mb-3">Loyalty Card</h2>
+                <div className="rounded-2xl overflow-hidden shadow-brand relative h-36">
+                  {card.card_image ? (
+                    <img src={card.card_image} alt="My Card" loading="lazy" className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full gradient-brand flex flex-col justify-between p-4">
+                      <p className="text-white/60 text-[10px] uppercase tracking-widest">Deal Machan</p>
+                      <div>
+                        <p className="text-white font-mono font-semibold text-sm tracking-widest">
+                          {card.card_number?.replace(/.(?=.{4})/g, '•') ?? '•••• •••• ••••'}
+                        </p>
+                        <p className="text-white/70 text-xs mt-1">{profile?.name}</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </Link>
+          )}
+        </div>{/* /right column */}
+
+      </div>{/* /grid */}
     </div>
   )
 }

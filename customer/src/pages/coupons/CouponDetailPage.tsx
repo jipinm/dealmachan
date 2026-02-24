@@ -8,6 +8,7 @@ import { useAuthStore } from '@/store/authStore'
 import { getApiError } from '@/api/client'
 import SkeletonCard, { SkeletonRow } from '@/components/ui/SkeletonCard'
 import toast from 'react-hot-toast'
+import { getImageUrl } from '@/lib/imageUrl'
 
 // Discount display helpers
 function discountLabel(type: string, value: number): string {
@@ -97,7 +98,7 @@ export default function CouponDetailPage() {
 
   if (isLoading) {
     return (
-      <div className="max-w-lg mx-auto px-4 py-5 space-y-4">
+      <div className="max-w-[1200px] mx-auto px-4 py-5 space-y-4">
         <div className="skeleton h-44 rounded-2xl" />
         <SkeletonCard />
         <SkeletonRow />
@@ -120,7 +121,7 @@ export default function CouponDetailPage() {
   const gradient = discountGradient(coupon.discount_type)
 
   return (
-    <div className="max-w-lg mx-auto pb-10">
+    <div className="max-w-[1200px] mx-auto pb-10">
       {/* ── Back button ─────────────────────────────────────────────────── */}
       <div className="px-4 pt-5 mb-4 flex items-center justify-between">
         <Link to="/coupons" className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-800">
@@ -131,128 +132,135 @@ export default function CouponDetailPage() {
         </button>
       </div>
 
-      {/* ── Coupon hero card ─────────────────────────────────────────────── */}
-      <div className="mx-4">
-        <div className={`rounded-2xl bg-gradient-to-br ${gradient} p-px shadow-brand`}>
-          <div className="rounded-2xl bg-white overflow-hidden">
-            {/* Top gradient stripe */}
-            <div className={`bg-gradient-to-r ${gradient} px-5 pt-6 pb-5 text-white`}>
-              <p className="text-xs font-semibold uppercase tracking-widest opacity-80 mb-1">{merchant.business_name}</p>
-              <p className="font-heading font-bold text-3xl leading-tight">{discountLabel(coupon.discount_type, coupon.discount_value)}</p>
-              <p className="text-sm mt-1 opacity-90">{coupon.title}</p>
-            </div>
+      {/* ── Desktop 2-column layout ──────────────────────────────────────── */}
+      <div className="px-4 lg:grid lg:grid-cols-[1fr,320px] lg:gap-8 lg:items-start">
 
-            {/* Dashed separator */}
-            <div className="flex items-center px-4 py-0">
-              <div className="w-5 h-5 -ml-7 rounded-full bg-white border-2 border-gray-200 shrink-0" />
-              <div className="flex-1 border-t-2 border-dashed border-gray-200 mx-2" />
-              <div className="w-5 h-5 -mr-7 rounded-full bg-white border-2 border-gray-200 shrink-0" />
-            </div>
+        {/* ── LEFT: coupon hero card + terms + purchase info ─────────────── */}
+        <div className="space-y-4">
 
-            {/* Code + expiry row */}
-            <div className="px-5 py-4 flex items-center justify-between gap-3">
-              <div>
-                {coupon.coupon_code ? (
-                  <button
-                    onClick={handleCopyCode}
-                    className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-100 hover:bg-brand-50 transition-colors"
-                  >
-                    <span className="font-mono font-bold text-gray-900 tracking-widest">{coupon.coupon_code}</span>
-                    {codeCopied
-                      ? <span className="text-xs text-emerald-600 font-semibold">Copied!</span>
-                      : <Copy size={13} className="text-gray-400" />
-                    }
-                  </button>
-                ) : (
-                  <span className="text-xs text-gray-400 italic">No code needed, just show at store</span>
-                )}
-                {expiry && (
-                  <p className={`text-xs mt-1.5 font-medium ${expiry.urgent ? 'text-red-500' : 'text-gray-400'}`}>
-                    <Clock size={10} className="inline mr-0.5" /> {expiry.text}
-                  </p>
-                )}
+          {/* ── Coupon hero card ─────────────────────────────────────────── */}
+          <div className={`rounded-2xl bg-gradient-to-br ${gradient} p-px shadow-brand`}>
+            <div className="rounded-2xl bg-white overflow-hidden">
+              {/* Top gradient stripe */}
+              <div className={`bg-gradient-to-r ${gradient} px-5 pt-6 pb-5 text-white`}>
+                <p className="text-xs font-semibold uppercase tracking-widest opacity-80 mb-1">{merchant.business_name}</p>
+                <p className="font-heading font-bold text-3xl leading-tight">{discountLabel(coupon.discount_type, coupon.discount_value)}</p>
+                <p className="text-sm mt-1 opacity-90">{coupon.title}</p>
               </div>
 
-              {/* Save / wallet button */}
-              <button
-                onClick={() => saveMutation.mutate()}
-                disabled={saved || saveMutation.isPending}
-                className={`flex flex-col items-center gap-0.5 px-3 py-2 rounded-xl transition-all ${
-                  saved
-                    ? 'bg-brand-50 text-brand-600'
-                    : 'bg-gray-100 text-gray-500 hover:bg-brand-50 hover:text-brand-600'
-                }`}
-              >
-                {saveMutation.isPending
-                  ? <Loader2 size={16} className="animate-spin" />
-                  : saved ? <BookmarkCheck size={16} /> : <Bookmark size={16} />
-                }
-                <span className="text-[10px] font-semibold">{saved ? 'Saved' : 'Save'}</span>
-              </button>
+              {/* Dashed separator */}
+              <div className="flex items-center px-4 py-0">
+                <div className="w-5 h-5 -ml-7 rounded-full bg-white border-2 border-gray-200 shrink-0" />
+                <div className="flex-1 border-t-2 border-dashed border-gray-200 mx-2" />
+                <div className="w-5 h-5 -mr-7 rounded-full bg-white border-2 border-gray-200 shrink-0" />
+              </div>
+
+              {/* Code + expiry row */}
+              <div className="px-5 py-4 flex items-center justify-between gap-3">
+                <div>
+                  {coupon.coupon_code ? (
+                    <button
+                      onClick={handleCopyCode}
+                      className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-100 hover:bg-brand-50 transition-colors"
+                    >
+                      <span className="font-mono font-bold text-gray-900 tracking-widest">{coupon.coupon_code}</span>
+                      {codeCopied
+                        ? <span className="text-xs text-emerald-600 font-semibold">Copied!</span>
+                        : <Copy size={13} className="text-gray-400" />
+                      }
+                    </button>
+                  ) : (
+                    <span className="text-xs text-gray-400 italic">No code needed, just show at store</span>
+                  )}
+                  {expiry && (
+                    <p className={`text-xs mt-1.5 font-medium ${expiry.urgent ? 'text-red-500' : 'text-gray-400'}`}>
+                      <Clock size={10} className="inline mr-0.5" /> {expiry.text}
+                    </p>
+                  )}
+                </div>
+
+                {/* Save / wallet button */}
+                <button
+                  onClick={() => saveMutation.mutate()}
+                  disabled={saved || saveMutation.isPending}
+                  className={`flex flex-col items-center gap-0.5 px-3 py-2 rounded-xl transition-all ${
+                    saved
+                      ? 'bg-brand-50 text-brand-600'
+                      : 'bg-gray-100 text-gray-500 hover:bg-brand-50 hover:text-brand-600'
+                  }`}
+                >
+                  {saveMutation.isPending
+                    ? <Loader2 size={16} className="animate-spin" />
+                    : saved ? <BookmarkCheck size={16} /> : <Bookmark size={16} />
+                  }
+                  <span className="text-[10px] font-semibold">{saved ? 'Saved' : 'Save'}</span>
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      </div>
 
-      {/* ── Details ─────────────────────────────────────────────────────── */}
-      <div className="px-4 mt-6 space-y-4">
-        {/* Merchant info */}
-        <Link to={`/merchants/${merchant.id}`} className="card p-4 flex items-center gap-3 hover:shadow-md transition-shadow block">
-          {merchant.business_logo ? (
-            <img src={merchant.business_logo} alt={merchant.business_name} className="w-12 h-12 rounded-xl object-cover" />
-          ) : (
-            <div className="w-12 h-12 rounded-xl gradient-brand flex items-center justify-center text-white font-bold text-lg">
-              {merchant.business_name.charAt(0)}
+          {/* ── Terms & conditions ───────────────────────────────────────── */}
+          {coupon.terms_and_conditions && (
+            <div className="card p-4">
+              <h3 className="font-semibold text-gray-900 text-sm mb-2">Terms & Conditions</h3>
+              <p className="text-xs text-gray-500 leading-relaxed whitespace-pre-line">{coupon.terms_and_conditions}</p>
             </div>
           )}
-          <div className="min-w-0">
-            <p className="font-semibold text-gray-900 text-sm truncate">{merchant.business_name}</p>
-            {merchant.business_category && <p className="text-xs text-gray-400">{merchant.business_category}</p>}
-          </div>
-          <ChevronLeft size={14} className="ml-auto rotate-180 text-gray-300" />
-        </Link>
 
-        {/* Terms & conditions */}
-        {coupon.terms_and_conditions && (
-          <div className="card p-4">
-            <h3 className="font-semibold text-gray-900 text-sm mb-2">Terms & Conditions</h3>
-            <p className="text-xs text-gray-500 leading-relaxed whitespace-pre-line">{coupon.terms_and_conditions}</p>
-          </div>
-        )}
-
-        {/* Min purchase */}
-        {coupon.min_purchase_amount > 0 && (
-          <div className="flex items-center gap-2 text-sm text-gray-600 bg-amber-50 border border-amber-100 rounded-xl px-4 py-3">
-            <span>💰</span>
-            <span>Minimum purchase: <span className="font-semibold text-amber-700">₹{coupon.min_purchase_amount}</span></span>
-          </div>
-        )}
-
-        {/* Max discount cap */}
-        {coupon.max_discount_amount > 0 && (
-          <div className="flex items-center gap-2 text-sm text-gray-600 bg-blue-50 border border-blue-100 rounded-xl px-4 py-3">
-            <span>🎯</span>
-            <span>Max discount: <span className="font-semibold text-blue-700">₹{coupon.max_discount_amount}</span></span>
-          </div>
-        )}
-
-        {/* Valid stores */}
-        {stores.length > 0 && (
-          <div className="card p-4">
-            <h3 className="font-semibold text-gray-900 text-sm mb-2 flex items-center gap-1.5">
-              <Store size={14} className="text-brand-400" /> Valid Stores
-            </h3>
-            <div className="space-y-2">
-              {stores.map((s: any) => (
-                <div key={s.id} className="text-xs text-gray-500">
-                  <p className="font-medium text-gray-700">{s.name}</p>
-                  {s.address && <p>{s.address}{s.area_name ? `, ${s.area_name}` : ''}</p>}
-                </div>
-              ))}
+          {/* ── Min purchase ─────────────────────────────────────────────── */}
+          {coupon.min_purchase_amount > 0 && (
+            <div className="flex items-center gap-2 text-sm text-gray-600 bg-amber-50 border border-amber-100 rounded-xl px-4 py-3">
+              <span>💰</span>
+              <span>Minimum purchase: <span className="font-semibold text-amber-700">₹{coupon.min_purchase_amount}</span></span>
             </div>
-          </div>
-        )}
-      </div>
+          )}
+
+          {/* ── Max discount cap ─────────────────────────────────────────── */}
+          {coupon.max_discount_amount > 0 && (
+            <div className="flex items-center gap-2 text-sm text-gray-600 bg-blue-50 border border-blue-100 rounded-xl px-4 py-3">
+              <span>🎯</span>
+              <span>Max discount: <span className="font-semibold text-blue-700">₹{coupon.max_discount_amount}</span></span>
+            </div>
+          )}
+        </div>{/* /left column */}
+
+        {/* ── RIGHT: merchant info + valid stores ──────────────────────────── */}
+        <div className="mt-6 lg:mt-0 space-y-4">
+          {/* Merchant info */}
+          <Link to={`/merchants/${merchant.id}`} className="card p-4 flex items-center gap-3 hover:shadow-md transition-shadow block">
+            {merchant.business_logo ? (
+              <img src={getImageUrl(merchant.business_logo)} alt={merchant.business_name} loading="lazy" className="w-12 h-12 rounded-xl object-cover" />
+            ) : (
+              <div className="w-12 h-12 rounded-xl gradient-brand flex items-center justify-center text-white font-bold text-lg">
+                {merchant.business_name.charAt(0)}
+              </div>
+            )}
+            <div className="min-w-0">
+              <p className="font-semibold text-gray-900 text-sm truncate">{merchant.business_name}</p>
+              {merchant.business_category && <p className="text-xs text-gray-400">{merchant.business_category}</p>}
+            </div>
+            <ChevronLeft size={14} className="ml-auto rotate-180 text-gray-300" />
+          </Link>
+
+          {/* Valid stores */}
+          {stores.length > 0 && (
+            <div className="card p-4">
+              <h3 className="font-semibold text-gray-900 text-sm mb-2 flex items-center gap-1.5">
+                <Store size={14} className="text-brand-400" /> Valid Stores
+              </h3>
+              <div className="space-y-2">
+                {stores.map((s: any) => (
+                  <div key={s.id} className="text-xs text-gray-500">
+                    <p className="font-medium text-gray-700">{s.name}</p>
+                    {s.address && <p>{s.address}{s.area_name ? `, ${s.area_name}` : ''}</p>}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>{/* /right column */}
+
+      </div>{/* /lg:grid */}
     </div>
   )
 }

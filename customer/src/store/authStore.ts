@@ -12,6 +12,7 @@ export interface CustomerProfile {
   subscription_expiry: string | null
   is_dealmaker: boolean
   referral_code: string
+  temp_password?: number   // 1 = must reset before proceeding
   is_new_user?: boolean
 }
 

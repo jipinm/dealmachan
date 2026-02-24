@@ -25,18 +25,19 @@ class FavouriteController {
         $cid = $this->getCustomer($user);
 
         $favourites = $this->db->query(
-            "SELECT m.id, m.business_name, m.business_logo, m.business_category,
+            "SELECT m.id, m.business_name, m.business_logo,
+                    NULL AS business_category,
                     m.subscription_status,
                     cf.saved_at,
-                    COUNT(DISTINCT c.id) AS active_coupon_count,
-                    COALESCE(AVG(mr.rating), 0) AS avg_rating,
-                    COUNT(DISTINCT mr.id)         AS total_reviews
+                    COUNT(DISTINCT c.id)          AS active_coupon_count,
+                    COALESCE(AVG(r.rating), 0)    AS avg_rating,
+                    COUNT(DISTINCT r.id)          AS total_reviews
              FROM customer_favourite_merchants cf
              JOIN merchants m ON m.id = cf.merchant_id
              LEFT JOIN coupons c ON c.merchant_id = m.id AND c.status = 'active' AND c.valid_until >= CURDATE()
-             LEFT JOIN merchant_reviews mr ON mr.merchant_id = m.id AND mr.status = 'approved'
+             LEFT JOIN reviews r ON r.merchant_id = m.id AND r.status = 'approved'
              WHERE cf.customer_id = ?
-             GROUP BY m.id, cf.saved_at
+             GROUP BY m.id, m.business_name, m.business_logo, m.subscription_status, cf.saved_at
              ORDER BY cf.saved_at DESC",
             [$cid]
         );

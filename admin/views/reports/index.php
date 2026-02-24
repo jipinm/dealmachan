@@ -8,6 +8,10 @@
         ['icon'=>'bi-shop',             'color'=>'success',  'label'=>'Merchant Reports',   'url'=>'reports/merchants',   'val'=>number_format($stats['total_merchants'])],
         ['icon'=>'bi-arrow-repeat',     'color'=>'warning',  'label'=>'Redemption Reports', 'url'=>'reports/redemptions', 'val'=>number_format($stats['total_redemptions'])],
         ['icon'=>'bi-credit-card-2-back','color'=>'info',    'label'=>'Cards Assigned',     'url'=>'cards',               'val'=>number_format($stats['assigned_cards'])],
+        ['icon'=>'bi-cash-stack',           'color'=>'success',  'label'=>'Revenue / GMV',      'url'=>'reports/revenue',          'val'=>''],
+        ['icon'=>'bi-credit-card',          'color'=>'primary',  'label'=>'Subscription Revenue','url'=>'reports/subscription-report','val'=>''],
+        ['icon'=>'bi-ticket-perforated',    'color'=>'warning',  'label'=>'Coupon Analytics',   'url'=>'reports/coupon-analytics', 'val'=>''],
+        ['icon'=>'bi-activity',             'color'=>'info',     'label'=>'Engagement',          'url'=>'reports/engagement',       'val'=>''],
     ];
     foreach ($navCards as $c): ?>
     <div class="col-6 col-xl-3">

@@ -13,12 +13,25 @@ export interface Advertisement {
 
 export interface FlashDiscount {
   id: number
-  title: string           // API returns fd.name aliased as title
+  title: string
+  description: string | null
   discount_percentage: number
-  valid_until: string     // API returns fd.ends_at aliased as valid_until
+  valid_from: string | null
+  valid_until: string
+  max_redemptions: number | null
+  current_redemptions: number
+  banner_image: string | null
   merchant_id: number
-  merchant_name: string   // API returns m.business_name aliased as merchant_name
+  merchant_name: string
   merchant_logo: string | null
+  merchant_category: string | null
+  merchant_description: string | null
+  store_id: number | null
+  store_name: string | null
+  store_address: string | null
+  store_phone: string | null
+  city_name: string | null
+  area_name: string | null
 }
 
 export interface FeaturedMerchant {
@@ -46,7 +59,7 @@ export interface HomeData {
 export interface TopCoupon {
   id: number
   title: string
-  coupon_code: string
+  coupon_code: string | null
   discount_type: 'percentage' | 'flat' | 'fixed' | 'free_item' | 'bogo'
   discount_value: number
   valid_until: string | null
@@ -76,6 +89,13 @@ export interface Area {
   city_id: number
 }
 
+export interface OpeningHoursEntry {
+  day: string
+  open?: string
+  close?: string
+  closed?: boolean
+}
+
 export interface PublicMerchant {
   id: number
   business_name: string
@@ -95,6 +115,11 @@ export interface PublicMerchant {
     area_name: string | null
     city_name: string | null
     phone: string | null
+    email: string | null
+    latitude: number | null
+    longitude: number | null
+    opening_hours: OpeningHoursEntry[]
+    description: string | null
   }>
 }
 
@@ -116,9 +141,30 @@ export interface Contest {
   status: 'active' | 'ended' | 'upcoming'
 }
 
+export interface MerchantGalleryImage {
+  id: number
+  image_url: string
+  caption: string | null
+  display_order: number
+  store_id: number
+  store_name: string
+}
+
+export interface SearchStore {
+  id: number
+  name: string
+  address: string
+  business_name: string
+  business_logo: string | null
+  city_name: string | null
+  area_name: string | null
+}
+
 export interface SearchResult {
-  merchants: FeaturedMerchant[]
-  coupons: TopCoupon[]
+  query: string
+  merchants: Array<FeaturedMerchant & { business_category: string | null; coupon_count: number }>
+  coupons: Array<TopCoupon & { description: string | null }>
+  stores?: SearchStore[]
 }
 
 // ── Public API ────────────────────────────────────────────────────────────
@@ -182,6 +228,10 @@ export const publicApi = {
   getFlashDiscounts: (params?: { city_id?: number }) =>
     apiClient.get<{ data: FlashDiscount[] }>('/public/flash-discounts', { params }),
 
+  /** Single flash discount detail */
+  getFlashDiscountDetail: (id: number) =>
+    apiClient.get<{ data: FlashDiscount }>(`/public/flash-discounts/${id}`),
+
   /** All tags (categories) */
   getTags: () =>
     apiClient.get<{ data: Tag[] }>('/public/tags'),
@@ -200,7 +250,10 @@ export const publicApi = {
 
   /** Blog posts */
   getBlogPosts: (params?: { page?: number }) =>
-    apiClient.get<{ data: BlogPost[] }>('/public/blog', { params }),
+    apiClient.get<{
+      data: BlogPost[]
+      meta: { total: number; page: number; per_page: number; pages: number }
+    }>('/public/blog', { params }),
 
   /** Single blog post */
   getBlogPost: (slug: string) =>
@@ -210,7 +263,15 @@ export const publicApi = {
   getContests: () =>
     apiClient.get<{ data: Contest[] }>('/public/contests'),
 
+  /** Merchant gallery images (all stores combined) */
+  getMerchantGallery: (id: number) =>
+    apiClient.get<{ data: MerchantGalleryImage[] }>(`/public/merchants/${id}/gallery`),
+
   /** Unified search */
   search: (q: string, params?: { city_id?: number }) =>
     apiClient.get<{ data: SearchResult }>('/public/search', { params: { q, ...params } }),
+
+  /** Submit a review for a merchant (requires auth) */
+  submitReview: (merchantId: number, body: { rating: number; review_text?: string }) =>
+    apiClient.post<{ data: { message: string } }>(`/public/merchants/${merchantId}/reviews`, body),
 }

@@ -4,8 +4,7 @@ import { ChevronLeft, Plus, Crown, Trash2, ImageOff, ArrowUp, ArrowDown } from '
 import { useRef, useState } from 'react'
 import toast from 'react-hot-toast'
 import { storeApi, type GalleryImage } from '@/api/endpoints/stores'
-
-const API_BASE = 'http://dealmachan-api.local'
+import { getImageUrl } from '@/lib/imageUrl'
 
 function ImageCard({
   image, storeId, onDelete, onSetCover, onMoveUp, onMoveDown, isDeleting, isSettingCover, isFirst, isLast,
@@ -25,7 +24,7 @@ function ImageCard({
     <div className={`relative rounded-2xl overflow-hidden aspect-square ${
       image.is_cover ? 'ring-2 ring-amber-400' : ''
     }`}>
-      <img src={`${API_BASE}${image.image_url}`} alt={image.caption ?? 'Gallery'} className="w-full h-full object-cover" />
+      <img src={getImageUrl(image.image_url)} alt={image.caption ?? 'Gallery'} className="w-full h-full object-cover" />
       {image.is_cover && (
         <div className="absolute top-1.5 left-1.5 bg-amber-400 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full flex items-center gap-0.5">
           <Crown size={8} />Cover

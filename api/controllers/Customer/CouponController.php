@@ -28,10 +28,10 @@ class CustomerCouponController {
         $saved = $this->db->query(
             "SELECT cs.id, cs.coupon_id, cs.saved_at,
                     c.title, c.description, c.discount_type, c.discount_value,
-                    c.min_purchase, c.max_discount, c.valid_from, c.valid_until,
+                    c.min_purchase_amount, c.max_discount_amount, c.valid_from, c.valid_until,
                     c.terms_conditions, c.coupon_code,
-                    m.business_name,
-                    s.name AS store_name
+                    m.business_name AS merchant_name, m.business_logo AS merchant_logo,
+                    s.store_name
              FROM coupon_subscriptions cs
              JOIN coupons c ON c.id = cs.coupon_id
              LEFT JOIN merchants m ON m.id = c.merchant_id
@@ -41,18 +41,17 @@ class CustomerCouponController {
             [$customerId]
         );
 
-        // Gift coupons
+        // Gift coupons pending acceptance
         $gifts = $this->db->query(
-            "SELECT gc.id, gc.coupon_id, gc.status, gc.sent_at, gc.message,
+            "SELECT gc.id AS gift_id, gc.coupon_id, gc.acceptance_status, gc.gifted_at,
                     c.title, c.description, c.discount_type, c.discount_value,
-                    c.valid_until,
-                    m.business_name
+                    c.valid_until, c.coupon_code,
+                    m.business_name AS merchant_name, m.business_logo AS merchant_logo
              FROM gift_coupons gc
-             JOIN store_coupons sc ON sc.id = gc.store_coupon_id
-             JOIN coupons c ON c.id = sc.coupon_id
+             JOIN coupons c ON c.id = gc.coupon_id
              LEFT JOIN merchants m ON m.id = c.merchant_id
-             WHERE gc.recipient_customer_id = ? AND gc.status = 'sent'
-             ORDER BY gc.sent_at DESC",
+             WHERE gc.customer_id = ? AND gc.acceptance_status = 'pending'
+             ORDER BY gc.gifted_at DESC",
             [$customerId]
         );
 
@@ -71,10 +70,10 @@ class CustomerCouponController {
         $offset  = ($page - 1) * $perPage;
 
         $redemptions = $this->db->query(
-            "SELECT cr.id, cr.redeemed_at, cr.discount_amount, cr.original_amount, cr.final_amount,
-                    c.title, c.discount_type, c.discount_value,
-                    m.business_name,
-                    s.name AS store_name
+            "SELECT cr.id, cr.redeemed_at, cr.discount_amount, cr.transaction_amount,
+                    c.title, c.coupon_code, c.discount_type, c.discount_value,
+                    m.business_name AS merchant_name,
+                    s.store_name
              FROM coupon_redemptions cr
              JOIN coupons c ON c.id = cr.coupon_id
              LEFT JOIN merchants m ON m.id = c.merchant_id
@@ -129,6 +128,100 @@ class CustomerCouponController {
         );
 
         Response::success(['coupon_id' => $couponId], 'Coupon saved to wallet', 201);
+    }
+
+    // ── POST /api/customers/coupons/:id/subscribe ─────────────────────────────
+    // 6-rule validated subscribe (proper replacement for /save over time)
+    public function subscribe(array $user, int $couponId): never {
+        // ── 1. Resolve customer ──────────────────────────────────────────────
+        $customer = $this->db->queryOne(
+            "SELECT c.id, c.customer_type, c.subscription_status
+             FROM customers c WHERE c.user_id = ?",
+            [$user['id']]
+        );
+        if (!$customer) Response::notFound('Customer profile not found.');
+
+        $customerId = (int)$customer['id'];
+
+        // ── 2. Coupon exists ─────────────────────────────────────────────────
+        $coupon = $this->db->queryOne(
+            "SELECT id, title, status, approval_status,
+                    valid_from, valid_until,
+                    usage_limit, usage_count
+             FROM coupons WHERE id = ?",
+            [$couponId]
+        );
+        if (!$coupon) {
+            Response::notFound('Coupon not found.');
+        }
+
+        // ── 3. Active & approved ─────────────────────────────────────────────
+        if ($coupon['status'] !== 'active') {
+            Response::error('This coupon is no longer active.', 409, 'COUPON_INACTIVE');
+        }
+        if ($coupon['approval_status'] !== 'approved') {
+            Response::error('This coupon is not yet approved.', 409, 'COUPON_NOT_APPROVED');
+        }
+
+        // ── 4. Not before valid_from ─────────────────────────────────────────
+        if ($coupon['valid_from'] && strtotime($coupon['valid_from']) > time()) {
+            Response::error('This coupon is not yet available.', 409, 'COUPON_NOT_STARTED');
+        }
+
+        // ── 5. Not expired ───────────────────────────────────────────────────
+        if ($coupon['valid_until'] && strtotime($coupon['valid_until']) < strtotime('today')) {
+            Response::error('This coupon has expired.', 410, 'COUPON_EXPIRED');
+        }
+
+        // ── 6. Usage / availability limit ────────────────────────────────────
+        if ($coupon['usage_limit'] !== null && (int)$coupon['usage_count'] >= (int)$coupon['usage_limit']) {
+            Response::error('This coupon is no longer available — all slots have been taken.', 409, 'COUPON_LIMIT_REACHED');
+        }
+
+        // ── 7. Duplicate check ───────────────────────────────────────────────
+        $already = $this->db->queryOne(
+            "SELECT id FROM coupon_subscriptions WHERE customer_id = ? AND coupon_id = ?",
+            [$customerId, $couponId]
+        );
+        if ($already) {
+            Response::error('You have already saved this coupon.', 409, 'ALREADY_SAVED');
+        }
+
+        // ── 8. Per-customer live subscription limit ───────────────────────────
+        // Premium customers: 50 live coupons; Standard (no subscription): 10
+        $isPremium = $customer['customer_type'] === 'premium'
+            || $customer['customer_type'] === 'dealmaker'
+            || $customer['subscription_status'] === 'active';
+        $limit = $isPremium ? 50 : 10;
+
+        $liveCount = (int)($this->db->queryOne(
+            "SELECT COUNT(*) AS cnt
+             FROM coupon_subscriptions cs
+             WHERE cs.customer_id = ?",
+            [$customerId]
+        )['cnt'] ?? 0);
+
+        if ($liveCount >= $limit) {
+            Response::error(
+                $isPremium
+                    ? "You have reached the maximum of {$limit} saved coupons."
+                    : "Free accounts can save up to {$limit} coupons at a time. Upgrade to Premium for more.",
+                409, 'SUBSCRIPTION_LIMIT_REACHED'
+            );
+        }
+
+        // ── Insert ───────────────────────────────────────────────────────────
+        $this->db->execute(
+            "INSERT INTO coupon_subscriptions (customer_id, coupon_id, status, saved_at)
+             VALUES (?, ?, 'saved', NOW())",
+            [$customerId, $couponId]
+        );
+
+        Response::success(
+            ['coupon_id' => $couponId, 'coupon_title' => $coupon['title']],
+            'Coupon saved to your wallet!',
+            201
+        );
     }
 
     // ── DELETE /api/customers/coupons/:id/save ────────────────────────────────
@@ -220,14 +313,14 @@ class CustomerCouponController {
         if (!$customer) Response::notFound('Customer profile not found.');
 
         $gifts = $this->db->query(
-            "SELECT gc.id AS gift_id, gc.coupon_id, gc.status AS acceptance_status, gc.sent_at, gc.message,
-                    c.title, c.discount_type, c.discount_value, c.valid_until,
+            "SELECT gc.id AS gift_id, gc.coupon_id, gc.acceptance_status, gc.gifted_at,
+                    c.title, c.discount_type, c.discount_value, c.valid_until, c.coupon_code,
                     m.business_name AS merchant_name, m.business_logo AS merchant_logo
              FROM gift_coupons gc
              JOIN coupons c ON c.id = gc.coupon_id
              LEFT JOIN merchants m ON m.id = c.merchant_id
-             WHERE gc.recipient_customer_id = ?
-             ORDER BY gc.sent_at DESC",
+             WHERE gc.customer_id = ?
+             ORDER BY gc.gifted_at DESC",
             [$customer['id']]
         );
 
@@ -240,16 +333,16 @@ class CustomerCouponController {
         if (!$customer) Response::notFound('Customer profile not found.');
 
         $gift = $this->db->queryOne(
-            "SELECT gc.id, gc.coupon_id, gc.status
+            "SELECT gc.id, gc.coupon_id, gc.acceptance_status
              FROM gift_coupons gc
-             WHERE gc.id = ? AND gc.recipient_customer_id = ?",
+             WHERE gc.id = ? AND gc.customer_id = ?",
             [$giftId, $customer['id']]
         );
         if (!$gift) Response::notFound('Gift coupon not found.');
-        if ($gift['status'] !== 'sent') Response::error('Gift coupon already processed.', 409, 'ALREADY_PROCESSED');
+        if ($gift['acceptance_status'] !== 'pending') Response::error('Gift coupon already processed.', 409, 'ALREADY_PROCESSED');
 
         $this->db->execute(
-            "UPDATE gift_coupons SET status = 'accepted', responded_at = NOW() WHERE id = ?",
+            "UPDATE gift_coupons SET acceptance_status = 'accepted', accepted_at = NOW() WHERE id = ?",
             [$giftId]
         );
 
@@ -275,17 +368,52 @@ class CustomerCouponController {
         if (!$customer) Response::notFound('Customer profile not found.');
 
         $gift = $this->db->queryOne(
-            "SELECT id, status FROM gift_coupons WHERE id = ? AND recipient_customer_id = ?",
+            "SELECT id, acceptance_status FROM gift_coupons WHERE id = ? AND customer_id = ?",
             [$giftId, $customer['id']]
         );
         if (!$gift) Response::notFound('Gift coupon not found.');
-        if ($gift['status'] !== 'sent') Response::error('Gift coupon already processed.', 409, 'ALREADY_PROCESSED');
+        if ($gift['acceptance_status'] !== 'pending') Response::error('Gift coupon already processed.', 409, 'ALREADY_PROCESSED');
 
         $this->db->execute(
-            "UPDATE gift_coupons SET status = 'rejected', responded_at = NOW() WHERE id = ?",
+            "UPDATE gift_coupons SET acceptance_status = 'rejected', accepted_at = NOW() WHERE id = ?",
             [$giftId]
         );
 
         Response::success(null, 'Gift coupon declined');
+    }
+
+    // ── GET /api/customers/store-coupons ──────────────────────────────────────
+    // Returns store_coupons gifted directly to this customer by a merchant
+    public function storeCoupons(array $user): never {
+        $customer = $this->db->queryOne("SELECT id FROM customers WHERE user_id = ?", [$user['id']]);
+        if (!$customer) Response::notFound('Customer profile not found.');
+
+        $cid = (int)$customer['id'];
+
+        $coupons = $this->db->query(
+            "SELECT sc.id,
+                    sc.coupon_code,
+                    sc.discount_type,
+                    sc.discount_value,
+                    sc.valid_from,
+                    sc.valid_until,
+                    sc.is_redeemed,
+                    sc.redeemed_at,
+                    sc.status,
+                    sc.gifted_at,
+                    m.business_name AS merchant_name,
+                    m.business_logo AS merchant_logo,
+                    s.name          AS store_name,
+                    s.address       AS store_address
+             FROM store_coupons sc
+             LEFT JOIN merchants m ON m.id = sc.merchant_id
+             LEFT JOIN stores    s ON s.id  = sc.store_id
+             WHERE sc.gifted_to_customer_id = ?
+               AND sc.is_gifted = 1
+             ORDER BY sc.gifted_at DESC",
+            [$cid]
+        );
+
+        Response::success($coupons);
     }
 }

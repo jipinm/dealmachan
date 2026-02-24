@@ -48,6 +48,23 @@ export interface RedeemRequest {
   store_id?: number
 }
 
+export interface StoreCoupon {
+  id: number
+  coupon_code: string
+  discount_type: 'percentage' | 'fixed'
+  discount_value: number
+  valid_from: string | null
+  valid_until: string | null
+  is_redeemed: number
+  redeemed_at: string | null
+  status: 'active' | 'inactive' | 'expired'
+  gifted_at: string
+  merchant_name: string
+  merchant_logo: string | null
+  store_name: string | null
+  store_address: string | null
+}
+
 export const couponsApi = {
   /** Get all saved + accepted gift coupons in wallet */
   getWallet: () =>
@@ -60,9 +77,13 @@ export const couponsApi = {
       meta: { total: number; page: number; per_page: number }
     }>('/customers/coupons/history', { params }),
 
-  /** Save a coupon to wallet */
+  /** Save a coupon to wallet (basic) */
   saveCoupon: (couponId: number) =>
     apiClient.post(`/customers/coupons/${couponId}/save`),
+
+  /** Save a coupon with full 6-rule server-side validation */
+  subscribe: (couponId: number) =>
+    apiClient.post<{ data: { coupon_id: number; coupon_title: string } }>(`/customers/coupons/${couponId}/subscribe`),
 
   /** Remove saved coupon from wallet */
   unsaveCoupon: (couponId: number) =>
@@ -89,4 +110,8 @@ export const couponsApi = {
   /** Reject a gift coupon */
   rejectGift: (giftId: number) =>
     apiClient.post(`/customers/gift-coupons/${giftId}/reject`),
+
+  /** Get store coupons gifted by a merchant directly to this customer */
+  getStoreCoupons: () =>
+    apiClient.get<{ data: StoreCoupon[] }>('/customers/store-coupons').then(r => r.data.data ?? []),
 }

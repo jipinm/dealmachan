@@ -115,6 +115,49 @@ class FlashDiscount extends Model {
         return $stmt->fetchAll();
     }
 
+    // ─── CREATE ───────────────────────────────────────────────────────────────
+
+    public function createFlashDiscount($data) {
+        $data['created_at'] = date('Y-m-d H:i:s');
+
+        foreach (['store_id', 'description', 'valid_from', 'valid_until',
+                  'max_redemptions', 'banner_image'] as $nullable) {
+            if (isset($data[$nullable]) && $data[$nullable] === '') {
+                $data[$nullable] = null;
+            }
+        }
+
+        $cols   = implode(', ', array_keys($data));
+        $places = implode(', ', array_fill(0, count($data), '?'));
+        $stmt   = $this->db->prepare("INSERT INTO {$this->table} ({$cols}) VALUES ({$places})");
+        $stmt->execute(array_values($data));
+        return (int)$this->db->lastInsertId();
+    }
+
+    // ─── UPDATE ───────────────────────────────────────────────────────────────
+
+    public function updateFlashDiscount($id, $data) {
+        $data['updated_at'] = date('Y-m-d H:i:s');
+
+        foreach (['store_id', 'description', 'valid_from', 'valid_until',
+                  'max_redemptions', 'banner_image'] as $nullable) {
+            if (isset($data[$nullable]) && $data[$nullable] === '') {
+                $data[$nullable] = null;
+            }
+        }
+
+        $set = [];
+        foreach (array_keys($data) as $col) {
+            $set[] = "{$col} = ?";
+        }
+        $params   = array_values($data);
+        $params[] = $id;
+        $stmt = $this->db->prepare(
+            "UPDATE {$this->table} SET " . implode(', ', $set) . " WHERE id = ?"
+        );
+        return $stmt->execute($params);
+    }
+
     // ─── TOGGLE ───────────────────────────────────────────────────────────────
 
     public function toggleStatus($id) {

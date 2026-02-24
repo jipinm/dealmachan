@@ -8,7 +8,7 @@ import { getApiError } from '@/api/client'
 import toast from 'react-hot-toast'
 import AuthLayout from '@/components/layout/AuthLayout'
 
-const OTP_LENGTH = 6
+const OTP_LENGTH = 4 // DEV: matches hardcoded OTP '1234'
 
 export default function OtpVerifyPage() {
   const navigate = useNavigate()

@@ -1,132 +1,82 @@
-# Legacy PHP Application Functional Extraction Prompt
+# Task: Validate Admin Task List Against Customer Application
 
-## Overview
+A task list has already been prepared in **#file:./ADMIN-FINAL-TASK-LIST.md** based on the analysis of the admin and merchant applications.
 
-You are provided with two separate legacy **pure PHP** codebases:
+Now, analyze the **#file:./customer/** codebase to verify and refine this task list.
 
-- **`OLD-Customer-application-PHP-code/`** → contains the old **Customer application**
-- **`OLD-Merchant-application-PHP-code/`** → contains the old **Merchant application**
-
-These systems:
-- Use **direct database connections**
-- Render data **directly on PHP pages**
-- Do NOT expose API endpoints
-
-Your task is to analyze these legacy applications and extract **all existing functionalities, features, and business logic** in detail.
+The purpose of this analysis is to check whether any of the items listed in the admin task list are:
+- Already managed or partially managed by the **customer application**, or
+- Require additional MIS, reporting, or visibility in the **admin application**, even if they are handled on the customer side.
 
 ---
 
-## 1. Primary Objective (Critical)
+## Objectives
 
-The **main and mandatory goal** is:
+1. Analyze the **customer application codebase** to identify:
+   - What data is created or updated by customers
+   - What actions are performed by customers (e.g., registrations, coupon usage, deal views, redemptions, feedback, etc.)
+   - What entities or tables are affected by customer actions
 
-> To identify, document, and clearly describe **every functionality that currently exists** in both legacy applications so that they can be **fully re-implemented in the new system without any loss of behavior or business logic**.
+2. Cross-check these findings with **#file:./ADMIN-FINAL-TASK-LIST.md**:
+   - Identify which admin tasks depend on customer-side data
+   - Identify which tasks are already indirectly covered by the customer application
+   - Identify any missing MIS or reporting needs in the admin application for customer-managed data
 
-Missing even a single functional behavior is considered a failure of this task.
-
----
-
-## 2. Code Analysis Scope
-
-Thoroughly analyze **all source code** in both applications:
-
-- Customer Application: `OLD-Customer-application-PHP-code/`
-- Merchant Application: `OLD-Merchant-application-PHP-code/`
-
-Including but not limited to:
-
-- PHP pages and includes  
-- Form submissions and handlers  
-- Database queries and transactions  
-- Conditional logic and calculations  
-- Session and authentication handling  
-- User role–based behavior  
-- CRUD operations  
-- all modules and components that contribute to the user experience and business processes 
-- State transitions and workflow rules  
-- Validation logic and constraints  
+3. Ensure that:
+   - Even if a feature is managed by the customer application,  
+     the **admin application must still provide MIS / visibility** based on admin roles and permissions.
+   - No required admin MIS feature is removed simply because the customer app manages the data.
 
 ---
 
-## 3. Documentation Deliverables
+## Required Output
 
-Produce **two separate functional specification documents**:
+Generate an updated and refined version of the admin task list with the following details:
 
-### 📘 Document 1: Customer Application  
-Source: `OLD-Customer-application-PHP-code/`
+For each task in **#file:./ADMIN-FINAL-TASK-LIST.md**, specify:
 
-### 📕 Document 2: Merchant Application  
-Source: `OLD-Merchant-application-PHP-code/`
-
-Each document must list and explain:
-
-- Every **feature and functionality**  
-- All **business rules and decision logic**  
-- Step-by-step **user workflows**  
-- Page-level behaviors  
-- Data dependencies and effects  
-- Validation and restriction rules  
-
----
-
-## 4. Documentation Requirements
-
-For each identified functionality, document:
-
-- Feature name  
-- Description of what it does  
-- Who can use it (user role)  
-- Inputs (forms, buttons, parameters)  
-- Processing logic  
-- Output/result  
-- Database impact (tables affected)  
-- Conditions and edge cases  
+- Task / Feature name  
+- Related database table(s)  
+- Managed by:
+  - Customer application  
+  - Merchant application  
+  - System / API  
+- What is still missing in the admin application (if any)  
+- Whether the task should:
+  - Remain in the admin task list  
+  - Be modified  
+  - Be split into multiple tasks (e.g., management vs MIS/reporting)  
 
 ---
 
-## 5. Purpose of the Documentation
+## Rules
 
-These documents will be used as:
+- Do **NOT** modify any code.
+- Perform only:
+  - Codebase analysis  
+  - Task list validation  
+  - Gap identification  
+  - Task list refinement  
 
-- The **functional blueprint** for building the new Customer and Merchant applications  
-- The **single source of truth** for existing system behavior  
-- A safeguard to ensure **no functional regression** during migration  
+- Do **NOT** remove tasks unless:
+  - They are fully implemented in the admin application  
+  - AND admin MIS requirements are already satisfied
 
-Therefore:
-
-- ✅ Everything that exists must be captured  
-- ✅ Nothing new must be invented  
-- ✅ Nothing existing must be ignored  
-- ✅ Logic must be described in business terms, not just code  
-
----
-
-## 6. Documentation Style
-
-- Functional and business-oriented language  
-- Clear structure and headings  
-- No raw code dumps  
-- No speculative features  
-- No architectural redesign  
+- Focus on:
+  - Data ownership (customer vs merchant vs admin)
+  - MIS and reporting requirements for admin roles
+  - Relationship between customer actions and admin visibility
 
 ---
 
-## 7. Prohibited Actions
+## Final Deliverable
 
-- ❌ Do NOT redesign the system  
-- ❌ Do NOT modernize it  
-- ❌ Do NOT convert it to APIs  
-- ❌ Do NOT simplify or omit logic  
-- ❌ Do NOT assume undocumented behavior  
+Produce a revised task list document in Markdown that:
 
-Only describe what is verifiably present in the legacy code.
-
----
-
-## Output Format
-
-- Two separate Markdown documents:
-  - `customer-functional-spec.md`
-  - `merchant-functional-spec.md`
-
-Each must be complete and standalone.
+1. References **#file:./ADMIN-FINAL-TASK-LIST.md**
+2. Shows which tasks are impacted by customer application behavior
+3. Clearly marks:
+   - Valid tasks  
+   - Modified tasks  
+   - Newly identified tasks (if any)
+4. Represents the **final authoritative task list** for completing the admin application

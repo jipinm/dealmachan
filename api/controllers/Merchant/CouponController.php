@@ -72,6 +72,11 @@ class CouponController {
             [...$binds, $limit, $offset]
         );
 
+        foreach ($rows as &$r) {
+            $r['banner_image'] = imageUrl($r['banner_image'] ?? null);
+        }
+        unset($r);
+
         Response::success($rows, 'OK', 200, [
             'total' => $total,
             'page'  => $page,
@@ -169,7 +174,96 @@ class CouponController {
         );
 
         if (!$coupon) Response::notFound('Coupon not found');
+        $coupon['banner_image'] = imageUrl($coupon['banner_image'] ?? null);
         Response::success($coupon);
+    }
+
+    // ── POST /merchants/coupons/:id/image ─────────────────────────────────────
+    public function uploadImage(array $user, int $id): never {
+        $merchantId = (int)$user['merchant_id'];
+
+        $coupon = $this->db->queryOne(
+            'SELECT id, banner_image FROM coupons WHERE id = ? AND merchant_id = ?',
+            [$id, $merchantId]
+        );
+        if (!$coupon) Response::notFound('Coupon not found');
+
+        if (empty($_FILES['image'])) {
+            Response::error('No image uploaded.', 400, 'NO_FILE');
+        }
+
+        $file = $_FILES['image'];
+        if ($file['error'] !== UPLOAD_ERR_OK) {
+            Response::error('Upload error.', 422, 'UPLOAD_ERROR');
+        }
+
+        $allowedMimes = ['image/jpeg', 'image/png', 'image/webp', 'image/jpg'];
+        $maxSize      = 5 * 1024 * 1024;
+
+        if ($file['size'] > $maxSize) {
+            Response::error('Image must be under 5MB.', 422, 'FILE_TOO_LARGE');
+        }
+
+        $finfo = finfo_open(FILEINFO_MIME_TYPE);
+        $mime  = finfo_file($finfo, $file['tmp_name']);
+        finfo_close($finfo);
+
+        if (!in_array($mime, $allowedMimes)) {
+            Response::error('Only JPEG, PNG, or WebP images are allowed.', 422, 'INVALID_TYPE');
+        }
+
+        $uploadDir = API_UPLOAD_PATH . '/coupon-banners/';
+        if (!is_dir($uploadDir)) {
+            mkdir($uploadDir, 0755, true);
+        }
+
+        // Delete old banner if it exists
+        if (!empty($coupon['banner_image'])) {
+            $oldFile = $uploadDir . basename($coupon['banner_image']);
+            if (file_exists($oldFile)) @unlink($oldFile);
+        }
+
+        $ext      = pathinfo($file['name'], PATHINFO_EXTENSION) ?: 'jpg';
+        $filename = 'coupon_' . $id . '_' . uniqid() . '.' . strtolower($ext);
+        $dest     = $uploadDir . $filename;
+
+        if (!move_uploaded_file($file['tmp_name'], $dest)) {
+            Response::error('Failed to save image.', 500, 'SAVE_FAILED');
+        }
+
+        $relPath = '/uploads/coupon-banners/' . $filename;
+        $this->db->execute(
+            'UPDATE coupons SET banner_image = ? WHERE id = ?',
+            [$relPath, $id]
+        );
+
+        Response::success(['banner_image' => imageUrl($relPath)], 'Deal image uploaded.');
+    }
+
+    // ── DELETE /merchants/coupons/:id/image ────────────────────────────────────
+    public function deleteImage(array $user, int $id): never {
+        $merchantId = (int)$user['merchant_id'];
+
+        $coupon = $this->db->queryOne(
+            'SELECT id, banner_image FROM coupons WHERE id = ? AND merchant_id = ?',
+            [$id, $merchantId]
+        );
+        if (!$coupon) Response::notFound('Coupon not found');
+
+        if (empty($coupon['banner_image'])) {
+            Response::error('No image to delete.', 400, 'NO_IMAGE');
+        }
+
+        $uploadDir = API_UPLOAD_PATH . '/coupon-banners/';
+        $oldFile   = $uploadDir . basename($coupon['banner_image']);
+        if (file_exists($oldFile)) @unlink($oldFile);
+
+        $this->db->execute(
+            'UPDATE coupons SET banner_image = NULL WHERE id = ?',
+            [$id]
+        );
+
+        Response::success(null, 'Deal image removed.');
     }
 
     // ── PUT /merchants/coupons/:id ────────────────────────────────────────────

@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Loader2, MapPin, CheckCircle2 } from 'lucide-react'
+import { Loader2, MapPin, CheckCircle2, Navigation } from 'lucide-react'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { publicApi } from '@/api/endpoints/public'
 import { profileApi } from '@/api/endpoints/profile'
@@ -12,12 +12,13 @@ import toast from 'react-hot-toast'
 export default function OnboardingPage() {
   const navigate = useNavigate()
   const { setCustomer } = useAuthStore()
-  const { setLocation } = useLocationStore()
+  const { cityId: storedCityId, cityName: storedCityName, setLocation } = useLocationStore()
 
-  const [selectedCityId, setSelectedCityId] = useState<number | null>(null)
-  const [selectedCityName, setSelectedCityName] = useState('')
+  const [selectedCityId, setSelectedCityId] = useState<number | null>(storedCityId)
+  const [selectedCityName, setSelectedCityName] = useState(storedCityName ?? '')
   const [selectedAreaId, setSelectedAreaId] = useState<number | null>(null)
   const [selectedAreaName, setSelectedAreaName] = useState('')
+  const [autoDetected, setAutoDetected] = useState(!!storedCityId)
 
   const { data: cities, isLoading: citiesLoading } = useQuery({
     queryKey: ['cities'],
@@ -32,17 +33,26 @@ export default function OnboardingPage() {
     enabled:   !!selectedCityId,
   })
 
+  // If auto-detect finishes after this page mounts, pick it up
+  useEffect(() => {
+    if (storedCityId && !selectedCityId) {
+      setSelectedCityId(storedCityId)
+      setSelectedCityName(storedCityName ?? '')
+      setAutoDetected(true)
+    }
+  }, [storedCityId, storedCityName]) // eslint-disable-line react-hooks/exhaustive-deps
+
   const { mutate, isPending } = useMutation({
     mutationFn: () =>
       profileApi.updateProfile({
-        city_id:  selectedCityId!,
-        area_id:  selectedAreaId ?? undefined,
+        city_id: selectedCityId!,
+        area_id: selectedAreaId ?? undefined,
       }),
     onSuccess: (res) => {
       if (res.data.data) setCustomer(res.data.data as any)
       setLocation(selectedCityId!, selectedCityName, selectedAreaId ?? undefined, selectedAreaName || undefined)
       toast.success(`Welcome to Deal Machan, ${selectedCityName}!`)
-      navigate('/dashboard', { replace: true })
+      navigate('/deals', { replace: true })
     },
     onError: (err) => toast.error(getApiError(err)),
   })
@@ -52,11 +62,20 @@ export default function OnboardingPage() {
     setSelectedCityName(name)
     setSelectedAreaId(null)
     setSelectedAreaName('')
+    setAutoDetected(false)
   }
 
   const handleAreaSelect = (id: number, name: string) => {
     setSelectedAreaId(id)
     setSelectedAreaName(name)
+  }
+
+  // Skip: save the auto-detected / already-stored location without a profile API call
+  const handleSkip = () => {
+    if (selectedCityId) {
+      setLocation(selectedCityId, selectedCityName, null, null)
+    }
+    navigate('/deals', { replace: true })
   }
 
   const canContinue = !!selectedCityId
@@ -74,6 +93,16 @@ export default function OnboardingPage() {
             Select your city to discover deals near you. You can change this anytime.
           </p>
         </div>
+
+        {/* Auto-detect banner */}
+        {autoDetected && selectedCityName && (
+          <div className="flex items-center gap-2 bg-white/20 rounded-xl px-4 py-2.5 mb-4 text-white text-sm">
+            <Navigation size={15} className="shrink-0 text-green-300" />
+            <span>
+              <span className="font-semibold">{selectedCityName}</span> detected automatically
+            </span>
+          </div>
+        )}
 
         {/* City selection */}
         <div className="bg-white/10 backdrop-blur rounded-2xl p-4 mb-4">
@@ -94,7 +123,11 @@ export default function OnboardingPage() {
                       : 'bg-white/20 text-white hover:bg-white/30'
                   }`}
                 >
-                  {selectedCityId === city.id && <CheckCircle2 size={13} />}
+                  {selectedCityId === city.id && (
+                    autoDetected
+                      ? <Navigation size={13} className="text-brand-500" />
+                      : <CheckCircle2 size={13} />
+                  )}
                   {city.city_name}
                 </button>
               ))}
@@ -138,7 +171,7 @@ export default function OnboardingPage() {
         </button>
 
         <button
-          onClick={() => navigate('/dashboard', { replace: true })}
+          onClick={handleSkip}
           className="text-white/50 text-sm text-center mt-4 hover:text-white/80 transition-colors"
         >
           Skip for now

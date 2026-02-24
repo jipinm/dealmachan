@@ -1,13 +1,14 @@
-import { useEffect } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { ChevronLeft, Save } from 'lucide-react'
+import { ChevronLeft, ImagePlus, Save, Trash2 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { couponApi, type CreateCouponPayload } from '@/api/endpoints/coupons'
 import { storeApi } from '@/api/endpoints/stores'
+import { getImageUrl } from '@/lib/imageUrl'
 
 const schema = z.object({
   title:               z.string().min(2, 'Min 2 characters'),
@@ -44,6 +45,11 @@ export default function CouponFormPage() {
   const isEdit       = Boolean(id)
   const qc           = useQueryClient()
 
+  const [bannerImage, setBannerImage]       = useState<string | null>(null)
+  const [uploadingImg, setUploadingImg]     = useState(false)
+  const [removingImg, setRemovingImg]       = useState(false)
+  const fileInputRef                        = useRef<HTMLInputElement>(null)
+
   const { register, handleSubmit, control, watch, reset, formState: { errors } } =
     useForm<FormValues>({
       resolver: zodResolver(schema),
@@ -75,6 +81,7 @@ export default function CouponFormPage() {
         usage_limit:         existingData.usage_limit,
         terms_conditions:    existingData.terms_conditions ?? '',
       })
+      setBannerImage(existingData.banner_image ?? null)
     }
   }, [existingData, reset])
 
@@ -116,6 +123,36 @@ export default function CouponFormPage() {
       toast.error(e?.response?.data?.message ?? 'Something went wrong')
     },
   })
+
+  async function handleImageUpload(file: File) {
+    if (!id) return
+    setUploadingImg(true)
+    try {
+      const res = await couponApi.uploadImage(Number(id), file)
+      setBannerImage(res.data.data.banner_image)
+      qc.invalidateQueries({ queryKey: ['coupon', id] })
+      toast.success('Deal image uploaded!')
+    } catch (e: any) {
+      toast.error(e?.response?.data?.message ?? 'Upload failed')
+    } finally {
+      setUploadingImg(false)
+    }
+  }
+
+  async function handleImageRemove() {
+    if (!id) return
+    setRemovingImg(true)
+    try {
+      await couponApi.deleteImage(Number(id))
+      setBannerImage(null)
+      qc.invalidateQueries({ queryKey: ['coupon', id] })
+      toast.success('Deal image removed')
+    } catch (e: any) {
+      toast.error(e?.response?.data?.message ?? 'Remove failed')
+    } finally {
+      setRemovingImg(false)
+    }
+  }
 
   return (
     <div className="min-h-full bg-gray-50">
@@ -257,6 +294,74 @@ export default function CouponFormPage() {
               placeholder="Any restrictions or conditions…" className={inputCls} />
           </Field>
         </div>
+
+        {/* Deal Image — only available in edit mode */}
+        {isEdit ? (
+          <div className="bg-white rounded-2xl p-4 space-y-3 shadow-sm">
+            <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Deal Image</p>
+            <p className="text-xs text-gray-500">Upload a promotional image for this deal. This replaces the business logo on deal cards.</p>
+
+            {bannerImage ? (
+              <div className="relative">
+                <img
+                  src={getImageUrl(bannerImage)}
+                  alt="Deal banner"
+                  className="w-full h-40 object-cover rounded-xl bg-slate-100"
+                />
+                <button
+                  type="button"
+                  onClick={handleImageRemove}
+                  disabled={removingImg}
+                  className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white rounded-full p-1.5 disabled:opacity-50"
+                >
+                  <Trash2 size={14} />
+                </button>
+              </div>
+            ) : (
+              <div
+                onClick={() => fileInputRef.current?.click()}
+                className="border-2 border-dashed border-gray-200 rounded-xl h-32 flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-brand-400 hover:bg-brand-50 transition-colors"
+              >
+                {uploadingImg ? (
+                  <span className="text-sm text-gray-500">Uploading…</span>
+                ) : (
+                  <>
+                    <ImagePlus size={24} className="text-gray-400" />
+                    <span className="text-sm text-gray-500">Tap to upload deal image</span>
+                    <span className="text-xs text-gray-400">JPEG, PNG or WebP · max 5MB</span>
+                  </>
+                )}
+              </div>
+            )}
+
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0]
+                if (file) handleImageUpload(file)
+                e.target.value = ''
+              }}
+            />
+
+            {bannerImage && (
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploadingImg}
+                className="w-full border border-brand-300 text-brand-600 text-sm font-semibold py-2 rounded-xl hover:bg-brand-50 transition-colors disabled:opacity-50"
+              >
+                {uploadingImg ? 'Uploading…' : 'Replace Image'}
+              </button>
+            )}
+          </div>
+        ) : (
+          <div className="bg-blue-50 rounded-2xl p-4 shadow-sm">
+            <p className="text-xs text-blue-600 font-medium">💡 You can add a deal image after creating the coupon.</p>
+          </div>
+        )}
 
         <button
           type="submit"

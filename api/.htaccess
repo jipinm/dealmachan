@@ -13,10 +13,6 @@ RewriteRule ^(config|helpers|middleware|controllers|migrations|models|core)(/.*)
 # ── Block access to .env, .git, composer files ────────────────────────────────
 RewriteRule ^(\.env|\.git|composer\.(json|lock))$ - [F,L]
 
-# ── Handle CORS preflight (OPTIONS) ──────────────────────────────────────────
-RewriteCond %{REQUEST_METHOD} OPTIONS
-RewriteRule ^ - [L,R=204]
-
 # ── Route all other requests to index.php ────────────────────────────────────
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d

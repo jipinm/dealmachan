@@ -5,6 +5,7 @@ import { ChevronLeft, CreditCard, CheckCircle, Loader2, Info } from 'lucide-reac
 import { profileApi } from '@/api/endpoints/profile'
 import { useAuthStore } from '@/store/authStore'
 import { getApiError } from '@/api/client'
+import TapReveal from '@/components/ui/TapReveal'
 import toast from 'react-hot-toast'
 
 export default function MyCardPage() {
@@ -39,7 +40,7 @@ export default function MyCardPage() {
   }
 
   return (
-    <div className="max-w-lg mx-auto px-4 py-6 pb-10">
+    <div className="max-w-[1200px] mx-auto px-4 py-6 pb-10">
       {/* Header */}
       <div className="flex items-center gap-3 mb-6">
         <Link to="/profile" className="p-2 hover:bg-gray-100 rounded-xl">
@@ -53,7 +54,7 @@ export default function MyCardPage() {
         <>
           <div className="rounded-3xl overflow-hidden shadow-brand mb-6 relative">
             {card.card_image ? (
-              <img src={card.card_image} alt="Deal Machan Card" className="w-full" />
+              <img src={card.card_image} alt="Deal Machan Card" loading="lazy" className="w-full" />
             ) : (
               <div className="gradient-brand px-6 pt-8 pb-6 min-h-48">
                 {/* Decorative circles */}
@@ -66,11 +67,18 @@ export default function MyCardPage() {
                     <CreditCard size={22} className="text-white/80" />
                   </div>
 
-                  <p className="font-mono font-bold text-white text-xl tracking-[0.2em] mb-4">
-                    {card.card_number
-                      ? card.card_number.replace(/(.{4})/g, '$1 ').trim().replace(/.(?=.{4})/g, '•')
-                      : '•••• •••• ••••'}
-                  </p>
+                  {card.card_number ? (
+                    <TapReveal
+                      value={card.card_number}
+                      masked={card.card_number.replace(/(.{4})/g, '$1 ').trim().replace(/.(?=.{4})/g, '\u2022')}
+                      formatRevealed={(v) => v.replace(/(.{4})/g, '$1 ').trim()}
+                      className="mb-4"
+                    />
+                  ) : (
+                    <p className="font-mono font-bold text-white/40 text-xl tracking-[0.2em] mb-4">
+                      {'\u2022\u2022\u2022\u2022 \u2022\u2022\u2022\u2022 \u2022\u2022\u2022\u2022'}
+                    </p>
+                  )}
 
                   <div className="flex items-end justify-between">
                     <div>
@@ -100,9 +108,16 @@ export default function MyCardPage() {
             </div>
             <div className="flex items-center justify-between">
               <span className="text-xs text-gray-500">Card Number</span>
-              <span className="text-xs font-mono font-semibold text-gray-900">
-                {card.card_number?.slice(-4) ? `•••• ${card.card_number.slice(-4)}` : '—'}
-              </span>
+              {card.card_number ? (
+                <TapReveal
+                  value={card.card_number}
+                  masked={`\u2022\u2022\u2022\u2022 ${card.card_number.slice(-4)}`}
+                  formatRevealed={(v) => v.replace(/(.{4})/g, '$1 ').trim()}
+                  variant="inline"
+                />
+              ) : (
+                <span className="text-xs font-mono font-semibold text-gray-900">\u2014</span>
+              )}
             </div>
             <div className="flex items-center justify-between">
               <span className="text-xs text-gray-500">Type</span>

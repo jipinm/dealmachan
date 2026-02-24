@@ -1,6 +1,11 @@
 import { Link } from 'react-router-dom'
 import { Heart, MapPin, Tag } from 'lucide-react'
 import { useState } from 'react'
+import { useMutation } from '@tanstack/react-query'
+import { getImageUrl } from '@/lib/imageUrl'
+import { slugify } from '@/lib/slugify'
+import { useAuthStore } from '@/store/authStore'
+import { favouritesApi } from '@/api/endpoints/favourites'
 
 export interface MerchantCardData {
   id: number
@@ -19,18 +24,29 @@ export interface MerchantCardData {
 interface Props {
   merchant: MerchantCardData
   showFavourite?: boolean
-  onFavouriteToggle?: (id: number, current: boolean) => void
   isFavourited?: boolean
+  onFavouriteChange?: (id: number, newState: boolean) => void
 }
 
-export default function MerchantCard({ merchant, showFavourite, onFavouriteToggle, isFavourited }: Props) {
-  const [favoured, setFavoured] = useState(isFavourited ?? false)
+export default function MerchantCard({ merchant, showFavourite, isFavourited = false, onFavouriteChange }: Props) {
+  const { isAuthenticated } = useAuthStore()
+  const [favoured, setFavoured] = useState(isFavourited)
+
+  const addMutation = useMutation({
+    mutationFn: () => favouritesApi.add(merchant.id),
+    onSuccess: () => { setFavoured(true); onFavouriteChange?.(merchant.id, true) },
+  })
+  const removeMutation = useMutation({
+    mutationFn: () => favouritesApi.remove(merchant.id),
+    onSuccess: () => { setFavoured(false); onFavouriteChange?.(merchant.id, false) },
+  })
 
   function handleFav(e: React.MouseEvent) {
     e.preventDefault()
     e.stopPropagation()
-    setFavoured((v) => !v)
-    onFavouriteToggle?.(merchant.id, favoured)
+    if (!isAuthenticated) return
+    if (addMutation.isPending || removeMutation.isPending) return
+    favoured ? removeMutation.mutate() : addMutation.mutate()
   }
 
   const initial = merchant.business_name.charAt(0).toUpperCase()
@@ -38,14 +54,14 @@ export default function MerchantCard({ merchant, showFavourite, onFavouriteToggl
 
   return (
     <Link
-      to={`/merchants/${merchant.id}`}
+      to={`/stores/${merchant.id}/${slugify(merchant.business_name)}`}
       className="card group flex flex-col overflow-hidden hover:shadow-lg transition-shadow"
     >
       {/* Logo / banner */}
       <div className="relative h-32 bg-gradient-to-br from-brand-100 to-purple-100 flex items-center justify-center overflow-hidden shrink-0">
         {merchant.business_logo ? (
           <img
-            src={merchant.business_logo}
+            src={getImageUrl(merchant.business_logo)}
             alt={merchant.business_name}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
           />
@@ -63,10 +79,11 @@ export default function MerchantCard({ merchant, showFavourite, onFavouriteToggl
         )}
 
         {/* Favourite button */}
-        {showFavourite && (
+        {showFavourite && isAuthenticated && (
           <button
             onClick={handleFav}
             className="absolute top-2 right-2 w-7 h-7 rounded-full bg-white/90 flex items-center justify-center shadow"
+            aria-label={favoured ? 'Remove from wishlist' : 'Add to wishlist'}
           >
             <Heart
               size={14}
@@ -99,8 +116,8 @@ export default function MerchantCard({ merchant, showFavourite, onFavouriteToggl
 
         {merchant.avg_rating != null && merchant.avg_rating > 0 && (
           <div className="flex items-center gap-1 mt-0.5">
-            <span className="text-yellow-400 text-xs">★</span>
-            <span className="text-xs font-semibold text-gray-700">{merchant.avg_rating.toFixed(1)}</span>
+            <span className="text-yellow-400 text-xs">?</span>
+            <span className="text-xs font-semibold text-gray-700">{Number(merchant.avg_rating).toFixed(1)}</span>
             {merchant.total_reviews != null && (
               <span className="text-xs text-gray-400">({merchant.total_reviews})</span>
             )}

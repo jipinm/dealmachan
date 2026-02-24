@@ -7,12 +7,13 @@ import { useAuthStore } from '@/store/authStore'
 import { getApiError } from '@/api/client'
 import toast from 'react-hot-toast'
 import AuthLayout from '@/components/layout/AuthLayout'
+import { Helmet } from 'react-helmet-async'
 
 export default function LoginPage() {
   const navigate = useNavigate()
   const location = useLocation()
   const { setAuth } = useAuthStore()
-  const from = (location.state as { from?: { pathname: string } })?.from?.pathname || '/dashboard'
+  const from = (location.state as { from?: { pathname: string } })?.from?.pathname || '/'
 
   const [login, setLogin] = useState('')
   const [password, setPassword] = useState('')
@@ -37,6 +38,10 @@ export default function LoginPage() {
       title="Welcome back!"
       subtitle="Sign in to your DealMachan account to continue"
     >
+      <Helmet>
+        <title>Sign In | Deal Machan</title>
+        <meta name="description" content="Sign in to your Deal Machan account to access your saved deals, coupon wallet, and personalised offers." />
+      </Helmet>
       <form
         onSubmit={(e) => { e.preventDefault(); if (login.trim() && password) mutate() }}
         className="space-y-5"

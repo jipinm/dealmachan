@@ -1,12 +1,79 @@
-import { useParams, Link } from 'react-router-dom'
-import { useQuery } from '@tanstack/react-query'
+import { useState } from 'react'
+import { useParams, Link, useNavigate } from 'react-router-dom'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { publicApi } from '@/api/endpoints/public'
-import { Star, MapPin, Phone, Tag, Globe, ChevronRight, Store, Clock, ArrowLeft } from 'lucide-react'
+import { favouritesApi } from '@/api/endpoints/favourites'
+import { Star, MapPin, Phone, Tag, Globe, ChevronRight, Store, Clock, ArrowLeft, MessageSquare, User, Mail, Navigation, Send, Heart, Lock, Loader2 as HeartLoader } from 'lucide-react'
+import RatingStars from '@/components/ui/RatingStars'
+import { getImageUrl } from '@/lib/imageUrl'
+import { slugify } from '@/lib/slugify'
+import { useAuthStore } from '@/store/authStore'
+import { Helmet } from 'react-helmet-async'
+import toast from 'react-hot-toast'
 
 function imgSrc(path: string | null): string {
-  if (!path) return ''
-  if (path.startsWith('http')) return path
-  return `${import.meta.env.VITE_API_BASE_URL?.replace('/api', '') ?? 'http://localhost:8000'}${path}`
+  return getImageUrl(path)
+}
+
+const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+
+function TodayHours({ hours }: { hours: { day: string; open?: string; close?: string; closed?: boolean }[] }) {
+  if (!hours?.length) return null
+  const todayName = DAYS[new Date().getDay()]
+  const today = hours.find(h => h.day?.toLowerCase() === todayName.toLowerCase())
+  if (!today) return null
+  return (
+    <span className={`flex items-center gap-1 text-xs mt-1 font-medium ${today.closed ? 'text-red-500' : 'text-green-600'}`}>
+      <Clock size={11} />
+      {today.closed ? 'Closed today' : `Today: ${today.open ?? ''} – ${today.close ?? ''}`}
+    </span>
+  )
+}
+
+function OpeningHoursGrid({ hours }: { hours: { day: string; open?: string; close?: string; closed?: boolean }[] }) {
+  if (!hours?.length) return null
+  const todayName = DAYS[new Date().getDay()]
+  return (
+    <div className="mt-3 grid grid-cols-2 gap-x-4 gap-y-0.5 text-[11px]">
+      {hours.map(h => (
+        <div key={h.day} className={`flex justify-between gap-2 py-0.5 border-b border-slate-50 ${
+          h.day?.toLowerCase() === todayName.toLowerCase() ? 'font-semibold text-slate-800' : 'text-slate-500'
+        }`}>
+          <span className="truncate">{h.day?.slice(0, 3)}</span>
+          {h.closed
+            ? <span className="text-red-400">Closed</span>
+            : <span>{h.open} – {h.close}</span>
+          }
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function StarPicker({ value, onChange }: { value: number; onChange: (n: number) => void }) {
+  const [hover, setHover] = useState(0)
+  return (
+    <div className="flex items-center gap-1">
+      {[1, 2, 3, 4, 5].map(n => (
+        <button
+          key={n}
+          type="button"
+          onMouseEnter={() => setHover(n)}
+          onMouseLeave={() => setHover(0)}
+          onClick={() => onChange(n)}
+          className="p-0.5 transition-transform hover:scale-110"
+          aria-label={`${n} star`}
+        >
+          <Star
+            size={24}
+            className={`transition-colors ${
+              n <= (hover || value) ? 'text-amber-400 fill-amber-400' : 'text-slate-300'
+            }`}
+          />
+        </button>
+      ))}
+    </div>
+  )
 }
 
 function timeLeft(until: string | null): string {
@@ -19,11 +86,54 @@ function timeLeft(until: string | null): string {
 }
 
 export default function StoreDetailPage() {
-  const { id } = useParams<{ id: string }>()
+  const { id } = useParams<{ id: string; slug?: string }>()
+  const { isAuthenticated } = useAuthStore()
+  const queryClient = useQueryClient()
+  const navigate = useNavigate()
+  const [rating, setRating] = useState(0)
+  const [reviewText, setReviewText] = useState('')
+  const [showHours, setShowHours] = useState<number | null>(null)
+  const [reviewSubmitted, setReviewSubmitted] = useState(false)
+
+  // ── Favourite state ──────────────────────────────────────────────────────
+  const merchantId = Number(id)
+  const { data: favData } = useQuery({
+    queryKey: ['fav-check', merchantId],
+    queryFn: () => favouritesApi.check(merchantId).then((r) => r.is_favourite ?? false),
+    enabled: !!id && isAuthenticated,
+    staleTime: 60_000,
+  })
+  const isFavourited = favData === true
+
+  const favMutation = useMutation({
+    mutationFn: () => {
+      if (!isAuthenticated) throw new Error('login')
+      return isFavourited
+        ? favouritesApi.remove(merchantId)
+        : favouritesApi.add(merchantId)
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['fav-check', merchantId] })
+      queryClient.invalidateQueries({ queryKey: ['favourites'] })
+      toast.success(isFavourited ? 'Removed from favourites' : 'Added to favourites')
+    },
+    onError: (err: any) => {
+      if (err.message === 'login') {
+        navigate(`/login?redirect=${encodeURIComponent(location.pathname)}`)
+      } else {
+        toast.error('Could not update favourites')
+      }
+    },
+  })
 
   const { data: merchant, isLoading } = useQuery({
     queryKey: ['merchant', id],
-    queryFn: () => publicApi.getMerchant(Number(id)).then((r) => r.data.data),
+    queryFn: () => publicApi.getMerchant(Number(id)).then((r) => {
+      const payload = (r.data as any).data
+      // API returns { merchant: {...}, stores: [...], coupons: [...] }
+      // Merge merchant fields with stores so component can access both naturally
+      return { ...(payload.merchant ?? payload), stores: payload.stores ?? [] } as any
+    }),
     enabled: !!id,
   })
 
@@ -31,6 +141,26 @@ export default function StoreDetailPage() {
     queryKey: ['merchant-coupons', id],
     queryFn: () => publicApi.getMerchantCoupons(Number(id)).then((r) => r.data.data ?? []),
     enabled: !!id,
+  })
+
+  const { data: reviewsData } = useQuery({
+    queryKey: ['merchant-reviews', id],
+    queryFn: () => publicApi.getMerchantReviews(Number(id)).then((r) => r.data.data ?? []),
+    enabled: !!id,
+    staleTime: 300_000,
+  })
+
+  const reviews = (reviewsData as any[]) ?? []
+
+  const reviewMutation = useMutation({
+    mutationFn: (vars: { rating: number; review_text?: string }) =>
+      publicApi.submitReview(Number(id), vars),
+    onSuccess: () => {
+      setReviewSubmitted(true)
+      setRating(0)
+      setReviewText('')
+      queryClient.invalidateQueries({ queryKey: ['merchant-reviews', id] })
+    },
   })
 
   if (isLoading) {
@@ -59,6 +189,10 @@ export default function StoreDetailPage() {
 
   return (
     <div>
+      <Helmet>
+        <title>{`${merchant.business_name} | Deal Machan`}</title>
+        <meta name="description" content={`${merchant.business_name} on Deal Machan – browse exclusive deals, coupons, and store information. Find the best offers near you.`} />
+      </Helmet>
       {/* Breadcrumb */}
       <div className="bg-white border-b border-slate-100">
         <div className="site-container py-3">
@@ -79,18 +213,34 @@ export default function StoreDetailPage() {
             <div className="card p-6 mb-5 sticky top-24">
               <div className="w-24 h-24 rounded-2xl bg-slate-100 overflow-hidden mx-auto mb-4">
                 {merchant.business_logo ? (
-                  <img src={imgSrc(merchant.business_logo)} alt={merchant.business_name} className="w-full h-full object-cover" />
+                  <img src={imgSrc(merchant.business_logo)} alt={merchant.business_name} loading="lazy" className="w-full h-full object-cover" />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center">
                     <Store size={36} className="text-slate-300" />
                   </div>
                 )}
               </div>
-              <h1 className="font-heading font-bold text-xl text-slate-800 text-center mb-2">{merchant.business_name}</h1>
-              <div className="flex items-center justify-center gap-1 mb-4">
-                <Star size={14} className="text-yellow-400 fill-yellow-400" />
-                <span className="font-semibold text-slate-700">{merchant.avg_rating?.toFixed(1) ?? '–'}</span>
-                <span className="text-sm text-slate-400">({merchant.total_reviews ?? 0} reviews)</span>
+              <div className="flex items-center justify-between mb-2">
+                <h1 className="font-heading font-bold text-xl text-slate-800 flex-1 text-center">{merchant.business_name}</h1>
+                <button
+                  onClick={() => favMutation.mutate()}
+                  disabled={favMutation.isPending}
+                  aria-label={isFavourited ? 'Remove from favourites' : 'Add to favourites'}
+                  className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 transition-colors hover:bg-rose-50"
+                >
+                  {favMutation.isPending
+                    ? <HeartLoader size={16} className="animate-spin text-slate-400" />
+                    : <Heart size={18} className={isFavourited ? 'fill-rose-500 text-rose-500' : 'text-slate-300 hover:text-rose-400'} />
+                  }
+                </button>
+              </div>
+              <div className="flex items-center justify-center gap-1.5 mb-4">
+                <RatingStars
+                  rating={merchant.avg_rating ?? 0}
+                  size={15}
+                  showValue
+                  reviewCount={merchant.total_reviews ?? 0}
+                />
               </div>
               {merchant.business_description && (
                 <p className="text-sm text-slate-500 leading-relaxed mb-4 text-center">{merchant.business_description}</p>
@@ -130,7 +280,7 @@ export default function StoreDetailPage() {
                   {(coupons ?? []).map((c) => (
                     <Link
                       key={c.id}
-                      to={`/deals/${c.id}`}
+                      to={`/deals/${c.id}/${slugify(c.title)}`}
                       className="card card-hover p-4 block"
                     >
                       <div className="flex items-start justify-between mb-2">
@@ -139,10 +289,30 @@ export default function StoreDetailPage() {
                           {c.discount_type === 'percentage' ? `${c.discount_value}%` : `₹${c.discount_value}`} OFF
                         </span>
                       </div>
+                      {c.banner_image && (
+                        <div className="h-24 rounded-xl overflow-hidden mb-2 -mx-0">
+                          <img
+                            src={c.banner_image}
+                            alt={c.title}
+                            className="w-full h-full object-cover"
+                            onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
+                          />
+                        </div>
+                      )}
                       <div className="flex items-center justify-between mt-2">
-                        <span className="font-mono text-xs bg-slate-50 text-slate-600 px-2 py-1 rounded-lg border border-dashed border-slate-300">
-                          {c.coupon_code}
-                        </span>
+                        {c.coupon_code ? (
+                          <span className="font-mono text-xs bg-slate-50 text-slate-600 px-2 py-1 rounded-lg border border-dashed border-slate-300">
+                            {c.coupon_code}
+                          </span>
+                        ) : (
+                          <Link
+                            to="/login"
+                            onClick={(e) => e.stopPropagation()}
+                            className="inline-flex items-center gap-1 text-xs bg-slate-100 text-slate-400 px-2 py-1 rounded-lg border border-dashed border-slate-200 hover:border-brand-300 hover:text-brand-500 transition-colors"
+                          >
+                            <Lock size={10} /> Login to see code
+                          </Link>
+                        )}
                         {c.valid_until && (
                           <span className="flex items-center gap-1 text-xs text-slate-400">
                             <Clock size={11} /> {timeLeft(c.valid_until)}
@@ -162,28 +332,159 @@ export default function StoreDetailPage() {
 
             {/* Store locations */}
             {merchant.stores?.length > 0 && (
-              <section>
+              <section className="mb-8">
                 <h2 className="section-heading mb-4 text-xl">Store Locations</h2>
                 <div className="space-y-3">
                   {merchant.stores.map((store) => (
-                    <div key={store.id} className="card p-4 flex items-start gap-3">
-                      <div className="w-9 h-9 rounded-xl bg-rose-50 flex items-center justify-center flex-shrink-0">
-                        <MapPin size={16} className="text-cta-500" />
-                      </div>
-                      <div>
-                        <p className="font-semibold text-slate-800 text-sm">{store.store_name}</p>
-                        <p className="text-xs text-slate-500">{store.address}{store.area_name ? `, ${store.area_name}` : ''}{store.city_name ? `, ${store.city_name}` : ''}</p>
-                        {store.phone && (
-                          <a href={`tel:${store.phone}`} className="flex items-center gap-1 text-xs text-brand-600 mt-1">
-                            <Phone size={11} /> {store.phone}
-                          </a>
-                        )}
+                    <div key={store.id} className="card p-4">
+                      <div className="flex items-start gap-3">
+                        <div className="w-9 h-9 rounded-xl bg-rose-50 flex items-center justify-center flex-shrink-0 mt-0.5">
+                          <MapPin size={16} className="text-cta-500" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold text-slate-800 text-sm">{store.store_name}</p>
+                          <p className="text-xs text-slate-500 leading-relaxed">{store.address}{store.area_name ? `, ${store.area_name}` : ''}{store.city_name ? `, ${store.city_name}` : ''}</p>
+                          <TodayHours hours={store.opening_hours} />
+                          <div className="flex flex-wrap items-center gap-3 mt-2">
+                            {store.phone && (
+                              <a href={`tel:${store.phone}`} className="flex items-center gap-1 text-xs text-brand-600 hover:underline">
+                                <Phone size={11} /> {store.phone}
+                              </a>
+                            )}
+                            {store.email && (
+                              <a href={`mailto:${store.email}`} className="flex items-center gap-1 text-xs text-brand-600 hover:underline">
+                                <Mail size={11} /> {store.email}
+                              </a>
+                            )}
+                            {store.latitude && store.longitude && (
+                              <a
+                                href={`https://www.google.com/maps/dir/?api=1&destination=${store.latitude},${store.longitude}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center gap-1 text-xs text-emerald-600 hover:underline"
+                              >
+                                <Navigation size={11} /> Directions
+                              </a>
+                            )}
+                          </div>
+                          {store.opening_hours?.length > 0 && (
+                            <button
+                              onClick={() => setShowHours(showHours === store.id ? null : store.id)}
+                              className="mt-2 text-[11px] text-slate-400 hover:text-brand-600 underline"
+                            >
+                              {showHours === store.id ? 'Hide hours' : 'Opening hours'}
+                            </button>
+                          )}
+                          {showHours === store.id && (
+                            <OpeningHoursGrid hours={store.opening_hours} />
+                          )}
+                        </div>
                       </div>
                     </div>
                   ))}
                 </div>
               </section>
             )}
+
+            {/* Reviews */}
+            <section>
+              <h2 className="section-heading mb-4 text-xl flex items-center gap-2">
+                <MessageSquare size={18} className="text-slate-400" />
+                Reviews
+                <span className="text-slate-400 text-base font-normal">({reviews.length})</span>
+              </h2>
+
+              {reviews.length === 0 ? (
+                <div className="text-center py-10 bg-white rounded-2xl border border-slate-100">
+                  <Star size={30} className="mx-auto mb-2 text-slate-200 fill-slate-100" />
+                  <p className="text-sm text-slate-400">No reviews yet — be the first!</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {reviews.map((review: any) => (
+                    <div key={review.id} className="card p-4">
+                      <div className="flex items-start justify-between gap-3 mb-2">
+                        <div className="flex items-center gap-2">
+                          <div className="w-8 h-8 rounded-full bg-brand-50 flex items-center justify-center flex-shrink-0">
+                            <User size={14} className="text-brand-400" />
+                          </div>
+                          <div>
+                            <p className="text-sm font-semibold text-slate-800 leading-tight">
+                              {review.customer_name ?? 'Anonymous'}
+                            </p>
+                            <p className="text-[11px] text-slate-400">
+                              {new Date(review.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                            </p>
+                          </div>
+                        </div>
+                        <RatingStars rating={review.rating} size={13} />
+                      </div>
+                      {review.review_text && (
+                        <p className="text-sm text-slate-600 leading-relaxed">{review.review_text}</p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Review submission form */}
+              <div className="mt-6">
+                <h3 className="font-semibold text-slate-800 mb-3 text-base">Write a Review</h3>
+                {!isAuthenticated ? (
+                  <div className="card p-5 text-center border-dashed">
+                    <MessageSquare size={28} className="mx-auto mb-2 text-slate-300" />
+                    <p className="text-sm text-slate-500 mb-3">Sign in to share your experience</p>
+                    <Link to={`/login?redirect=${encodeURIComponent(location.pathname)}`} className="btn-primary !px-5 !py-2 !text-sm inline-block">
+                      Sign in
+                    </Link>
+                  </div>
+                ) : reviewSubmitted ? (
+                  <div className="card p-5 text-center bg-green-50 border-green-100">
+                    <Star size={28} className="mx-auto mb-2 text-amber-400 fill-amber-300" />
+                    <p className="text-sm font-semibold text-green-700">Thanks for your review!</p>
+                    <p className="text-xs text-green-600 mt-1">It will appear after admin approval.</p>
+                    <button onClick={() => setReviewSubmitted(false)} className="mt-3 text-xs text-brand-600 underline">Edit review</button>
+                  </div>
+                ) : (
+                  <form
+                    className="card p-5 space-y-4"
+                    onSubmit={(e) => {
+                      e.preventDefault()
+                      if (rating === 0) return
+                      reviewMutation.mutate({ rating, review_text: reviewText || undefined })
+                    }}
+                  >
+                    <div>
+                      <p className="text-sm text-slate-600 mb-2">Your rating <span className="text-red-500">*</span></p>
+                      <StarPicker value={rating} onChange={setRating} />
+                      {rating === 0 && reviewMutation.isError && (
+                        <p className="text-xs text-red-500 mt-1">Please select a rating.</p>
+                      )}
+                    </div>
+                    <div>
+                      <textarea
+                        value={reviewText}
+                        onChange={e => setReviewText(e.target.value)}
+                        rows={3}
+                        placeholder="Tell others about your experience (optional)…"
+                        className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-300 resize-none"
+                      />
+                    </div>
+                    {reviewMutation.isError && (
+                      <p className="text-xs text-red-500">Something went wrong. Please try again.</p>
+                    )}
+                    <button
+                      type="submit"
+                      disabled={rating === 0 || reviewMutation.isPending}
+                      className="btn-primary !px-6 !py-2.5 !text-sm flex items-center gap-2 disabled:opacity-50"
+                    >
+                      <Send size={14} />
+                      {reviewMutation.isPending ? 'Submitting…' : 'Submit Review'}
+                    </button>
+                  </form>
+                )}
+              </div>
+            </section>
           </main>
         </div>
       </div>

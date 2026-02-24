@@ -44,6 +44,9 @@ $current_user = $auth->getCurrentUser();
                                 <a class="nav-link small" href="<?= BASE_URL ?>customers/add">
                                     <i class="fas fa-plus me-2"></i> Add Customer
                                 </a>
+                                <a class="nav-link small" href="<?= BASE_URL ?>referrals">
+                                    <i class="fas fa-user-plus me-2"></i> Referral Tracking
+                                </a>
                             </div>
                         </div>
                     </div>
@@ -143,7 +146,198 @@ $current_user = $auth->getCurrentUser();
                         </div>
                     </div>
                     <?php endif; ?>
-                    
+
+                    <!-- Grievances - Super Admin, City Admin, Sales Admin -->
+                    <?php if (in_array($current_user['admin_type'], ['super_admin', 'city_admin', 'sales_admin'])): ?>
+                    <div class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="collapse" data-bs-target="#grievancesMenu" aria-expanded="false">
+                            <i class="fas fa-comment-alt me-2"></i> Grievances
+                            <?php
+                            // Show open count badge
+                            try {
+                                $db = Database::getInstance()->getConnection();
+                                $openCount = (int)$db->query("SELECT COUNT(*) FROM grievances WHERE status IN ('open','in_progress')")->fetchColumn();
+                                if ($openCount > 0):
+                            ?>
+                            <span class="badge bg-danger ms-1" style="font-size:0.65rem;"><?= $openCount ?></span>
+                            <?php endif; } catch (Exception $e) {} ?>
+                        </a>
+                        <div class="collapse" id="grievancesMenu">
+                            <div class="nav flex-column ps-3">
+                                <a class="nav-link small" href="<?= BASE_URL ?>grievances">
+                                    <i class="fas fa-list me-2"></i> View All
+                                </a>
+                                <a class="nav-link small" href="<?= BASE_URL ?>grievances?status=open">
+                                    <i class="fas fa-exclamation-circle me-2"></i> Open
+                                </a>
+                                <a class="nav-link small" href="<?= BASE_URL ?>grievances?status=in_progress">
+                                    <i class="fas fa-spinner me-2"></i> In Progress
+                                </a>
+                                <a class="nav-link small" href="<?= BASE_URL ?>grievances?priority=urgent">
+                                    <i class="fas fa-fire me-2"></i> Urgent
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    <?php endif; ?>
+
+                    <!-- Review Moderation - Super Admin, City Admin, Sales Admin -->
+                    <?php if (in_array($current_user['admin_type'], ['super_admin', 'city_admin', 'sales_admin'])): ?>
+                    <div class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="collapse" data-bs-target="#reviewsMenu" aria-expanded="false">
+                            <i class="fas fa-star me-2"></i> Reviews
+                        </a>
+                        <div class="collapse" id="reviewsMenu">
+                            <div class="nav flex-column ps-3">
+                                <a class="nav-link small" href="<?= BASE_URL ?>reviews">
+                                    <i class="fas fa-list me-2"></i> All Reviews
+                                </a>
+                                <a class="nav-link small" href="<?= BASE_URL ?>reviews?status=pending">
+                                    <i class="fas fa-clock me-2"></i> Pending Approval
+                                </a>
+                                <a class="nav-link small" href="<?= BASE_URL ?>reviews?status=approved">
+                                    <i class="fas fa-check-circle me-2"></i> Approved
+                                </a>
+                                <a class="nav-link small" href="<?= BASE_URL ?>reviews?status=rejected">
+                                    <i class="fas fa-times-circle me-2"></i> Rejected
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    <?php endif; ?>
+
+                    <!-- Subscriptions - Super Admin -->
+                    <?php if ($current_user['admin_type'] === 'super_admin'): ?>
+                    <div class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="collapse" data-bs-target="#subscriptionsMenu" aria-expanded="false">
+                            <i class="fas fa-id-card me-2"></i> Subscriptions
+                        </a>
+                        <div class="collapse" id="subscriptionsMenu">
+                            <div class="nav flex-column ps-3">
+                                <a class="nav-link small" href="<?= BASE_URL ?>subscriptions">
+                                    <i class="fas fa-list me-2"></i> All Subscriptions
+                                </a>
+                                <a class="nav-link small" href="<?= BASE_URL ?>subscriptions?expiring_soon=1">
+                                    <i class="fas fa-hourglass-half me-2"></i> Expiring Soon
+                                </a>
+                                <a class="nav-link small" href="<?= BASE_URL ?>subscriptions/add">
+                                    <i class="fas fa-plus me-2"></i> Add Subscription
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    <?php endif; ?>
+
+                    <!-- Sales Registry - Super Admin, City Admin, Sales Admin -->
+                    <?php if (in_array($current_user['admin_type'], ['super_admin', 'city_admin', 'sales_admin'])): ?>
+                    <div class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="collapse" data-bs-target="#salesMenu" aria-expanded="false">
+                            <i class="fas fa-cash-register me-2"></i> Sales Registry
+                        </a>
+                        <div class="collapse" id="salesMenu">
+                            <div class="nav flex-column ps-3">
+                                <a class="nav-link small" href="<?= BASE_URL ?>sales">
+                                    <i class="fas fa-list me-2"></i> All Transactions
+                                </a>
+                                <a class="nav-link small" href="<?= BASE_URL ?>sales/export">
+                                    <i class="fas fa-file-csv me-2"></i> Export CSV
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    <?php endif; ?>
+
+                    <!-- Advertisements - Super Admin -->
+                    <?php if ($current_user['admin_type'] === 'super_admin'): ?>
+                    <div class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="collapse" data-bs-target="#advertisementsMenu" aria-expanded="false">
+                            <i class="fas fa-bullhorn me-2"></i> Advertisements
+                        </a>
+                        <div class="collapse" id="advertisementsMenu">
+                            <div class="nav flex-column ps-3">
+                                <a class="nav-link small" href="<?= BASE_URL ?>advertisements">
+                                    <i class="fas fa-list me-2"></i> All Ads
+                                </a>
+                                <a class="nav-link small" href="<?= BASE_URL ?>advertisements?live=1">
+                                    <i class="fas fa-circle text-danger me-2"></i> Live Now
+                                </a>
+                                <a class="nav-link small" href="<?= BASE_URL ?>advertisements/add">
+                                    <i class="fas fa-plus me-2"></i> Create Ad
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    <?php endif; ?>
+
+                    <!-- Blog / CMS - Super Admin, City Admin -->
+                    <?php if (in_array($current_user['admin_type'], ['super_admin', 'city_admin'])): ?>
+                    <div class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="collapse" data-bs-target="#blogMenu" aria-expanded="false">
+                            <i class="fas fa-blog me-2"></i> Blog / CMS
+                        </a>
+                        <div class="collapse" id="blogMenu">
+                            <div class="nav flex-column ps-3">
+                                <a class="nav-link small" href="<?= BASE_URL ?>blog">
+                                    <i class="fas fa-list me-2"></i> All Posts
+                                </a>
+                                <a class="nav-link small" href="<?= BASE_URL ?>blog?status=draft">
+                                    <i class="fas fa-pencil-alt me-2"></i> Drafts
+                                </a>
+                                <a class="nav-link small" href="<?= BASE_URL ?>blog?status=published">
+                                    <i class="fas fa-globe me-2"></i> Published
+                                </a>
+                                <a class="nav-link small" href="<?= BASE_URL ?>blog/add">
+                                    <i class="fas fa-plus me-2"></i> New Post
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    <?php endif; ?>
+
+                    <!-- Audit Logs - Super Admin -->
+                    <?php if ($current_user['admin_type'] === 'super_admin'): ?>
+                    <div class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="collapse" data-bs-target="#auditLogsMenu" aria-expanded="false">
+                            <i class="fas fa-shield-alt me-2"></i> Audit Logs
+                        </a>
+                        <div class="collapse" id="auditLogsMenu">
+                            <div class="nav flex-column ps-3">
+                                <a class="nav-link small" href="<?= BASE_URL ?>audit-logs">
+                                    <i class="fas fa-list me-2"></i> All Logs
+                                </a>
+                                <a class="nav-link small" href="<?= BASE_URL ?>audit-logs?user_type=admin">
+                                    <i class="fas fa-user-shield me-2"></i> Admin Activity
+                                </a>
+                                <a class="nav-link small" href="<?= BASE_URL ?>audit-logs/export">
+                                    <i class="fas fa-file-csv me-2"></i> Export CSV
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    <?php endif; ?>
+
+                    <!-- Gift Coupons - Super Admin, City Admin -->
+                    <?php if (in_array($current_user['admin_type'], ['super_admin', 'city_admin'])): ?>
+                    <div class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="collapse" data-bs-target="#giftCouponsMenu" aria-expanded="false">
+                            <i class="fas fa-gift me-2"></i> Gift Coupons
+                        </a>
+                        <div class="collapse" id="giftCouponsMenu">
+                            <div class="nav flex-column ps-3">
+                                <a class="nav-link small" href="<?= BASE_URL ?>gift-coupons">
+                                    <i class="fas fa-list me-2"></i> All Gifts
+                                </a>
+                                <a class="nav-link small" href="<?= BASE_URL ?>gift-coupons?acceptance_status=pending">
+                                    <i class="fas fa-clock me-2"></i> Pending Acceptance
+                                </a>
+                                <a class="nav-link small" href="<?= BASE_URL ?>gift-coupons/add">
+                                    <i class="fas fa-plus me-2"></i> Gift a Coupon
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    <?php endif; ?>
+
                     <!-- Card Management - All Admin Types -->
                     <div class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="collapse" data-bs-target="#cardsMenu" aria-expanded="false">
@@ -252,6 +446,18 @@ $current_user = $auth->getCurrentUser();
                                 <a class="nav-link small" href="<?= BASE_URL ?>reports/redemptions">
                                     <i class="fas fa-gift me-2"></i> Redemption Reports
                                 </a>
+                                <a class="nav-link small" href="<?= BASE_URL ?>reports/revenue">
+                                    <i class="fas fa-cash-register me-2"></i> Revenue / GMV
+                                </a>
+                                <a class="nav-link small" href="<?= BASE_URL ?>reports/subscription-report">
+                                    <i class="fas fa-credit-card me-2"></i> Subscription Revenue
+                                </a>
+                                <a class="nav-link small" href="<?= BASE_URL ?>reports/coupon-analytics">
+                                    <i class="fas fa-ticket-alt me-2"></i> Coupon Analytics
+                                </a>
+                                <a class="nav-link small" href="<?= BASE_URL ?>reports/engagement">
+                                    <i class="fas fa-chart-line me-2"></i> Engagement
+                                </a>
                             </div>
                         </div>
                     </div>
@@ -288,6 +494,9 @@ $current_user = $auth->getCurrentUser();
                                 <a class="nav-link small" href="<?= BASE_URL ?>master-data/day-types">
                                     <i class="fas fa-calendar-day me-2"></i> Day Types
                                 </a>
+                                <a class="nav-link small" href="<?= BASE_URL ?>master-data/job-titles">
+                                    <i class="fas fa-id-badge me-2"></i> Job Titles
+                                </a>
                             </div>
                         </div>
                     </div>
@@ -308,7 +517,31 @@ $current_user = $auth->getCurrentUser();
                             </div>
                         </div>
                     </div>
+
+                    <!-- CMS Pages - Super Admin Only -->
+                    <div class="nav-item">
+                        <a class="nav-link" href="<?= BASE_URL ?>cms-pages">
+                            <i class="fas fa-file-alt me-2"></i> CMS Pages
+                        </a>
+                    </div>
                     <?php endif; ?>
+
+                    <!-- Business Leads -->
+                    <?php if (in_array($current_user['admin_type'], ['super_admin', 'sales_admin', 'city_admin'])): ?>
+                    <div class="nav-item">
+                        <a class="nav-link" href="<?= BASE_URL ?>leads">
+                            <i class="fas fa-funnel-dollar me-2"></i> Business Leads
+                        </a>
+                    </div>
+
+                    <!-- Contact Enquiries -->
+                    <div class="nav-item">
+                        <a class="nav-link" href="<?= BASE_URL ?>contact-enquiries">
+                            <i class="fas fa-envelope me-2"></i> Contact Enquiries
+                        </a>
+                    </div>
+                    <?php endif; ?>
+
                 </nav>
             </div>
         </div>
@@ -355,6 +588,11 @@ $current_user = $auth->getCurrentUser();
                                 <li><a class="dropdown-item" href="<?= BASE_URL ?>settings/preferences">
                                     <i class="fas fa-cog me-2"></i> Preferences
                                 </a></li>
+                                <?php if ($current_user['admin_type'] === 'super_admin'): ?>
+                                <li><a class="dropdown-item" href="<?= BASE_URL ?>settings/system">
+                                    <i class="fas fa-sliders-h me-2"></i> System Settings
+                                </a></li>
+                                <?php endif; ?>
                                 <li><hr class="dropdown-divider"></li>
                                 <li><a class="dropdown-item text-danger" href="<?= BASE_URL ?>auth/logout">
                                     <i class="fas fa-sign-out-alt me-2"></i> Logout

@@ -1,23 +1,24 @@
 <?php
 /**
- * Deal Machan API — Front Controller
+ * Deal Machan API â€” Front Controller
  * Routes all /api/* requests to appropriate controllers.
  */
 
-// ── Bootstrap ─────────────────────────────────────────────────────────────────
+// â”€â”€ Bootstrap â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 require_once __DIR__ . '/config/env.php';
 require_once __DIR__ . '/config/constants.php';
 require_once __DIR__ . '/config/Database.php';
 require_once __DIR__ . '/config/JWT.php';
 require_once __DIR__ . '/helpers/Response.php';
 require_once __DIR__ . '/helpers/Validator.php';
+require_once __DIR__ . '/helpers/Image.php';
 require_once __DIR__ . '/middleware/CorsMiddleware.php';
 require_once __DIR__ . '/middleware/AuthMiddleware.php';
 
-// ── CORS (always first) ───────────────────────────────────────────────────────
+// â”€â”€ CORS (always first) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 CorsMiddleware::handle();
 
-// ── Parse route ───────────────────────────────────────────────────────────────
+// â”€â”€ Parse route â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 $requestUri    = $_SERVER['REQUEST_URI'] ?? '/';
 $requestMethod = strtoupper($_SERVER['REQUEST_METHOD']);
 
@@ -38,8 +39,8 @@ if (str_contains($contentType, 'application/json')) {
     $body = $_POST;
 }
 
-// ── Router ────────────────────────────────────────────────────────────────────
-// Pattern: method:path/pattern  →  Controller@method
+// â”€â”€ Router â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Pattern: method:path/pattern  â†’  Controller@method
 // :id  matches [0-9]+  and is injected as $_ROUTE_PARAMS['id']
 $_ROUTE_PARAMS = [];
 
@@ -69,7 +70,7 @@ function loadController(string $group, string $file): void {
     require_once API_ROOT . "/controllers/{$group}/{$file}.php";
 }
 
-// ── Route Definitions ─────────────────────────────────────────────────────────
+// â”€â”€ Route Definitions â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 // ---------- Auth ----------
 if (matchRoute('POST', 'auth/merchant/login', $path)) {
@@ -265,6 +266,15 @@ if (matchRoute('GET', 'public/merchants/:id/reviews', $path)) {
     loadController('Public', 'MerchantBrowseController');
     (new MerchantBrowseController())->reviews((int)param('id'), $_GET);
 }
+if (matchRoute('POST', 'public/merchants/:id/reviews', $path)) {
+    $user = AuthMiddleware::requireCustomer();
+    loadController('Public', 'MerchantBrowseController');
+    (new MerchantBrowseController())->submitReview((int)param('id'), $body, $user);
+}
+if (matchRoute('GET', 'public/merchants/:id/gallery', $path)) {
+    loadController('Public', 'MerchantBrowseController');
+    (new MerchantBrowseController())->gallery((int)param('id'));
+}
 if (matchRoute('GET', 'public/tags', $path)) {
     $db   = Database::getInstance();
     $tags = $db->query("SELECT id, tag_name AS name, tag_category, parent_tag_id, icon FROM tags WHERE status='active' ORDER BY tag_name");
@@ -273,6 +283,10 @@ if (matchRoute('GET', 'public/tags', $path)) {
 if (matchRoute('GET', 'public/flash-discounts', $path)) {
     loadController('Public', 'CouponController');
     (new PublicCouponController())->flashDiscounts($_GET);
+}
+if (matchRoute('GET', 'public/flash-discounts/:id', $path)) {
+    loadController('Public', 'CouponController');
+    (new PublicCouponController())->flashDiscountDetail((int)param('id'));
 }
 if (matchRoute('GET', 'public/coupons/:id', $path)) {
     loadController('Public', 'CouponController');
@@ -293,6 +307,24 @@ if (matchRoute('GET', 'public/blog/:slug', $path)) {
 if (matchRoute('GET', 'public/blog', $path)) {
     loadController('Public', 'BlogController');
     (new PublicBlogController())->index($_GET);
+}
+
+// ---------- Public: Forms (contact, business signup) ----------
+if (matchRoute('POST', 'public/contact', $path)) {
+    loadController('Public', 'PublicFormController');
+    (new PublicFormController())->contact($body);
+}
+if (matchRoute('POST', 'public/business-signup', $path)) {
+    loadController('Public', 'PublicFormController');
+    (new PublicFormController())->businessSignup($body);
+}
+if (matchRoute('GET', 'public/page/:slug', $path)) {
+    loadController('Public', 'CmsController');
+    (new CmsController())->show(param('slug'));
+}
+if (matchRoute('GET', 'public/contests', $path)) {
+    loadController('Customer', 'ContestController');
+    (new ContestController())->publicIndex();
 }
 
 // ---------- Coupons ----------
@@ -335,6 +367,16 @@ if (matchRoute('DELETE', 'merchants/coupons/:id', $path)) {
     loadController('Merchant', 'CouponController');
     $user = AuthMiddleware::require();
     (new CouponController())->destroy($user, (int)param('id'));
+}
+if (matchRoute('POST', 'merchants/coupons/:id/image', $path)) {
+    loadController('Merchant', 'CouponController');
+    $user = AuthMiddleware::require();
+    (new CouponController())->uploadImage($user, (int)param('id'));
+}
+if (matchRoute('DELETE', 'merchants/coupons/:id/image', $path)) {
+    loadController('Merchant', 'CouponController');
+    $user = AuthMiddleware::require();
+    (new CouponController())->deleteImage($user, (int)param('id'));
 }
 
 // ---------- Store Coupons ----------
@@ -559,139 +601,271 @@ if (matchRoute('POST', 'merchants/flash-discounts/:id/redeem', $path)) {
 
 // ---------- Customer Profile ----------
 if (matchRoute('GET', 'customers/profile', $path)) {
-    $user = AuthMiddleware::require();
+    $user = AuthMiddleware::requireCustomer();
     loadController('Customer', 'ProfileController');
     (new CustomerProfileController())->show($user);
 }
 if (matchRoute('PUT', 'customers/profile', $path)) {
-    $user = AuthMiddleware::require();
+    $user = AuthMiddleware::requireCustomer();
     loadController('Customer', 'ProfileController');
     (new CustomerProfileController())->update($user, $body);
 }
 
 // ---------- Customer Coupons ----------
 if (matchRoute('GET', 'customers/coupons/wallet', $path)) {
-    $user = AuthMiddleware::require();
+    $user = AuthMiddleware::requireCustomer();
     loadController('Customer', 'CouponController');
     (new CustomerCouponController())->wallet($user);
 }
 if (matchRoute('GET', 'customers/coupons/history', $path)) {
-    $user = AuthMiddleware::require();
+    $user = AuthMiddleware::requireCustomer();
     loadController('Customer', 'CouponController');
     (new CustomerCouponController())->history($user, $_GET);
 }
 if (matchRoute('POST', 'customers/coupons/:id/save', $path)) {
-    $user = AuthMiddleware::require();
+    $user = AuthMiddleware::requireCustomer();
     loadController('Customer', 'CouponController');
     (new CustomerCouponController())->save($user, (int)param('id'));
 }
+if (matchRoute('POST', 'customers/coupons/:id/subscribe', $path)) {
+    $user = AuthMiddleware::requireCustomer();
+    loadController('Customer', 'CouponController');
+    (new CustomerCouponController())->subscribe($user, (int)param('id'));
+}
 if (matchRoute('DELETE', 'customers/coupons/:id/save', $path)) {
-    $user = AuthMiddleware::require();
+    $user = AuthMiddleware::requireCustomer();
     loadController('Customer', 'CouponController');
     (new CustomerCouponController())->unsave($user, (int)param('id'));
 }
 if (matchRoute('POST', 'customers/coupons/redeem', $path)) {
-    $user = AuthMiddleware::require();
+    $user = AuthMiddleware::requireCustomer();
     loadController('Customer', 'CouponController');
     (new CustomerCouponController())->redeem($user, $body);
 }
 if (matchRoute('GET', 'customers/gift-coupons', $path)) {
-    $user = AuthMiddleware::require();
+    $user = AuthMiddleware::requireCustomer();
     loadController('Customer', 'CouponController');
     (new CustomerCouponController())->giftCoupons($user);
 }
 if (matchRoute('POST', 'customers/gift-coupons/:id/accept', $path)) {
-    $user = AuthMiddleware::require();
+    $user = AuthMiddleware::requireCustomer();
     loadController('Customer', 'CouponController');
     (new CustomerCouponController())->acceptGift($user, (int)param('id'));
 }
 if (matchRoute('POST', 'customers/gift-coupons/:id/reject', $path)) {
-    $user = AuthMiddleware::require();
+    $user = AuthMiddleware::requireCustomer();
     loadController('Customer', 'CouponController');
     (new CustomerCouponController())->rejectGift($user, (int)param('id'));
+}
+if (matchRoute('GET', 'customers/store-coupons', $path)) {
+    $user = AuthMiddleware::requireCustomer();
+    loadController('Customer', 'CouponController');
+    (new CustomerCouponController())->storeCoupons($user);
 }
 
 // ---------- Customer Profile (extended) ----------
 if (matchRoute('POST', 'customers/profile/image', $path)) {
-    $user = AuthMiddleware::require();
+    $user = AuthMiddleware::requireCustomer();
     loadController('Customer', 'ProfileController');
     (new CustomerProfileController())->uploadImage($user);
 }
 if (matchRoute('GET', 'customers/subscription', $path)) {
-    $user = AuthMiddleware::require();
+    $user = AuthMiddleware::requireCustomer();
     loadController('Customer', 'ProfileController');
     (new CustomerProfileController())->subscription($user);
 }
 if (matchRoute('PUT', 'customers/profile/password', $path)) {
-    $user = AuthMiddleware::require();
+    $user = AuthMiddleware::requireCustomer();
     loadController('Customer', 'ProfileController');
     (new CustomerProfileController())->changePassword($user, $body);
 }
+if (matchRoute('POST', 'customers/password/set-new', $path)) {
+    $user = AuthMiddleware::requireCustomer();
+    loadController('Customer', 'ProfileController');
+    (new CustomerProfileController())->setNewPassword($user, $body);
+}
 if (matchRoute('GET', 'customers/stats', $path)) {
-    $user = AuthMiddleware::require();
+    $user = AuthMiddleware::requireCustomer();
     loadController('Customer', 'ProfileController');
     (new CustomerProfileController())->stats($user);
 }
 
+// ---------- Customer Important Days ----------
+if (matchRoute('GET', 'customers/important-days', $path)) {
+    $user = AuthMiddleware::requireCustomer();
+    loadController('Customer', 'ImportantDaysController');
+    (new ImportantDaysController())->index($user);
+}
+if (matchRoute('POST', 'customers/important-days', $path)) {
+    $user = AuthMiddleware::requireCustomer();
+    loadController('Customer', 'ImportantDaysController');
+    (new ImportantDaysController())->store($user, $body);
+}
+if (matchRoute('DELETE', 'customers/important-days/:id', $path)) {
+    $user = AuthMiddleware::requireCustomer();
+    loadController('Customer', 'ImportantDaysController');
+    (new ImportantDaysController())->destroy($user, (int)param('id'));
+}
+
 // ---------- Customer Favourites ----------
 if (matchRoute('GET', 'customers/favourites/check/:merchantId', $path)) {
-    $user = AuthMiddleware::require();
+    $user = AuthMiddleware::requireCustomer();
     loadController('Customer', 'FavouriteController');
     (new FavouriteController())->check($user, (int)param('merchantId'));
 }
 if (matchRoute('GET', 'customers/favourites', $path)) {
-    $user = AuthMiddleware::require();
+    $user = AuthMiddleware::requireCustomer();
     loadController('Customer', 'FavouriteController');
     (new FavouriteController())->index($user);
 }
 if (matchRoute('POST', 'customers/favourites/:merchantId', $path)) {
-    $user = AuthMiddleware::require();
+    $user = AuthMiddleware::requireCustomer();
     loadController('Customer', 'FavouriteController');
     (new FavouriteController())->add($user, (int)param('merchantId'));
 }
 if (matchRoute('DELETE', 'customers/favourites/:merchantId', $path)) {
-    $user = AuthMiddleware::require();
+    $user = AuthMiddleware::requireCustomer();
     loadController('Customer', 'FavouriteController');
     (new FavouriteController())->remove($user, (int)param('merchantId'));
 }
 
+// ---------- Customer Referrals ----------
+if (matchRoute('GET', 'customers/referral', $path)) {
+    $user = AuthMiddleware::requireCustomer();
+    loadController('Customer', 'ReferralController');
+    (new ReferralController())->index($user);
+}
+
+// ---------- DealMaker ----------
+if (matchRoute('GET', 'customers/dealmaker/status', $path)) {
+    $user = AuthMiddleware::requireCustomer();
+    loadController('Customer', 'DealmakerController');
+    (new DealmakerController())->status($user);
+}
+if (matchRoute('POST', 'customers/dealmaker/apply', $path)) {
+    $user = AuthMiddleware::requireCustomer();
+    loadController('Customer', 'DealmakerController');
+    (new DealmakerController())->apply($user, $body);
+}
+if (matchRoute('GET', 'customers/dealmaker/tasks', $path)) {
+    $user = AuthMiddleware::requireCustomer();
+    loadController('Customer', 'DealmakerController');
+    (new DealmakerController())->tasks($user);
+}
+if (matchRoute('POST', 'customers/dealmaker/tasks/:id/complete', $path)) {
+    $user = AuthMiddleware::requireCustomer();
+    loadController('Customer', 'DealmakerController');
+    (new DealmakerController())->completeTask($user, (int)param('id'), $body);
+}
+if (matchRoute('GET', 'customers/dealmaker/earnings', $path)) {
+    $user = AuthMiddleware::requireCustomer();
+    loadController('Customer', 'DealmakerController');
+    (new DealmakerController())->earnings($user);
+}
+
+// ---------- Surveys ----------
+if (matchRoute('GET', 'customers/surveys/completed', $path)) {
+    $user = AuthMiddleware::requireCustomer();
+    loadController('Customer', 'SurveyController');
+    (new SurveyController())->completed($user);
+}
+if (matchRoute('GET', 'customers/surveys', $path)) {
+    $user = AuthMiddleware::requireCustomer();
+    loadController('Customer', 'SurveyController');
+    (new SurveyController())->index($user);
+}
+if (matchRoute('GET', 'customers/surveys/:id', $path)) {
+    $user = AuthMiddleware::requireCustomer();
+    loadController('Customer', 'SurveyController');
+    (new SurveyController())->show($user, (int)param('id'));
+}
+if (matchRoute('POST', 'customers/surveys/:id/submit', $path)) {
+    $user = AuthMiddleware::requireCustomer();
+    loadController('Customer', 'SurveyController');
+    (new SurveyController())->submit($user, (int)param('id'), $body);
+}
+
+// ---------- Contests ----------
+if (matchRoute('GET', 'customers/contests/my-entries', $path)) {
+    $user = AuthMiddleware::requireCustomer();
+    loadController('Customer', 'ContestController');
+    (new ContestController())->myEntries($user);
+}
+if (matchRoute('GET', 'customers/contests', $path)) {
+    $user = AuthMiddleware::requireCustomer();
+    loadController('Customer', 'ContestController');
+    (new ContestController())->index($user);
+}
+if (matchRoute('GET', 'customers/contests/:id', $path)) {
+    $user = AuthMiddleware::requireCustomer();
+    loadController('Customer', 'ContestController');
+    (new ContestController())->show($user, (int)param('id'));
+}
+if (matchRoute('POST', 'customers/contests/:id/participate', $path)) {
+    $user = AuthMiddleware::requireCustomer();
+    loadController('Customer', 'ContestController');
+    (new ContestController())->participate($user, (int)param('id'), $body);
+}
+
 // ---------- Customer Card ----------
 if (matchRoute('POST', 'customers/card/activate', $path)) {
-    $user = AuthMiddleware::require();
+    $user = AuthMiddleware::requireCustomer();
     loadController('Customer', 'CardController');
     (new CardController())->activate($user, $body);
 }
 if (matchRoute('GET', 'customers/card', $path)) {
-    $user = AuthMiddleware::require();
+    $user = AuthMiddleware::requireCustomer();
     loadController('Customer', 'CardController');
     (new CardController())->show($user);
 }
 
 // ---------- Customer Notifications ----------
 if (matchRoute('GET', 'customers/notifications/unread-count', $path)) {
-    $user = AuthMiddleware::require();
+    $user = AuthMiddleware::requireCustomer();
     loadController('Customer', 'NotificationController');
     (new CustomerNotificationController())->unreadCount($user);
 }
 if (matchRoute('GET', 'customers/notifications', $path)) {
-    $user = AuthMiddleware::require();
+    $user = AuthMiddleware::requireCustomer();
     loadController('Customer', 'NotificationController');
     (new CustomerNotificationController())->index($user, $_GET);
 }
 if (matchRoute('PUT', 'customers/notifications/read-all', $path)) {
-    $user = AuthMiddleware::require();
+    $user = AuthMiddleware::requireCustomer();
     loadController('Customer', 'NotificationController');
     (new CustomerNotificationController())->markAllRead($user);
 }
 if (matchRoute('PUT', 'customers/notifications/:id/read', $path)) {
-    $user = AuthMiddleware::require();
+    $user = AuthMiddleware::requireCustomer();
     loadController('Customer', 'NotificationController');
     (new CustomerNotificationController())->markRead($user, (int)param('id'));
 }
 if (matchRoute('DELETE', 'customers/notifications/:id', $path)) {
-    $user = AuthMiddleware::require();
+    $user = AuthMiddleware::requireCustomer();
     loadController('Customer', 'NotificationController');
     (new CustomerNotificationController())->delete($user, (int)param('id'));
+}
+
+// ---------- Customer Grievances ----------
+if (matchRoute('GET', 'customers/grievances', $path)) {
+    $user = AuthMiddleware::requireCustomer();
+    loadController('Customer', 'GrievanceController');
+    (new CustomerGrievanceController())->index($user, $_GET);
+}
+if (matchRoute('GET', 'customers/grievances/:id', $path)) {
+    $user = AuthMiddleware::requireCustomer();
+    loadController('Customer', 'GrievanceController');
+    (new CustomerGrievanceController())->show($user, (int)param('id'));
+}
+if (matchRoute('POST', 'customers/grievances', $path)) {
+    $user = AuthMiddleware::requireCustomer();
+    loadController('Customer', 'GrievanceController');
+    (new CustomerGrievanceController())->store($user, $body);
+}
+if (matchRoute('PUT', 'customers/grievances/:id/archive', $path)) {
+    $user = AuthMiddleware::requireCustomer();
+    loadController('Customer', 'GrievanceController');
+    (new CustomerGrievanceController())->archive($user, (int)param('id'));
 }
 
 // ---------- Health check ----------
@@ -699,5 +873,5 @@ if (matchRoute('GET', 'health', $path)) {
     Response::success(['status' => 'ok', 'timestamp' => date('c')], 'API is running');
 }
 
-// ── 404 fallback ──────────────────────────────────────────────────────────────
+// â”€â”€ 404 fallback â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 Response::notFound("Endpoint [{$requestMethod}] /api/{$path} not found.");

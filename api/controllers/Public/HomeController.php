@@ -23,6 +23,9 @@ class HomeController {
         $cityId = !empty($query['city_id']) ? (int)$query['city_id'] : null;
         $limit  = min(20, max(5, (int)($query['limit'] ?? 10)));
 
+        // Optional auth — coupon codes are only shown to logged-in users
+        $isAuthenticated = AuthMiddleware::optional();
+
         // ── Advertisements ────────────────────────────────────────────────────
         $ads = $this->db->query(
             "SELECT a.id, a.title, a.media_url, a.link_url, a.media_type, a.display_duration
@@ -43,6 +46,7 @@ class HomeController {
                     fd.title,
                     fd.discount_percentage,
                     fd.valid_until,
+                    fd.banner_image,
                     fd.merchant_id,
                     m.business_name    AS merchant_name,
                     m.business_logo    AS merchant_logo,
@@ -89,7 +93,8 @@ class HomeController {
             : '';
         $coupons = $this->db->query(
             "SELECT c.id, c.title, c.coupon_code, c.discount_type, c.discount_value,
-                    c.valid_until, NULL AS banner_image,
+                    c.valid_until,
+                    c.banner_image,
                     c.merchant_id,
                     m.business_name AS merchant_name,
                     m.business_logo AS merchant_logo,
@@ -119,12 +124,27 @@ class HomeController {
         );
 
         Response::success([
-            'advertisements'   => $ads,
-            'flash_discounts'  => $flashDiscounts,
-            'featured_merchants' => $merchants,
-            'top_coupons'      => $coupons,
-            'new_merchants'    => [],   // populated in future by recency-sorted query
-            'tags'             => $tags,
+            'advertisements'     => array_map(static function ($ad) {
+                $ad['media_url'] = imageUrl($ad['media_url']);
+                return $ad;
+            }, $ads),
+            'flash_discounts'    => array_map(static function ($fd) {
+                $fd['merchant_logo'] = imageUrl($fd['merchant_logo']);
+                $fd['banner_image']  = imageUrl($fd['banner_image']);
+                return $fd;
+            }, $flashDiscounts),
+            'featured_merchants' => array_map(static function ($m) {
+                $m['business_logo'] = imageUrl($m['business_logo']);
+                return $m;
+            }, $merchants),
+            'top_coupons'        => array_map(static function ($c) use ($isAuthenticated) {
+                $c['merchant_logo'] = imageUrl($c['merchant_logo']);
+                $c['banner_image']  = imageUrl($c['banner_image']);
+                if (!$isAuthenticated) $c['coupon_code'] = null;
+                return $c;
+            }, $coupons),
+            'new_merchants'      => [],   // populated in future by recency-sorted query
+            'tags'               => $tags,
         ]);
     }
 }

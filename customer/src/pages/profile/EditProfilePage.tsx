@@ -85,7 +85,8 @@ export default function EditProfilePage() {
   const avatarSrc = preview ?? profile?.profile_image
 
   return (
-    <div className="max-w-lg mx-auto px-4 py-6 pb-10">
+    <div className="max-w-[1200px] mx-auto px-4 py-6 pb-10">
+      <div className="max-w-2xl mx-auto">
       {/* Header */}
       <div className="flex items-center gap-3 mb-6">
         <Link to="/profile" className="p-2 hover:bg-gray-100 rounded-xl">
@@ -107,7 +108,7 @@ export default function EditProfilePage() {
         <div className="relative">
           <div className="w-24 h-24 rounded-3xl overflow-hidden">
             {avatarSrc ? (
-              <img src={avatarSrc} alt="Avatar" className="w-full h-full object-cover" />
+              <img src={avatarSrc} alt="Avatar" loading="lazy" className="w-full h-full object-cover" />
             ) : (
               <div className="w-full h-full gradient-brand flex items-center justify-center text-white font-bold text-4xl">
                 {profile?.name?.charAt(0).toUpperCase() ?? '?'}
@@ -142,15 +143,27 @@ export default function EditProfilePage() {
 
       {/* Form fields */}
       <div className="space-y-4">
-        {/* Name */}
+        {/* First Name */}
         <div>
-          <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">Full Name</label>
+          <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">First Name</label>
           <input
             type="text"
             className="input w-full"
-            placeholder="Your name"
+            placeholder="First name"
             value={val('name')}
             onChange={(e) => set('name', e.target.value)}
+          />
+        </div>
+
+        {/* Last Name */}
+        <div>
+          <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">Last Name</label>
+          <input
+            type="text"
+            className="input w-full"
+            placeholder="Last name"
+            value={val('last_name') ?? ''}
+            onChange={(e) => set('last_name', e.target.value || null)}
           />
         </div>
 
@@ -226,7 +239,44 @@ export default function EditProfilePage() {
             className="input w-full h-24 resize-none"
             placeholder="A short bio…"
             value={val('bio')}
-            onChange={(e) => set('bio', e.target.value)}
+            onChange={(e) => set('bio', e.target.value || null)}
+          />
+        </div>
+
+        {/* Occupation */}
+        <div>
+          <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">Occupation</label>
+          <input
+            type="text"
+            className="input w-full"
+            placeholder="e.g. Software Engineer, Teacher…"
+            value={val('occupation') ?? ''}
+            onChange={(e) => set('occupation', e.target.value || null)}
+          />
+        </div>
+
+        {/* Full Address */}
+        <div>
+          <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">Address</label>
+          <textarea
+            className="input w-full h-20 resize-none"
+            placeholder="Street / apartment / landmark"
+            value={val('full_address') ?? ''}
+            onChange={(e) => set('full_address', e.target.value || null)}
+          />
+        </div>
+
+        {/* Pincode */}
+        <div>
+          <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">Pincode</label>
+          <input
+            type="text"
+            inputMode="numeric"
+            maxLength={10}
+            className="input w-full"
+            placeholder="Postal / ZIP code"
+            value={val('pincode') ?? ''}
+            onChange={(e) => set('pincode', e.target.value || null)}
           />
         </div>
       </div>
@@ -240,6 +290,7 @@ export default function EditProfilePage() {
         {saveMutation.isPending ? <Loader2 size={16} className="animate-spin" /> : null}
         Save Changes
       </button>
+      </div>{/* /max-w-2xl */}
     </div>
   )
 }

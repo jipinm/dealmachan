@@ -62,34 +62,58 @@ class NotificationsController extends Controller {
             return;
         }
 
-        $admins = $this->model->getAdminList();
+        $admins          = $this->model->getAdminList();
+        $totalCustomers  = $this->model->countActiveCustomers();
+        $totalMerchants  = $this->model->countApprovedMerchants();
         $errors = [];
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $title   = trim($_POST['title'] ?? '');
             $message = trim($_POST['message'] ?? '');
-            $type    = in_array($_POST['notif_type'] ?? '', ['info','success','warning','error'])
-                       ? $_POST['notif_type'] : 'info';
+            $validTypes = ['info','success','warning','error','promotion','coupon','flash_discount','contest','referral','order'];
+            $type    = in_array($_POST['notification_type'] ?? '', $validTypes) ? $_POST['notification_type'] : 'info';
             $url     = trim($_POST['action_url'] ?? '');
-            $targets = $_POST['target_admins'] ?? 'all';
+            $target  = $_POST['target'] ?? 'all_admins';
 
             if (!$title)   $errors[] = 'Title is required.';
             if (!$message) $errors[] = 'Message is required.';
 
             if (!$errors) {
-                $ids = ($targets === 'all') ? [] : array_map('intval', (array)($_POST['admin_ids'] ?? []));
-                $count = $this->model->broadcastToAdmins([
+                $payload = [
                     'notification_type' => $type,
                     'title'             => $title,
                     'message'           => $message,
                     'action_url'        => $url ?: null,
-                ], $ids);
-                $this->redirect("notifications?success=Notification+sent+to+{$count}+admins");
+                ];
+
+                $count = 0;
+                switch ($target) {
+                    case 'all_admins':
+                        $count = $this->model->broadcastToAdmins($payload);
+                        break;
+                    case 'specific_admins':
+                        $ids = array_map('intval', (array)($_POST['admin_ids'] ?? []));
+                        $count = $this->model->broadcastToAdmins($payload, $ids);
+                        break;
+                    case 'all_customers':
+                        $count = $this->model->broadcastToCustomers($payload);
+                        break;
+                    case 'all_merchants':
+                        $count = $this->model->broadcastToMerchants($payload);
+                        break;
+                    case 'all_users':
+                        $count  = $this->model->broadcastToAdmins($payload);
+                        $count += $this->model->broadcastToCustomers($payload);
+                        $count += $this->model->broadcastToMerchants($payload);
+                        break;
+                }
+                $label = str_replace('_', ' ', $target);
+                $this->redirect("notifications?success=Sent+{$count}+notifications+to+{$label}");
                 return;
             }
         }
 
         $stats = $this->model->getStats($adminId);
-        $this->loadView('notifications/broadcast', compact('cu', 'admins', 'errors', 'stats'));
+        $this->loadView('notifications/broadcast', compact('cu', 'admins', 'errors', 'stats', 'totalCustomers', 'totalMerchants'));
     }
 }

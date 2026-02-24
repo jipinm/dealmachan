@@ -8,6 +8,8 @@ export interface LocationState {
   areaName: string | null
   /** Whether the location picker modal is open */
   modalOpen: boolean
+  /** True once auto-detection has been attempted (persisted so it only runs once) */
+  detectionAttempted: boolean
 }
 
 interface LocationActions {
@@ -16,6 +18,7 @@ interface LocationActions {
   clearLocation(): void
   openLocationModal(): void
   closeLocationModal(): void
+  setDetectionAttempted(val: boolean): void
 }
 
 export const useLocationStore = create<LocationState & LocationActions>()(
@@ -26,6 +29,7 @@ export const useLocationStore = create<LocationState & LocationActions>()(
       areaId:   null,
       areaName: null,
       modalOpen: false,
+      detectionAttempted: false,
 
       setLocation: (cityId, cityName, areaId = null, areaName = null) => {
         set({ cityId, cityName, areaId, areaName })
@@ -41,6 +45,7 @@ export const useLocationStore = create<LocationState & LocationActions>()(
 
       openLocationModal: () => set({ modalOpen: true }),
       closeLocationModal: () => set({ modalOpen: false }),
+      setDetectionAttempted: (val) => set({ detectionAttempted: val }),
     }),
     {
       name: 'dm-customer-location',
@@ -49,6 +54,7 @@ export const useLocationStore = create<LocationState & LocationActions>()(
         cityName: state.cityName,
         areaId: state.areaId,
         areaName: state.areaName,
+        detectionAttempted: state.detectionAttempted,
       }),
     },
   ),

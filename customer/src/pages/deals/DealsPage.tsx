@@ -1,9 +1,11 @@
 import { useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { useQuery } from '@tanstack/react-query'
-import { Search, Tag, Clock, X } from 'lucide-react'
+import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
+import { Search, Tag, Clock, X, Loader2, Lock } from 'lucide-react'
 import { publicApi, type TopCoupon } from '@/api/endpoints/public'
 import { useLocationStore } from '@/store/locationStore'
+import { useInfiniteScroll } from '@/lib/useInfiniteScroll'
+import { slugify } from '@/lib/slugify'
 
 function timeLeft(until: string | null): string {
   if (!until) return 'Limited time'
@@ -15,23 +17,29 @@ function timeLeft(until: string | null): string {
   return h > 0 ? `${h}h ${m}m left` : `${m}m left`
 }
 
+import { getImageUrl } from '@/lib/imageUrl'
+import { Helmet } from 'react-helmet-async'
+
 function imgSrc(path: string | null): string {
-  if (!path) return 'https://via.placeholder.com/400x200?text=Deal'
-  if (path.startsWith('http')) return path
-  return `${import.meta.env.VITE_API_BASE_URL?.replace('/api', '') ?? 'http://localhost:8000'}${path}`
+  return getImageUrl(path, 'https://via.placeholder.com/400x200?text=Deal')
 }
 
 function CouponGridCard({ coupon }: { coupon: TopCoupon }) {
-  const discountLabel = coupon.discount_type === 'percentage'
-    ? `${coupon.discount_value}% OFF`
-    : `₹${coupon.discount_value} OFF`
+  const discountLabel =
+    coupon.discount_type === 'percentage' ? `${coupon.discount_value}% OFF`
+    : coupon.discount_type === 'flat'       ? `₹${coupon.discount_value} OFF`
+    : coupon.discount_type === 'free_item'  ? 'FREE ITEM'
+    : coupon.discount_type === 'bogo'       ? 'BOGO'
+    : coupon.discount_value != null         ? `₹${coupon.discount_value} OFF`
+    : 'DEAL'
 
   return (
-    <Link to={`/deals/${coupon.id}`} className="card card-hover group block overflow-hidden">
+    <Link to={`/deals/${coupon.id}/${slugify(coupon.title)}`} className="card card-hover group block overflow-hidden">
       <div className="relative h-44 bg-slate-100 overflow-hidden">
         <img
-          src={imgSrc(coupon.banner_image)}
+          src={imgSrc(coupon.banner_image || coupon.merchant_logo)}
           alt={coupon.title}
+          loading="lazy"
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
           onError={(e) => { (e.target as HTMLImageElement).src = 'https://via.placeholder.com/400x200?text=Deal' }}
         />
@@ -42,6 +50,7 @@ function CouponGridCard({ coupon }: { coupon: TopCoupon }) {
           <img
             src={imgSrc(coupon.merchant_logo)}
             alt={coupon.merchant_name}
+            loading="lazy"
             className="w-6 h-6 rounded-full object-cover bg-slate-100"
             onError={(e) => { (e.target as HTMLImageElement).src = 'https://via.placeholder.com/40?text=M' }}
           />
@@ -49,9 +58,19 @@ function CouponGridCard({ coupon }: { coupon: TopCoupon }) {
         </div>
         <h3 className="font-semibold text-slate-800 text-sm leading-snug line-clamp-2 mb-3">{coupon.title}</h3>
         <div className="flex items-center justify-between">
-          <span className="inline-flex items-center gap-1 text-xs bg-slate-50 text-slate-600 px-2 py-1 rounded-lg font-mono font-bold border border-dashed border-slate-300">
-            <Tag size={10} /> {coupon.coupon_code}
-          </span>
+          {coupon.coupon_code ? (
+            <span className="inline-flex items-center gap-1 text-xs bg-slate-50 text-slate-600 px-2 py-1 rounded-lg font-mono font-bold border border-dashed border-slate-300">
+              <Tag size={10} /> {coupon.coupon_code}
+            </span>
+          ) : (
+            <Link
+              to="/login"
+              onClick={(e) => e.stopPropagation()}
+              className="inline-flex items-center gap-1 text-xs bg-slate-100 text-slate-400 px-2 py-1 rounded-lg border border-dashed border-slate-200 hover:border-brand-300 hover:text-brand-500 transition-colors"
+            >
+              <Lock size={10} /> Login to see code
+            </Link>
+          )}
           {coupon.valid_until && (
             <span className="flex items-center gap-1 text-xs text-slate-400">
               <Clock size={11} /> {timeLeft(coupon.valid_until)}
@@ -68,15 +87,19 @@ export default function DealsPage() {
   const { cityId } = useLocationStore()
   const [search, setSearch] = useState(params.get('q') ?? '')
 
-  const q        = params.get('q') ?? undefined
-  const tagId    = params.get('tag') ?? undefined
-  const page     = Number(params.get('page') ?? '1')
+  const q     = params.get('q') ?? undefined
+  const tagId = params.get('tag') ?? undefined
 
-  const { data, isLoading } = useQuery({
-    queryKey: ['deals', cityId, q, tagId, page],
-    queryFn: () =>
-      publicApi.getCoupons({ city_id: cityId ?? undefined, q, tag_id: tagId, page, per_page: 12 })
+  const { data, isLoading, isFetchingNextPage, fetchNextPage, hasNextPage } = useInfiniteQuery({
+    queryKey: ['deals-inf', cityId, q, tagId],
+    queryFn: ({ pageParam = 1 }) =>
+      publicApi.getCoupons({ city_id: cityId ?? undefined, q, tag_id: tagId, page: pageParam as number, per_page: 12 })
         .then((r) => r.data),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage: any, allPages) => {
+      const total = lastPage?.data?.pagination?.pages ?? 1
+      return allPages.length < total ? allPages.length + 1 : undefined
+    },
     staleTime: 2 * 60 * 1000,
   })
 
@@ -86,8 +109,13 @@ export default function DealsPage() {
     staleTime: Infinity,
   })
 
-  const coupons = data?.data ?? []
-  const total   = data?.pagination?.total ?? 0
+  const coupons: TopCoupon[] = data?.pages.flatMap((p: any) => p?.data?.data ?? []) ?? []
+  const total = data?.pages[0]?.data?.pagination?.total ?? 0
+
+  const sentinelRef = useInfiniteScroll(
+    () => { if (hasNextPage && !isFetchingNextPage) fetchNextPage() },
+    !!hasNextPage && !isFetchingNextPage,
+  )
 
   function handleSearch(e: React.FormEvent) {
     e.preventDefault()
@@ -108,6 +136,10 @@ export default function DealsPage() {
 
   return (
     <div>
+      <Helmet>
+        <title>Best Deals &amp; Coupons | Deal Machan</title>
+        <meta name="description" content="Browse hundreds of exclusive coupons and discount deals from local merchants near you. Filter by category, location, and more." />
+      </Helmet>
       {/* Page header */}
       <div className="bg-white border-b border-slate-100 py-8">
         <div className="site-container">
@@ -165,9 +197,22 @@ export default function DealsPage() {
             {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => <div key={i} className="h-72 skeleton rounded-2xl" />)}
           </div>
         ) : coupons.length > 0 ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-            {coupons.map((c) => <CouponGridCard key={c.id} coupon={c} />)}
-          </div>
+          <>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+              {coupons.map((c) => <CouponGridCard key={c.id} coupon={c} />)}
+            </div>
+
+            {/* Infinite scroll sentinel */}
+            <div ref={sentinelRef} className="h-4 mt-4" />
+            {isFetchingNextPage && (
+              <div className="flex justify-center py-6">
+                <Loader2 size={22} className="animate-spin text-brand-500" />
+              </div>
+            )}
+            {!hasNextPage && coupons.length > 0 && (
+              <p className="text-center text-xs text-slate-400 py-6">All {total} deals loaded</p>
+            )}
+          </>
         ) : (
           <div className="text-center py-24 text-slate-400">
             <Tag size={48} className="mx-auto mb-4 opacity-30" />
@@ -179,21 +224,6 @@ export default function DealsPage() {
             >
               Clear filters
             </button>
-          </div>
-        )}
-
-        {/* Pagination */}
-        {(data?.pagination?.pages ?? 0) > 1 && (
-          <div className="flex justify-center gap-2 mt-10">
-            {Array.from({ length: data!.pagination!.pages }, (_, i) => i + 1).map((p) => (
-              <button
-                key={p}
-                onClick={() => { const n = new URLSearchParams(params); n.set('page', String(p)); setParams(n) }}
-                className={`w-9 h-9 rounded-lg text-sm font-semibold transition-colors ${p === page ? 'bg-brand-600 text-white' : 'bg-white text-slate-600 border border-slate-200 hover:border-brand-300'}`}
-              >
-                {p}
-              </button>
-            ))}
           </div>
         )}
       </div>

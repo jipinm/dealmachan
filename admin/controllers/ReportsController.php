@@ -81,7 +81,58 @@ class ReportsController extends Controller {
         $this->loadView('reports/redemptions', compact('cu','stats','trend','topCoup','list','total','pages','page','from','to'));
     }
 
-    // GET /reports/export?type=customers|merchants|redemptions&date_from=&date_to=
+    // GET /reports/revenue
+    public function revenue(): void {
+        if (!$this->auth->isLoggedIn()) { $this->redirect('auth/login'); return; }
+        $cu = $this->auth->getCurrentUser();
+        [$from, $to] = $this->dateRange();
+
+        $stats     = $this->model->getRevenueStats($from, $to);
+        $trend     = $this->model->getRevenueTrend($from, $to);
+        $topMerch  = $this->model->getTopMerchantsByRevenue($from, $to, 10);
+
+        $this->loadView('reports/revenue', compact('cu','stats','trend','topMerch','from','to'));
+    }
+
+    // GET /reports/subscription-report
+    public function subscriptionReport(): void {
+        if (!$this->auth->isLoggedIn()) { $this->redirect('auth/login'); return; }
+        $cu = $this->auth->getCurrentUser();
+        [$from, $to] = $this->dateRange();
+
+        $stats = $this->model->getSubscriptionReportStats($from, $to);
+        $trend = $this->model->getSubscriptionRevenueTrend($from, $to);
+
+        $this->loadView('reports/subscriptions', compact('cu','stats','trend','from','to'));
+    }
+
+    // GET /reports/coupon-analytics
+    public function couponAnalytics(): void {
+        if (!$this->auth->isLoggedIn()) { $this->redirect('auth/login'); return; }
+        $cu = $this->auth->getCurrentUser();
+        [$from, $to] = $this->dateRange();
+
+        $stats      = $this->model->getCouponAnalyticsStats($from, $to);
+        $topSaved   = $this->model->getTopSavedCoupons($from, $to, 10);
+        $saveTrend  = $this->model->getCouponSaveTrend($from, $to);
+
+        $this->loadView('reports/coupon-analytics', compact('cu','stats','topSaved','saveTrend','from','to'));
+    }
+
+    // GET /reports/engagement
+    public function engagement(): void {
+        if (!$this->auth->isLoggedIn()) { $this->redirect('auth/login'); return; }
+        $cu = $this->auth->getCurrentUser();
+        [$from, $to] = $this->dateRange();
+
+        $stats        = $this->model->getEngagementStats($from, $to);
+        $topContests  = $this->model->getTopContestsByParticipation($from, $to, 10);
+        $topSurveys   = $this->model->getTopSurveysByResponse($from, $to, 10);
+
+        $this->loadView('reports/engagement', compact('cu','stats','topContests','topSurveys','from','to'));
+    }
+
+    // GET /reports/export (extended)
     public function export(): void {
         if (!$this->auth->isLoggedIn()) { $this->redirect('auth/login'); return; }
         [$from, $to] = $this->dateRange();
@@ -97,6 +148,11 @@ class ReportsController extends Controller {
                 $rows    = $this->model->exportMerchantsCSV($from, $to);
                 $headers = ['ID','Business Name','Email','Phone','Profile Status','Subscription','Premium','Created'];
                 $file    = "merchants_{$from}_{$to}.csv";
+                break;
+            case 'revenue':
+                $rows    = $this->model->exportRevenueCSV($from, $to);
+                $headers = ['ID','Date','Business','Store','Customer','Phone','Amount (₹)','Discount (₹)','Payment Method'];
+                $file    = "revenue_{$from}_{$to}.csv";
                 break;
             default:
                 $rows    = $this->model->exportRedemptionsCSV($from, $to);

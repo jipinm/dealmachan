@@ -74,9 +74,30 @@ class CardsController extends Controller {
         $card = $this->cardModel->findWithDetails($id);
         if (!$card) { $this->redirectWithError('cards', 'Card not found.'); return; }
 
+        // Fetch activation / assignment audit trail for this card
+        // Note: logAudit() is called as logAudit(action, $id, 'card', adminId)
+        // so rows are stored with table_name=$id and record_id='card' (or vice-versa)
+        try {
+            $db   = \Database::getInstance()->getConnection();
+            $stmt = $db->prepare(
+                "SELECT al.*, u.name AS admin_name
+                 FROM audit_logs al
+                 LEFT JOIN users u ON al.user_id = u.id
+                 WHERE (al.table_name = :id_str AND al.record_id IN ('card','cards'))
+                    OR (al.table_name IN ('card','cards') AND al.record_id = :id_str2)
+                 ORDER BY al.created_at DESC
+                 LIMIT 50"
+            );
+            $stmt->execute([':id_str' => (string)$id, ':id_str2' => (string)$id]);
+            $auditLogs = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        } catch (\Exception $e) {
+            $auditLogs = [];
+        }
+
         $this->loadView('cards/view', [
             'title'        => 'Card — ' . escape($card['card_number']),
             'card'         => $card,
+            'audit_logs'   => $auditLogs,
             'current_user' => $this->auth->getCurrentUser(),
         ]);
     }

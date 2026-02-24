@@ -83,15 +83,28 @@ class CustomersController extends Controller {
         $analytics    = $this->customerModel->getTransactionAnalytics($id);
         $transactions = $this->customerModel->getRecentTransactions($id);
         $storeCoupons = $this->customerModel->getStoreCoupons($id);
+        // Profile sub-view tabs
+        $grievances        = $this->customerModel->getGrievances($id);
+        $reviews           = $this->customerModel->getReviews($id);
+        $referrals         = $this->customerModel->getReferrals($id);
+        $savedCoupons      = $this->customerModel->getSavedCoupons($id);
+        $favouriteMerchants= $this->customerModel->getFavouriteMerchants($id);
+        $importantDays     = $this->customerModel->getImportantDays($id);
 
         $this->loadView('customers/view', [
-            'title'        => 'Customer Profile — ' . escape($customer['name']),
-            'customer'     => $customer,
-            'redemptions'  => $redemptions,
-            'analytics'    => $analytics,
-            'transactions' => $transactions,
-            'storeCoupons' => $storeCoupons,
-            'current_user' => $this->auth->getCurrentUser(),
+            'title'              => 'Customer Profile — ' . escape($customer['name']),
+            'customer'           => $customer,
+            'redemptions'        => $redemptions,
+            'analytics'          => $analytics,
+            'transactions'       => $transactions,
+            'storeCoupons'       => $storeCoupons,
+            'grievances'         => $grievances,
+            'reviews'            => $reviews,
+            'referrals'          => $referrals,
+            'savedCoupons'       => $savedCoupons,
+            'favouriteMerchants' => $favouriteMerchants,
+            'importantDays'      => $importantDays,
+            'current_user'       => $this->auth->getCurrentUser(),
         ]);
     }
 

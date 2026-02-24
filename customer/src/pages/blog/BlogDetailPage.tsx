@@ -2,11 +2,11 @@ import { useParams, Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { publicApi } from '@/api/endpoints/public'
 import { Calendar, ArrowLeft, BookOpen } from 'lucide-react'
+import { getImageUrl } from '@/lib/imageUrl'
+import { Helmet } from 'react-helmet-async'
 
 function imgSrc(path: string | null): string {
-  if (!path) return 'https://via.placeholder.com/900x400?text=Blog'
-  if (path.startsWith('http')) return path
-  return `${import.meta.env.VITE_API_BASE_URL?.replace('/api', '') ?? 'http://localhost:8000'}${path}`
+  return getImageUrl(path, 'https://via.placeholder.com/900x400?text=Blog')
 }
 
 export default function BlogDetailPage() {
@@ -42,9 +42,13 @@ export default function BlogDetailPage() {
 
   return (
     <div>
+      <Helmet>
+        <title>{post.title} | Deal Machan Blog</title>
+        <meta name="description" content={post.excerpt ?? `Read "${post.title}" on the Deal Machan blog for smart saving tips and local deal guides.`} />
+      </Helmet>
       {/* Hero image */}
       <div className="h-64 md:h-96 bg-slate-100 overflow-hidden">
-        <img src={imgSrc(post.featured_image)} alt={post.title} className="w-full h-full object-cover" />
+        <img src={imgSrc(post.featured_image)} alt={post.title} loading="eager" className="w-full h-full object-cover" />
       </div>
 
       <div className="site-container py-10">

@@ -6,6 +6,7 @@ import { authApi } from '@/api/endpoints/auth'
 import { getApiError } from '@/api/client'
 import toast from 'react-hot-toast'
 import AuthLayout from '@/components/layout/AuthLayout'
+import { Helmet } from 'react-helmet-async'
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('')
@@ -45,6 +46,10 @@ export default function ForgotPasswordPage() {
       title="Forgot your password?"
       subtitle="Enter the email address linked to your account — we'll send you a reset link"
     >
+      <Helmet>
+        <title>Reset Password | Deal Machan</title>
+        <meta name="description" content="Forgot your Deal Machan password? Enter your email and we'll send you a reset link." />
+      </Helmet>
       <form
         onSubmit={(e) => { e.preventDefault(); mutate() }}
         className="space-y-5"

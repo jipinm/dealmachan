@@ -47,6 +47,9 @@ $statusColors = ['active' => 'success', 'inactive' => 'secondary', 'expired' => 
                                 <?= $flashDiscount['status'] === 'active' ? 'Deactivate' : 'Activate' ?>
                             </button>
                         </form>
+                        <a href="<?= BASE_URL ?>flash-discounts/edit?id=<?= $flashDiscount['id'] ?>" class="btn btn-sm btn-outline-secondary">
+                            <i class="fas fa-edit me-1"></i> Edit
+                        </a>
                     </div>
                 </div>
             </div>

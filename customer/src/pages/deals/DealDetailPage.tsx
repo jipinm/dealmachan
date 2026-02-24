@@ -3,12 +3,13 @@ import { useParams, Link } from 'react-router-dom'
 import { useQuery, useMutation } from '@tanstack/react-query'
 import {
   Tag, Clock, Star, MapPin, ChevronRight, Copy, Check,
-  Bookmark, BookmarkCheck, Share2, Loader2, Store, AlertCircle,
+  Bookmark, BookmarkCheck, Share2, Loader2, Store, AlertCircle, LogIn,
 } from 'lucide-react'
 import { publicApi } from '@/api/endpoints/public'
 import { couponsApi } from '@/api/endpoints/coupons'
 import { useAuthStore } from '@/store/authStore'
 import { getApiError } from '@/api/client'
+import AuthModal from '@/components/ui/AuthModal'
 import toast from 'react-hot-toast'
 
 // ── Helpers ───────────────────────────────────────────────────────────────
@@ -21,10 +22,12 @@ function daysLeft(until: string | null): { text: string; urgent: boolean } | nul
   return { text: `${diff} days left`, urgent: false }
 }
 
+import { getImageUrl } from '@/lib/imageUrl'
+import { slugify } from '@/lib/slugify'
+import { Helmet } from 'react-helmet-async'
+
 function imgSrc(path: string | null): string {
-  if (!path) return 'https://via.placeholder.com/800x400?text=Deal'
-  if (path.startsWith('http')) return path
-  return `${import.meta.env.VITE_API_BASE_URL?.replace('/api', '') ?? 'http://localhost:8000'}${path}`
+  return getImageUrl(path, 'https://via.placeholder.com/800x400?text=Deal')
 }
 
 function discountLabel(type: string, value: number): string {
@@ -51,11 +54,12 @@ function discountGradient(type: string): string {
 
 // ── Main Page ─────────────────────────────────────────────────────────────
 export default function DealDetailPage() {
-  const { id } = useParams<{ id: string }>()
+  const { id } = useParams<{ id: string; slug?: string }>()
   const couponId = Number(id)
   const { isAuthenticated } = useAuthStore()
   const [saved, setSaved] = useState(false)
   const [codeCopied, setCodeCopied] = useState(false)
+  const [showAuthModal, setShowAuthModal] = useState(false)
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['deal-detail', couponId],
@@ -64,7 +68,7 @@ export default function DealDetailPage() {
   })
 
   const saveMutation = useMutation({
-    mutationFn: () => couponsApi.saveCoupon(couponId),
+    mutationFn: () => couponsApi.subscribe(couponId),
     onSuccess: () => {
       setSaved(true)
       toast.success('Coupon saved to your wallet!')
@@ -78,7 +82,7 @@ export default function DealDetailPage() {
   if (isLoading) {
     return (
       <div className="site-container py-10">
-        <div className="max-w-3xl mx-auto space-y-4">
+        <div className="max-w-[1200px] mx-auto space-y-4">
           <div className="h-64 skeleton rounded-3xl" />
           <div className="h-8 skeleton rounded-xl w-3/4" />
           <div className="h-5 skeleton rounded-xl w-1/2" />
@@ -129,7 +133,7 @@ export default function DealDetailPage() {
 
   function handleSave() {
     if (!isAuthenticated) {
-      toast.error('Please sign in to save coupons to your wallet')
+      setShowAuthModal(true)
       return
     }
     saveMutation.mutate()
@@ -137,6 +141,10 @@ export default function DealDetailPage() {
 
   return (
     <div>
+      <Helmet>
+        <title>{coupon.title} | Deal Machan</title>
+        <meta name="description" content={`${discountLabel(coupon.discount_type, coupon.discount_value)} at ${coupon.merchant_name ?? 'local merchant'}. Valid until ${coupon.valid_until ?? 'limited time'}. Claim your deal on Deal Machan.`} />
+      </Helmet>
       {/* Breadcrumb */}
       <div className="bg-white border-b border-slate-100">
         <div className="site-container py-3">
@@ -151,11 +159,23 @@ export default function DealDetailPage() {
       </div>
 
       <div className="site-container py-8">
-        <div className="max-w-3xl mx-auto">
+        <div className="max-w-[1200px] mx-auto">
 
           {/* ── Coupon Card ─────────────────────────────────────────── */}
           <div className={`rounded-3xl bg-gradient-to-br ${gradient} p-px shadow-lg mb-6`}>
             <div className="rounded-3xl bg-white overflow-hidden">
+              {/* Banner image */}
+              {coupon.banner_image && (
+                <div className="relative h-52 overflow-hidden rounded-t-3xl">
+                  <img
+                    src={imgSrc(coupon.banner_image)}
+                    alt={coupon.title}
+                    className="w-full h-full object-cover"
+                    onError={(e) => { (e.target as HTMLImageElement).src = 'https://via.placeholder.com/800x400?text=Deal' }}
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
+                </div>
+              )}
               {/* Gradient header */}
               <div className={`bg-gradient-to-r ${gradient} px-6 md:px-8 pt-8 pb-6 text-white relative`}>
                 <div className="flex items-start justify-between gap-4">
@@ -212,7 +232,7 @@ export default function DealDetailPage() {
 
               {/* Code section */}
               <div className="p-6 md:px-8">
-                {coupon.coupon_code ? (
+                {(coupon.coupon_code || !isAuthenticated) ? (
                   <div className="flex flex-col sm:flex-row items-center gap-4">
                     <div className="flex-1 text-center sm:text-left">
                       <p className="text-xs text-slate-500 mb-1 font-medium uppercase tracking-wide">Coupon Code</p>
@@ -231,17 +251,24 @@ export default function DealDetailPage() {
                         </button>
                       ) : (
                         <div className="text-center sm:text-left">
-                          <div className="font-mono font-black text-2xl tracking-[.2em] text-slate-300 blur-sm select-none mb-2">
+                          <div className="font-mono font-black text-2xl tracking-[.2em] text-slate-300 blur-sm select-none mb-3">
                             XXXXXXXX
                           </div>
-                          <div className="flex flex-col sm:flex-row items-center gap-2">
-                            <Link to="/login" className="btn-primary !py-2.5 !px-5 !text-sm !rounded-xl inline-flex items-center gap-2">
-                              Sign In to Reveal Code
-                            </Link>
-                            <span className="text-xs text-slate-400">
-                              or <Link to="/register" className="text-brand-600 font-medium hover:underline">create a free account</Link>
-                            </span>
-                          </div>
+                          <button
+                            onClick={() => setShowAuthModal(true)}
+                            className="btn-primary !py-2.5 !px-5 !text-sm !rounded-xl inline-flex items-center gap-2"
+                          >
+                            <LogIn size={15} /> Sign In to Reveal Code
+                          </button>
+                          <p className="text-xs text-slate-400 mt-2">
+                            Don&apos;t have an account?{' '}
+                            <button
+                              onClick={() => { setShowAuthModal(true) }}
+                              className="text-brand-600 font-medium hover:underline"
+                            >
+                              Register free
+                            </button>
+                          </p>
                         </div>
                       )}
                     </div>
@@ -275,7 +302,7 @@ export default function DealDetailPage() {
 
           {/* ── Merchant row ────────────────────────────────────────── */}
           <Link
-            to={`/stores/${merchant.id}`}
+            to={`/stores/${merchant.id}/${slugify(merchant.business_name)}`}
             className="flex items-center gap-3 p-4 bg-white rounded-2xl mb-5 shadow-sm border border-slate-100 hover:shadow-md transition-shadow"
           >
             {merchant.business_logo ? (
@@ -293,7 +320,7 @@ export default function DealDetailPage() {
               <p className="font-semibold text-slate-800 text-sm">{merchant.business_name}</p>
               <div className="flex items-center gap-1 text-xs text-slate-500">
                 <Star size={11} className="text-yellow-400 fill-yellow-400" />
-                <span>{merchant.avg_rating?.toFixed(1)} ({merchant.total_reviews} reviews)</span>
+                <span>{Number(merchant.avg_rating ?? 0).toFixed(1)} ({merchant.total_reviews} reviews)</span>
               </div>
             </div>
             <ChevronRight size={16} className="text-slate-400" />
@@ -353,6 +380,13 @@ export default function DealDetailPage() {
           )}
         </div>
       </div>
+
+      <AuthModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        prompt="Sign in to reveal & save this coupon"
+        onSuccess={() => saveMutation.mutate()}
+      />
     </div>
   )
 }

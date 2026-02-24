@@ -323,6 +323,206 @@ class Report {
     }
 
     // ------------------------------------------------------------------
+    // Revenue / GMV Report  (sales_registry)
+    // ------------------------------------------------------------------
+
+    public function getRevenueStats(string $from, string $to): array {
+        $p    = [':from' => $from, ':to' => $to];
+        $base = "FROM sales_registry WHERE DATE(transaction_date) BETWEEN :from AND :to";
+
+        $total    = $this->scalar("SELECT COUNT(*) $base", $p);
+        $gmv      = (float)$this->scalar("SELECT COALESCE(SUM(transaction_amount),0) $base", $p);
+        $discount = (float)$this->scalar("SELECT COALESCE(SUM(discount_amount),0) $base", $p);
+        $avgTicket = $total > 0 ? round($gmv / $total, 2) : 0;
+        $withCoupon = $this->scalar("SELECT COUNT(*) $base AND coupon_used IS NOT NULL", $p);
+
+        $pmStmt = $this->db->prepare("SELECT payment_method, COUNT(*) AS cnt, COALESCE(SUM(transaction_amount),0) AS vol $base GROUP BY payment_method");
+        $pmStmt->execute($p);
+
+        return compact('total', 'gmv', 'discount', 'avgTicket', 'withCoupon') + [
+            'payment_breakdown' => $pmStmt->fetchAll(PDO::FETCH_ASSOC),
+        ];
+    }
+
+    public function getRevenueTrend(string $from, string $to): array {
+        $stmt = $this->db->prepare("
+            SELECT DATE(transaction_date) AS day,
+                   COUNT(*) AS cnt,
+                   COALESCE(SUM(transaction_amount),0) AS gmv,
+                   COALESCE(SUM(discount_amount),0) AS discount
+            FROM sales_registry
+            WHERE DATE(transaction_date) BETWEEN :from AND :to
+            GROUP BY day ORDER BY day
+        ");
+        $stmt->execute([':from' => $from, ':to' => $to]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function getTopMerchantsByRevenue(string $from, string $to, int $limit = 10): array {
+        $stmt = $this->db->prepare("
+            SELECT m.id, m.business_name,
+                   COUNT(sr.id) AS transactions,
+                   COALESCE(SUM(sr.transaction_amount),0) AS gmv,
+                   COALESCE(SUM(sr.discount_amount),0) AS discount
+            FROM sales_registry sr
+            JOIN merchants m ON sr.merchant_id = m.id
+            WHERE DATE(sr.transaction_date) BETWEEN :from AND :to
+            GROUP BY m.id
+            ORDER BY gmv DESC
+            LIMIT :lim
+        ");
+        $stmt->execute([':from' => $from, ':to' => $to, ':lim' => $limit]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function exportRevenueCSV(string $from, string $to): array {
+        $stmt = $this->db->prepare("
+            SELECT sr.id, sr.transaction_date, m.business_name, s.store_name,
+                   c.name AS customer_name, u.phone AS customer_phone,
+                   sr.transaction_amount, sr.discount_amount, sr.payment_method
+            FROM sales_registry sr
+            JOIN merchants m ON sr.merchant_id = m.id
+            JOIN stores s ON sr.store_id = s.id
+            LEFT JOIN customers c ON sr.customer_id = c.id
+            LEFT JOIN users u ON c.user_id = u.id
+            WHERE DATE(sr.transaction_date) BETWEEN :from AND :to
+            ORDER BY sr.transaction_date DESC
+        ");
+        $stmt->execute([':from' => $from, ':to' => $to]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    // ------------------------------------------------------------------
+    // Subscription Revenue Report
+    // ------------------------------------------------------------------
+
+    public function getSubscriptionReportStats(string $from, string $to): array {
+        $p    = [':from' => $from, ':to' => $to];
+        $base = "FROM subscriptions WHERE DATE(start_date) BETWEEN :from AND :to";
+
+        $total     = $this->scalar("SELECT COUNT(*) $base", $p);
+        $active    = $this->scalar("SELECT COUNT(*) $base AND status='active'", $p);
+        $expired   = $this->scalar("SELECT COUNT(*) $base AND status='expired'", $p);
+        $cancelled = $this->scalar("SELECT COUNT(*) $base AND status='cancelled'", $p);
+        $revenue   = (float)$this->scalar("SELECT COALESCE(SUM(payment_amount),0) $base", $p);
+        $merchants = $this->scalar("SELECT COUNT(*) $base AND user_type='merchant'", $p);
+        $customers = $this->scalar("SELECT COUNT(*) $base AND user_type='customer'", $p);
+
+        $planStmt = $this->db->prepare("SELECT plan_type, COUNT(*) AS cnt, COALESCE(SUM(payment_amount),0) AS revenue $base GROUP BY plan_type ORDER BY revenue DESC");
+        $planStmt->execute($p);
+
+        return compact('total','active','expired','cancelled','revenue','merchants','customers') + [
+            'by_plan' => $planStmt->fetchAll(PDO::FETCH_ASSOC),
+        ];
+    }
+
+    public function getSubscriptionRevenueTrend(string $from, string $to): array {
+        $stmt = $this->db->prepare("
+            SELECT DATE_FORMAT(start_date,'%Y-%m') AS month,
+                   COUNT(*) AS cnt,
+                   COALESCE(SUM(payment_amount),0) AS revenue
+            FROM subscriptions
+            WHERE DATE(start_date) BETWEEN :from AND :to
+            GROUP BY month ORDER BY month
+        ");
+        $stmt->execute([':from' => $from, ':to' => $to]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    // ------------------------------------------------------------------
+    // Coupon Analytics Report
+    // ------------------------------------------------------------------
+
+    public function getCouponAnalyticsStats(string $from, string $to): array {
+        $p = [':from' => $from, ':to' => $to];
+
+        $saves         = $this->scalar("SELECT COUNT(*) FROM coupon_subscriptions WHERE DATE(subscribed_at) BETWEEN :from AND :to", $p);
+        $uniqCustomers = $this->scalar("SELECT COUNT(DISTINCT customer_id) FROM coupon_subscriptions WHERE DATE(subscribed_at) BETWEEN :from AND :to", $p);
+        $uniqCoupons   = $this->scalar("SELECT COUNT(DISTINCT coupon_id) FROM coupon_subscriptions WHERE DATE(subscribed_at) BETWEEN :from AND :to", $p);
+        $redemptions   = $this->scalar("SELECT COUNT(*) FROM coupon_redemptions WHERE DATE(redeemed_at) BETWEEN :from AND :to", $p);
+
+        return compact('saves', 'uniqCustomers', 'uniqCoupons', 'redemptions');
+    }
+
+    public function getTopSavedCoupons(string $from, string $to, int $limit = 10): array {
+        $stmt = $this->db->prepare("
+            SELECT cp.id, cp.title, cp.coupon_code, cp.discount_type, cp.discount_value,
+                   m.business_name,
+                   COUNT(cs.id) AS save_count
+            FROM coupon_subscriptions cs
+            JOIN coupons cp ON cs.coupon_id = cp.id
+            LEFT JOIN merchants m ON cp.merchant_id = m.id
+            WHERE DATE(cs.subscribed_at) BETWEEN :from AND :to
+            GROUP BY cp.id
+            ORDER BY save_count DESC
+            LIMIT :lim
+        ");
+        $stmt->execute([':from' => $from, ':to' => $to, ':lim' => $limit]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function getCouponSaveTrend(string $from, string $to): array {
+        $stmt = $this->db->prepare("
+            SELECT DATE(subscribed_at) AS day, COUNT(*) AS saves
+            FROM coupon_subscriptions
+            WHERE DATE(subscribed_at) BETWEEN :from AND :to
+            GROUP BY day ORDER BY day
+        ");
+        $stmt->execute([':from' => $from, ':to' => $to]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    // ------------------------------------------------------------------
+    // Engagement Report (surveys, contests, dealmakers, referrals)
+    // ------------------------------------------------------------------
+
+    public function getEngagementStats(string $from, string $to): array {
+        $p = [':from' => $from, ':to' => $to];
+
+        $surveyResponses  = $this->scalar("SELECT COUNT(*) FROM survey_responses WHERE DATE(submitted_at) BETWEEN :from AND :to", $p);
+        $contestEntries   = $this->scalar("SELECT COUNT(*) FROM contest_participants WHERE DATE(entered_at) BETWEEN :from AND :to", $p);
+        $referrals        = $this->scalar("SELECT COUNT(*) FROM referrals WHERE DATE(created_at) BETWEEN :from AND :to", $p);
+        $referralsCompleted= $this->scalar("SELECT COUNT(*) FROM referrals WHERE status='completed' AND DATE(created_at) BETWEEN :from AND :to", $p);
+        $referralsRewarded = $this->scalar("SELECT COUNT(*) FROM referrals WHERE reward_given=1 AND DATE(created_at) BETWEEN :from AND :to", $p);
+        $rewardAmount      = (float)$this->scalar("SELECT COALESCE(SUM(reward_amount),0) FROM referrals WHERE reward_given=1 AND DATE(created_at) BETWEEN :from AND :to", $p);
+        $dealmakerTasks    = $this->scalar("SELECT COUNT(*) FROM dealmaker_tasks WHERE DATE(created_at) BETWEEN :from AND :to", $p);
+        $dealmakerCompleted= $this->scalar("SELECT COUNT(*) FROM dealmaker_tasks WHERE status='completed' AND DATE(created_at) BETWEEN :from AND :to", $p);
+
+        return compact('surveyResponses','contestEntries','referrals','referralsCompleted',
+                       'referralsRewarded','rewardAmount','dealmakerTasks','dealmakerCompleted');
+    }
+
+    public function getTopContestsByParticipation(string $from, string $to, int $limit = 10): array {
+        $stmt = $this->db->prepare("
+            SELECT co.id, co.title, co.status,
+                   COUNT(cp.id) AS participant_count
+            FROM contests co
+            LEFT JOIN contest_participants cp ON cp.contest_id = co.id
+                AND DATE(cp.entered_at) BETWEEN :from AND :to
+            GROUP BY co.id
+            ORDER BY participant_count DESC
+            LIMIT :lim
+        ");
+        $stmt->execute([':from' => $from, ':to' => $to, ':lim' => $limit]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function getTopSurveysByResponse(string $from, string $to, int $limit = 10): array {
+        $stmt = $this->db->prepare("
+            SELECT sv.id, sv.title, sv.status,
+                   COUNT(sr.id) AS response_count
+            FROM surveys sv
+            LEFT JOIN survey_responses sr ON sr.survey_id = sv.id
+                AND DATE(sr.submitted_at) BETWEEN :from AND :to
+            GROUP BY sv.id
+            ORDER BY response_count DESC
+            LIMIT :lim
+        ");
+        $stmt->execute([':from' => $from, ':to' => $to, ':lim' => $limit]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    // ------------------------------------------------------------------
     // Utility
     // ------------------------------------------------------------------
 

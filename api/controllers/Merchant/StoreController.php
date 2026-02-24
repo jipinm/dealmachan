@@ -58,6 +58,7 @@ class StoreController {
             $st['active_coupons'] = (int)$st['active_coupons'];
             $st['gallery_count']  = (int)$st['gallery_count'];
             $st['opening_hours']  = $st['opening_hours'] ? json_decode($st['opening_hours'], true) : null;
+            $st['cover_image']    = imageUrl($st['cover_image']);
         }
 
         Response::success($stores);
@@ -218,7 +219,7 @@ class StoreController {
 
         $allowedMimes = ['image/jpeg', 'image/png', 'image/webp', 'image/jpg'];
         $maxSize      = 5 * 1024 * 1024; // 5MB
-        $uploadDir    = __DIR__ . '/../../public/uploads/gallery/';
+        $uploadDir    = API_UPLOAD_PATH . '/gallery/';
 
         if (!is_dir($uploadDir)) {
             mkdir($uploadDir, 0755, true);
@@ -247,14 +248,15 @@ class StoreController {
 
             if (move_uploaded_file($file['tmp_name'], $dest)) {
                 $isCover = (!$hasCover && $idx === 0) ? 1 : 0;
+                $relPath  = '/uploads/gallery/' . $filename;
                 $this->db->execute(
                     "INSERT INTO store_gallery (store_id, merchant_id, image_url, is_cover, display_order, created_at)
                      VALUES (?, ?, ?, ?, (SELECT COALESCE(MAX(g.display_order),0)+1 FROM store_gallery g WHERE g.store_id = ?), NOW())",
-                    [$storeId, $merchantId, '/uploads/gallery/' . $filename, $isCover, $storeId]
+                    [$storeId, $merchantId, $relPath, $isCover, $storeId]
                 );
                 $saved[] = [
                     'id'        => (int)$this->db->lastInsertId(),
-                    'image_url' => '/uploads/gallery/' . $filename,
+                    'image_url' => imageUrl($relPath),
                     'is_cover'  => (bool)$isCover,
                 ];
                 if ($isCover) $hasCover = true;
@@ -284,7 +286,7 @@ class StoreController {
         }
 
         // Delete physical file
-        $filePath = __DIR__ . '/../../public' . $image['image_url'];
+        $filePath = API_UPLOAD_PATH . '/gallery/' . basename($image['image_url']);
         if (file_exists($filePath)) {
             @unlink($filePath);
         }
@@ -380,7 +382,8 @@ class StoreController {
             [$storeId]
         );
         foreach ($store['gallery'] as &$img) {
-            $img['is_cover'] = (bool)$img['is_cover'];
+            $img['is_cover']   = (bool)$img['is_cover'];
+            $img['image_url']  = imageUrl($img['image_url']);
         }
 
         return $store;

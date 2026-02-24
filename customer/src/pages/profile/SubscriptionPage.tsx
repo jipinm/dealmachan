@@ -41,7 +41,7 @@ export default function SubscriptionPage() {
   }
 
   return (
-    <div className="max-w-lg mx-auto px-4 py-6 pb-10">
+    <div className="max-w-[1200px] mx-auto px-4 py-6 pb-10">
       {/* Header */}
       <div className="flex items-center gap-3 mb-6">
         <Link to="/profile" className="p-2 hover:bg-gray-100 rounded-xl">

@@ -22,18 +22,29 @@ class CustomerNotificationController {
         $perPage = min(50, max(10, (int)($query['per_page'] ?? 20)));
         $offset  = ($page - 1) * $perPage;
 
+        $typeFilter = isset($query['type']) && $query['type'] !== '' ? $query['type'] : null;
+
+        $whereParams = [$user['id'], 'customer'];
+        $typeClause  = '';
+        if ($typeFilter) {
+            $typeClause    = ' AND notification_type = ?';
+            $whereParams[] = $typeFilter;
+        }
+
         $notifications = $this->db->query(
-            "SELECT id, type, title, message, is_read, action_url, created_at
+            "SELECT id, notification_type AS type, title, message,
+                    read_status AS is_read, action_url, created_at
              FROM notifications
-             WHERE user_id = ?
+             WHERE user_id = ? AND user_type = ?" . $typeClause . "
              ORDER BY created_at DESC
              LIMIT ? OFFSET ?",
-            [$user['id'], $perPage, $offset]
+            array_merge($whereParams, [$perPage, $offset])
         );
 
         $total = $this->db->queryOne(
-            "SELECT COUNT(*) AS cnt FROM notifications WHERE user_id = ?",
-            [$user['id']]
+            "SELECT COUNT(*) AS cnt FROM notifications
+             WHERE user_id = ? AND user_type = ?" . $typeClause,
+            $whereParams
         )['cnt'] ?? 0;
 
         Response::success([
@@ -50,7 +61,7 @@ class CustomerNotificationController {
     // ── GET /api/customers/notifications/unread-count ────────────────────────
     public function unreadCount(array $user): never {
         $count = $this->db->queryOne(
-            "SELECT COUNT(*) AS cnt FROM notifications WHERE user_id = ? AND is_read = 0",
+            "SELECT COUNT(*) AS cnt FROM notifications WHERE user_id = ? AND user_type = 'customer' AND read_status = 0",
             [$user['id']]
         )['cnt'] ?? 0;
 
@@ -60,7 +71,7 @@ class CustomerNotificationController {
     // ── PUT /api/customers/notifications/read-all ─────────────────────────────
     public function markAllRead(array $user): never {
         $this->db->execute(
-            "UPDATE notifications SET is_read = 1 WHERE user_id = ? AND is_read = 0",
+            "UPDATE notifications SET read_status = 1, read_at = NOW() WHERE user_id = ? AND user_type = 'customer' AND read_status = 0",
             [$user['id']]
         );
 
@@ -70,7 +81,7 @@ class CustomerNotificationController {
     // ── PUT /api/customers/notifications/:id/read ─────────────────────────────
     public function markRead(array $user, int $id): never {
         $this->db->execute(
-            "UPDATE notifications SET is_read = 1 WHERE id = ? AND user_id = ?",
+            "UPDATE notifications SET read_status = 1, read_at = NOW() WHERE id = ? AND user_id = ? AND user_type = 'customer'",
             [$id, $user['id']]
         );
 
@@ -80,7 +91,7 @@ class CustomerNotificationController {
     // ── DELETE /api/customers/notifications/:id ───────────────────────────────
     public function delete(array $user, int $id): never {
         $this->db->execute(
-            "DELETE FROM notifications WHERE id = ? AND user_id = ?",
+            "DELETE FROM notifications WHERE id = ? AND user_id = ? AND user_type = 'customer'",
             [$id, $user['id']]
         );
 

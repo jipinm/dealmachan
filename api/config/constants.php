@@ -5,6 +5,8 @@ require_once __DIR__ . '/env.php';
 define('API_ENV',      getenv('APP_ENV')    ?: 'development');
 define('API_ROOT',     dirname(__DIR__));
 define('API_DEBUG',    API_ENV === 'development');
+// Public URL of the API server — used to build absolute image URLs
+define('APP_URL', rtrim(getenv('APP_URL') ?: 'http://dealmachan-api.local', '/'));
 
 // JWT
 define('JWT_SECRET',         getenv('JWT_SECRET')         ?: 'dealmachan-jwt-secret-change-in-prod');
@@ -30,6 +32,7 @@ define('CORS_ORIGINS', [
 
 // Upload
 define('API_UPLOAD_PATH', API_ROOT . '/uploads');
+define('API_UPLOAD_URL',  APP_URL . '/uploads');  // base URL for all uploaded files
 define('MAX_UPLOAD_SIZE',  5 * 1024 * 1024); // 5 MB
 define('ALLOWED_IMG_TYPES', ['image/jpeg', 'image/png', 'image/webp']);
 

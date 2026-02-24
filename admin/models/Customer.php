@@ -377,5 +377,83 @@ class Customer extends Model {
         }
         return (int)$stmt->fetchColumn() > 0;
     }
+
+    // ─── PROFILE SUB-VIEW DATA ───────────────────────────────────────────────
+
+    public function getGrievances($customerId, $limit = 20) {
+        $stmt = $this->db->prepare(
+            "SELECT g.*, m.business_name AS merchant_name
+             FROM grievances g
+             JOIN merchants m ON g.merchant_id = m.id
+             WHERE g.customer_id = ?
+             ORDER BY g.created_at DESC LIMIT ?"
+        );
+        $stmt->execute([$customerId, $limit]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function getReviews($customerId, $limit = 20) {
+        $stmt = $this->db->prepare(
+            "SELECT r.*, m.business_name AS merchant_name, s.store_name
+             FROM reviews r
+             JOIN merchants m ON r.merchant_id = m.id
+             LEFT JOIN stores s ON r.store_id = s.id
+             WHERE r.customer_id = ?
+             ORDER BY r.created_at DESC LIMIT ?"
+        );
+        $stmt->execute([$customerId, $limit]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function getReferrals($customerId, $limit = 20) {
+        $stmt = $this->db->prepare(
+            "SELECT r.*,
+                    CONCAT(uc.name) AS referee_name,
+                    uc_phone.phone AS referee_phone
+             FROM referrals r
+             JOIN customers uc ON r.referee_customer_id = uc.id
+             JOIN users uc_phone ON uc.user_id = uc_phone.id
+             WHERE r.referrer_customer_id = ?
+             ORDER BY r.created_at DESC LIMIT ?"
+        );
+        $stmt->execute([$customerId, $limit]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function getSavedCoupons($customerId, $limit = 20) {
+        $stmt = $this->db->prepare(
+            "SELECT cs.*, c.coupon_title, c.coupon_code, c.discount_type, c.discount_value,
+                    m.business_name AS merchant_name
+             FROM coupon_subscriptions cs
+             JOIN coupons c ON cs.coupon_id = c.id
+             JOIN merchants m ON c.merchant_id = m.id
+             WHERE cs.customer_id = ?
+             ORDER BY cs.subscribed_at DESC LIMIT ?"
+        );
+        $stmt->execute([$customerId, $limit]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function getFavouriteMerchants($customerId) {
+        $stmt = $this->db->prepare(
+            "SELECT cfm.*, m.business_name, m.profile_status, m.subscription_status
+             FROM customer_favourite_merchants cfm
+             JOIN merchants m ON cfm.merchant_id = m.id
+             WHERE cfm.customer_id = ?
+             ORDER BY cfm.saved_at DESC"
+        );
+        $stmt->execute([$customerId]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function getImportantDays($customerId) {
+        $stmt = $this->db->prepare(
+            "SELECT * FROM customer_important_days
+             WHERE customer_id = ?
+             ORDER BY event_month ASC, event_day ASC"
+        );
+        $stmt->execute([$customerId]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
 }
 ?>

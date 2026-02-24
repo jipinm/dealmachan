@@ -16,6 +16,7 @@ import {
   Ticket,
 } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
+import { getImageUrl } from '@/lib/imageUrl'
 
 interface MenuItem {
   icon: React.ElementType
@@ -176,7 +177,7 @@ export default function MorePage() {
         >
           <div className="w-14 h-14 rounded-2xl bg-brand-100 flex items-center justify-center shrink-0 overflow-hidden">
             {merchant?.logo_url ? (
-              <img src={merchant.logo_url} alt="logo" className="w-full h-full object-cover" />
+              <img src={getImageUrl(merchant.logo_url)} alt="logo" className="w-full h-full object-cover" />
             ) : (
               <User size={26} className="text-brand-400" />
             )}

@@ -252,6 +252,89 @@ $statusColors  = ['active'=>'success','inactive'=>'secondary','blocked'=>'danger
         </div>
         <?php endif; ?>
 
+        <!-- Store Gallery -->
+        <?php if (!empty($gallery)): ?>
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <span class="fw-semibold"><i class="fas fa-images me-2 text-primary"></i> Store Gallery</span>
+            </div>
+            <div class="card-body">
+                <?php foreach ($gallery as $storeId => $storeData): ?>
+                <h6 class="text-muted mb-2 mt-3 small text-uppercase fw-semibold"><?= escape($storeData['store_name']) ?></h6>
+                <div class="row g-2 mb-3">
+                    <?php foreach ($storeData['images'] as $img): ?>
+                    <div class="col-6 col-sm-4 col-md-3" id="gallery-img-<?= $img['id'] ?>">
+                        <div class="card border position-relative h-100">
+                            <?php if ($img['is_cover']): ?>
+                            <span class="badge bg-success position-absolute top-0 start-0 m-1" style="font-size:0.65rem;z-index:1;">Cover</span>
+                            <?php endif; ?>
+                            <img src="<?= escape($img['image_url']) ?>" alt="<?= escape($img['caption'] ?? '') ?>"
+                                 class="card-img-top object-fit-cover" style="height:100px;"
+                                 onerror="this.src='<?= BASE_URL ?>public/img/placeholder.png'">
+                            <?php if ($img['caption']): ?>
+                            <div class="card-body p-1"><small class="text-muted"><?= escape($img['caption']) ?></small></div>
+                            <?php endif; ?>
+                            <div class="card-footer p-1 d-flex gap-1 justify-content-end bg-transparent border-top">
+                                <?php if (!$img['is_cover']): ?>
+                                <button class="btn btn-xs btn-outline-success" style="font-size:0.7rem;padding:1px 5px;"
+                                        onclick="setCover(<?= $img['id'] ?>, <?= $storeId ?>, <?= $merchant['id'] ?>)"
+                                        title="Set as Cover">
+                                    <i class="bi bi-star"></i>
+                                </button>
+                                <?php endif; ?>
+                                <button class="btn btn-xs btn-outline-danger" style="font-size:0.7rem;padding:1px 5px;"
+                                        onclick="deleteGalleryImg(<?= $img['id'] ?>, <?= $merchant['id'] ?>)"
+                                        title="Delete Image">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <?php endforeach; ?>
+                </div>
+                <?php endforeach; ?>
+            </div>
+        </div>
+
+        <script>
+        function deleteGalleryImg(imageId, merchantId) {
+            Swal.fire({
+                title: 'Delete image?', icon: 'warning',
+                showCancelButton: true, confirmButtonColor: '#dc3545', confirmButtonText: 'Delete'
+            }).then(r => {
+                if (!r.isConfirmed) return;
+                fetch('<?= BASE_URL ?>merchants/delete-gallery-image', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                    body: 'image_id=' + imageId + '&merchant_id=' + merchantId
+                }).then(r => r.json()).then(d => {
+                    if (d.success) {
+                        const el = document.getElementById('gallery-img-' + imageId);
+                        if (el) el.remove();
+                        Swal.fire({icon:'success', title:'Deleted', timer:1500, showConfirmButton:false});
+                    } else {
+                        Swal.fire('Error', d.error || 'Failed.', 'error');
+                    }
+                });
+            });
+        }
+        function setCover(imageId, storeId, merchantId) {
+            fetch('<?= BASE_URL ?>merchants/set-cover-image', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                body: 'image_id=' + imageId + '&store_id=' + storeId + '&merchant_id=' + merchantId
+            }).then(r => r.json()).then(d => {
+                if (d.success) {
+                    Swal.fire({icon:'success', title:'Cover updated', timer:1500, showConfirmButton:false})
+                        .then(() => location.reload());
+                } else {
+                    Swal.fire('Error', d.error || 'Failed.', 'error');
+                }
+            });
+        }
+        </script>
+        <?php endif; ?>
+
     </div>
 
     <!-- RIGHT: Sidebar -->

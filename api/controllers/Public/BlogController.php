@@ -30,7 +30,7 @@ class PublicBlogController {
             $params[] = $tagId;
         }
         if ($search) {
-            $where[]  = "(b.title LIKE ? OR b.excerpt LIKE ?)";
+            $where[]  = "(b.title LIKE ? OR b.content LIKE ?)";
             $params[] = $search;
             $params[] = $search;
         }
@@ -44,8 +44,8 @@ class PublicBlogController {
         $total = (int)($countRow['cnt'] ?? 0);
 
         $posts = $this->db->query(
-            "SELECT b.id, b.title, b.slug, b.excerpt, b.featured_image,
-                    b.published_at, b.author_name
+            "SELECT b.id, b.title, b.slug, b.featured_image, b.published_at,
+                    LEFT(REGEXP_REPLACE(b.content, '<[^>]+>', ''), 200) AS excerpt
              FROM blog_posts b
              WHERE {$whereSQL}
              ORDER BY b.published_at DESC
@@ -53,23 +53,19 @@ class PublicBlogController {
             array_merge($params, [$perPage, $offset])
         );
 
-        Response::success([
-            'data'       => $posts,
-            'pagination' => [
-                'total'    => $total,
-                'page'     => $page,
-                'per_page' => $perPage,
-                'pages'    => (int)ceil($total / $perPage),
-            ],
+        Response::success($posts, 'OK', 200, [
+            'total'    => $total,
+            'page'     => $page,
+            'per_page' => $perPage,
+            'pages'    => (int)ceil($total / $perPage),
         ]);
     }
 
     // ── GET /api/public/blog/:slug ────────────────────────────────────────────
     public function show(string $slug): never {
         $post = $this->db->queryOne(
-            "SELECT b.id, b.title, b.slug, b.excerpt, b.content,
-                    b.featured_image, b.published_at, b.author_name,
-                    b.meta_title, b.meta_description
+            "SELECT b.id, b.title, b.slug, b.content, b.featured_image, b.published_at,
+                    LEFT(REGEXP_REPLACE(b.content, '<[^>]+>', ''), 200) AS excerpt
              FROM blog_posts b
              WHERE b.slug = ? AND b.status = 'published' AND b.published_at <= NOW()",
             [$slug]
@@ -87,9 +83,6 @@ class PublicBlogController {
             [$post['id']]
         );
 
-        Response::success([
-            'post'    => $post,
-            'related' => $related,
-        ]);
+        Response::success(array_merge($post, ['related' => $related]));
     }
 }

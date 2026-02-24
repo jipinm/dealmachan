@@ -70,12 +70,14 @@ export default function AdBanner({ ads, autoPlayMs = 4000, className = '' }: Pro
         <>
           <button
             onClick={prev}
+            aria-label="Previous banner"
             className="absolute left-2 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-black/30 flex items-center justify-center text-white hover:bg-black/50 transition-colors"
           >
             <ChevronLeft size={14} />
           </button>
           <button
             onClick={next}
+            aria-label="Next banner"
             className="absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-black/30 flex items-center justify-center text-white hover:bg-black/50 transition-colors"
           >
             <ChevronRight size={14} />

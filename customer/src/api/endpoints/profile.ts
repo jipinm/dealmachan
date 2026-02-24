@@ -3,11 +3,15 @@ import type { CustomerProfile } from '@/store/authStore'
 
 export interface UpdateProfileRequest {
   name?: string
+  last_name?: string | null
   date_of_birth?: string
   gender?: 'male' | 'female' | 'other'
+  bio?: string | null
+  occupation?: string | null
+  full_address?: string | null
+  pincode?: string | null
   city_id?: number | null
   area_id?: number | null
-  bio?: string | null
   profession_id?: number | null
 }
 
@@ -29,18 +33,28 @@ export interface CustomerCard {
   generated_at: string
 }
 
+export interface CustomerStats {
+  saved: number
+  redeemed: number
+  referrals: number
+}
+
 export const profileApi = {
   /** Get full customer profile */
   getProfile: () =>
     apiClient.get<{ data: CustomerProfile & {
       date_of_birth: string | null
       gender: string | null
+      last_name: string | null
+      bio: string | null
+      occupation: string | null
+      full_address: string | null
+      pincode: string | null
       city_id: number | null
       area_id: number | null
-      bio: string | null
-      profession_id: number | null
       city_name: string | null
       area_name: string | null
+      profession_id: number | null
     } }>('/customers/profile'),
 
   /** Update profile fields */
@@ -77,22 +91,12 @@ export const profileApi = {
   /** Change password */
   changePassword: (body: { current_password: string; new_password: string }) =>
     apiClient.put('/customers/profile/password', body),
-}
 
-export const favouritesApi = {
-  /** Get all favourited merchants */
-  list: () =>
-    apiClient.get<{ data: any[] }>('/customers/favourites'),
+  /** Set new password (mandatory reset — no current password required) */
+  setNewPassword: (body: { new_password: string; confirm_password: string }) =>
+    apiClient.post('/customers/password/set-new', body),
 
-  /** Add a merchant to favourites */
-  add: (merchantId: number) =>
-    apiClient.post(`/customers/favourites/${merchantId}`),
-
-  /** Remove a merchant from favourites */
-  remove: (merchantId: number) =>
-    apiClient.delete(`/customers/favourites/${merchantId}`),
-
-  /** Check if a specific merchant is favourited */
-  check: (merchantId: number) =>
-    apiClient.get<{ data: { is_favourite: boolean } }>(`/customers/favourites/check/${merchantId}`),
+  /** Get activity stats: saved coupons, redeemed, referrals */
+  getStats: (): Promise<CustomerStats> =>
+    apiClient.get('/customers/stats').then(r => r.data.data ?? r.data),
 }

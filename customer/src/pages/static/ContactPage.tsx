@@ -1,12 +1,26 @@
 import { useState } from 'react'
-import { Mail, Phone, MapPin, Send } from 'lucide-react'
+import { useMutation } from '@tanstack/react-query'
+import { Mail, Phone, MapPin, Send, CheckCircle2, Loader2 } from 'lucide-react'
+import { publicFormsApi } from '@/api/endpoints/publicForms'
+import { getApiError } from '@/api/client'
+import toast from 'react-hot-toast'
 
 export default function ContactPage() {
-  const [sent, setSent] = useState(false)
+  const [form, setForm] = useState({ name: '', mobile: '', subject: '', message: '' })
+  const [done, setDone] = useState(false)
+
+  const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
+    setForm(f => ({ ...f, [k]: e.target.value }))
+
+  const { mutate, isPending } = useMutation({
+    mutationFn: () => publicFormsApi.contact(form),
+    onSuccess: () => setDone(true),
+    onError:   (err) => toast.error(getApiError(err)),
+  })
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    setSent(true)
+    mutate()
   }
 
   return (
@@ -44,10 +58,10 @@ export default function ContactPage() {
 
           {/* Contact form */}
           <div>
-            {sent ? (
+            {done ? (
               <div className="card p-8 text-center">
                 <div className="w-16 h-16 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Send size={28} className="text-green-600" />
+                  <CheckCircle2 size={32} className="text-green-500" />
                 </div>
                 <h3 className="font-heading font-bold text-xl text-slate-800 mb-2">Message Sent!</h3>
                 <p className="text-slate-500">Thank you for reaching out. We'll get back to you within 24 hours.</p>
@@ -56,21 +70,35 @@ export default function ContactPage() {
               <form onSubmit={handleSubmit} className="card p-6 space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1.5">Your Name</label>
-                  <input type="text" required placeholder="John Doe" className="input-field" />
+                  <input
+                    type="text" required placeholder="John Doe" className="input-field"
+                    value={form.name} onChange={set('name')}
+                  />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1.5">Email Address</label>
-                  <input type="email" required placeholder="you@example.com" className="input-field" />
+                  <label className="block text-sm font-medium text-slate-700 mb-1.5">Mobile Number</label>
+                  <input
+                    type="tel" required placeholder="9876543210" maxLength={10} className="input-field"
+                    value={form.mobile} onChange={set('mobile')}
+                  />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1.5">Subject</label>
-                  <input type="text" required placeholder="How can we help?" className="input-field" />
+                  <input
+                    type="text" required placeholder="How can we help?" className="input-field"
+                    value={form.subject} onChange={set('subject')}
+                  />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1.5">Message</label>
-                  <textarea required rows={5} placeholder="Tell us more…" className="input-field resize-none" />
+                  <textarea
+                    required rows={5} placeholder="Tell us more…" className="input-field resize-none"
+                    value={form.message} onChange={set('message')}
+                  />
                 </div>
-                <button type="submit" className="btn-primary w-full !py-3">Send Message</button>
+                <button type="submit" disabled={isPending} className="btn-primary w-full !py-3 flex items-center justify-center gap-2">
+                  {isPending ? <><Loader2 size={16} className="animate-spin" /> Sending…</> : <><Send size={16} /> Send Message</>}
+                </button>
               </form>
             )}
           </div>

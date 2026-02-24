@@ -27,6 +27,7 @@ export interface Coupon {
   approval_status: ApprovalStatus
   status: CouponStatus
   terms_conditions: string | null
+  banner_image: string | null
   created_by: number
   created_at: string
   updated_at: string | null
@@ -153,6 +154,20 @@ export const couponApi = {
   manualRedeem: (payload: RedeemPayload) =>
     apiClient.post<{ success: boolean; data: RedeemResult; message: string }>(
       '/merchants/coupons/manual-redeem', payload
+    ),
+
+  uploadImage: (id: number, file: File) => {
+    const form = new FormData()
+    form.append('image', file)
+    return apiClient.post<{ success: boolean; data: { banner_image: string }; message: string }>(
+      `/merchants/coupons/${id}/image`, form,
+      { headers: { 'Content-Type': 'multipart/form-data' } }
+    )
+  },
+
+  deleteImage: (id: number) =>
+    apiClient.delete<{ success: boolean; message: string }>(
+      `/merchants/coupons/${id}/image`
     ),
 
   lookupCustomer: (search: string) =>

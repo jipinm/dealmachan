@@ -4,27 +4,13 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useState } from 'react'
 import {
   Search, MapPin, Zap, Tag, Store, ArrowRight, ChevronRight,
-  Star, Clock, Percent, Gift, Heart, Shield, TrendingUp,
+  Star, Clock, Percent, Gift, Heart, Shield, TrendingUp, Lock,
 } from 'lucide-react'
 import { publicApi, type TopCoupon, type FeaturedMerchant, type FlashDiscount } from '@/api/endpoints/public'
 import { useLocationStore } from '@/store/locationStore'
 import { useAuthStore } from '@/store/authStore'
-
-// ── Static category data ──────────────────────────────────────────────────────
-const STATIC_CATEGORIES = [
-  { id: 'food',        label: 'Food & Dining',    emoji: '🍔', color: 'bg-orange-50  text-orange-600  border-orange-200' },
-  { id: 'fashion',     label: 'Fashion',          emoji: '👗', color: 'bg-pink-50    text-pink-600    border-pink-200'   },
-  { id: 'beauty',      label: 'Beauty & Spa',     emoji: '💆', color: 'bg-rose-50    text-rose-600    border-rose-200'   },
-  { id: 'electronics', label: 'Electronics',      emoji: '📱', color: 'bg-blue-50    text-blue-600    border-blue-200'   },
-  { id: 'travel',      label: 'Travel',           emoji: '✈️', color: 'bg-sky-50     text-sky-600     border-sky-200'    },
-  { id: 'fitness',     label: 'Fitness',          emoji: '💪', color: 'bg-green-50   text-green-600   border-green-200'  },
-  { id: 'education',   label: 'Education',        emoji: '📚', color: 'bg-indigo-50  text-indigo-600  border-indigo-200' },
-  { id: 'home',        label: 'Home & Living',    emoji: '🏠', color: 'bg-amber-50   text-amber-600   border-amber-200'  },
-  { id: 'auto',        label: 'Auto & Services',  emoji: '🚗', color: 'bg-slate-50   text-slate-600   border-slate-200'  },
-  { id: 'health',      label: 'Health',           emoji: '❤️', color: 'bg-red-50     text-red-600     border-red-200'    },
-  { id: 'kids',        label: 'Kids & Toys',      emoji: '🧸', color: 'bg-yellow-50  text-yellow-600  border-yellow-200' },
-  { id: 'gifts',       label: 'Gifts',            emoji: '🎁', color: 'bg-purple-50  text-purple-600  border-purple-200' },
-]
+import CategoryGrid from '@/components/ui/CategoryGrid'
+import { Helmet } from 'react-helmet-async'
 
 // ── How It Works steps ────────────────────────────────────────────────────────
 const HOW_IT_WORKS = [
@@ -56,10 +42,11 @@ function timeLeft(until: string | null): string {
   return h > 0 ? `${h}h ${m}m left` : `${m}m left`
 }
 
+import { getImageUrl } from '@/lib/imageUrl'
+import { slugify } from '@/lib/slugify'
+
 function imgSrc(path: string | null, fallback = 'https://via.placeholder.com/400x300?text=No+Image'): string {
-  if (!path) return fallback
-  if (path.startsWith('http')) return path
-  return `${import.meta.env.VITE_API_BASE_URL?.replace('/api', '') ?? 'http://localhost:8000'}${path}`
+  return getImageUrl(path, fallback)
 }
 
 // ── Section Header ─────────────────────────────────────────────────────────────
@@ -83,14 +70,18 @@ function SectionHeader({ title, subtitle, linkTo, linkLabel }: {
 
 // ── Coupon card ───────────────────────────────────────────────────────────────
 function CouponCard({ coupon }: { coupon: TopCoupon }) {
-  const discountLabel = coupon.discount_type === 'percentage'
-    ? `${coupon.discount_value}% OFF`
-    : `₹${coupon.discount_value} OFF`
+  const discountLabel =
+    coupon.discount_type === 'percentage' ? `${coupon.discount_value}% OFF`
+    : coupon.discount_type === 'flat'       ? `₹${coupon.discount_value} OFF`
+    : coupon.discount_type === 'free_item'  ? 'FREE ITEM'
+    : coupon.discount_type === 'bogo'       ? 'BOGO'
+    : coupon.discount_value != null         ? `₹${coupon.discount_value} OFF`
+    : 'DEAL'
   return (
-    <Link to={`/deals/${coupon.id}`} className="card card-hover group block overflow-hidden">
+    <Link to={`/deals/${coupon.id}/${slugify(coupon.title)}`} className="card card-hover group block overflow-hidden">
       <div className="relative h-40 bg-slate-100 overflow-hidden">
         <img
-          src={imgSrc(coupon.banner_image)}
+          src={imgSrc(coupon.banner_image || coupon.merchant_logo)}
           alt={coupon.title}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
           onError={(e) => { (e.target as HTMLImageElement).src = 'https://via.placeholder.com/400x200?text=Deal' }}
@@ -109,9 +100,19 @@ function CouponCard({ coupon }: { coupon: TopCoupon }) {
         </div>
         <h3 className="font-semibold text-slate-800 text-sm leading-snug line-clamp-2 mb-2">{coupon.title}</h3>
         <div className="flex items-center justify-between">
-          <span className="inline-flex items-center gap-1 text-xs bg-slate-50 text-slate-600 px-2 py-1 rounded-lg font-mono font-semibold border border-dashed border-slate-300">
-            <Tag size={10} /> {coupon.coupon_code}
-          </span>
+          {coupon.coupon_code ? (
+            <span className="inline-flex items-center gap-1 text-xs bg-slate-50 text-slate-600 px-2 py-1 rounded-lg font-mono font-semibold border border-dashed border-slate-300">
+              <Tag size={10} /> {coupon.coupon_code}
+            </span>
+          ) : (
+            <Link
+              to="/login"
+              onClick={(e) => e.stopPropagation()}
+              className="inline-flex items-center gap-1 text-xs bg-slate-100 text-slate-400 px-2 py-1 rounded-lg border border-dashed border-slate-200 hover:border-brand-300 hover:text-brand-500 transition-colors"
+            >
+              <Lock size={10} /> Login to see code
+            </Link>
+          )}
           {coupon.valid_until && (
             <span className="flex items-center gap-1 text-xs text-slate-400">
               <Clock size={11} /> {timeLeft(coupon.valid_until)}
@@ -126,7 +127,7 @@ function CouponCard({ coupon }: { coupon: TopCoupon }) {
 // ── Merchant card ─────────────────────────────────────────────────────────────
 function MerchantCardLocal({ merchant }: { merchant: FeaturedMerchant }) {
   return (
-    <Link to={`/stores/${merchant.id}`} className="card card-hover group flex flex-col overflow-hidden">
+    <Link to={`/stores/${merchant.id}/${slugify(merchant.business_name)}`} className="card card-hover group flex flex-col overflow-hidden">
       <div className="relative h-32 bg-gradient-to-br from-slate-100 to-slate-200 overflow-hidden">
         {merchant.business_logo ? (
           <img
@@ -146,7 +147,7 @@ function MerchantCardLocal({ merchant }: { merchant: FeaturedMerchant }) {
         <h3 className="font-semibold text-slate-800 text-sm mb-1 line-clamp-1">{merchant.business_name}</h3>
         <div className="flex items-center gap-1 mb-2">
           <Star size={12} className="text-yellow-400 fill-yellow-400" />
-          <span className="text-xs font-semibold text-slate-700">{merchant.avg_rating?.toFixed(1) ?? '–'}</span>
+          <span className="text-xs font-semibold text-slate-700">{merchant.avg_rating != null ? Number(merchant.avg_rating).toFixed(1) : '–'}</span>
           <span className="text-xs text-slate-400">({merchant.total_reviews ?? 0})</span>
           {(merchant.area_name || merchant.city_name) && (
             <>
@@ -169,22 +170,33 @@ function MerchantCardLocal({ merchant }: { merchant: FeaturedMerchant }) {
 // ── Flash deal card ───────────────────────────────────────────────────────────
 function FlashDealCard({ deal }: { deal: FlashDiscount }) {
   return (
-    <Link to={`/flash-deals/${deal.id}`} className="flex-shrink-0 w-64 card card-hover overflow-hidden group">
-      <div className="h-28 bg-gradient-cta relative overflow-hidden flex items-center justify-center">
-        {deal.merchant_logo ? (
-          <img
-            src={imgSrc(deal.merchant_logo)}
-            alt={deal.merchant_name}
-            className="w-16 h-16 object-contain rounded-full bg-white p-1"
-          />
-        ) : (
-          <Zap size={40} className="text-white/60" />
-        )}
-        <span className="absolute top-2 right-2 text-white font-black text-2xl">{deal.discount_percentage}%</span>
+    <Link to={`/flash-deals/${deal.id}/${slugify(deal.title)}`} className="flex-shrink-0 w-64 card card-hover overflow-hidden group">
+      <div className="h-28 relative bg-slate-100 overflow-hidden">
+        <img
+          src={deal.banner_image ?? 'https://via.placeholder.com/256x112?text=Flash'}
+          alt={deal.title}
+          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+          onError={(e) => { (e.target as HTMLImageElement).src = 'https://via.placeholder.com/256x112?text=Flash' }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
+        <div className="absolute top-2 right-2 flex flex-col items-center justify-center w-12 h-12 rounded-full bg-cta-500/90 shadow">
+          <span className="font-black text-base text-white leading-none">{deal.discount_percentage}%</span>
+          <span className="text-white/80 text-[9px] font-semibold">OFF</span>
+        </div>
       </div>
       <div className="p-3">
+        <div className="flex items-center gap-1.5 mb-1">
+          {deal.merchant_logo && (
+            <img
+              src={imgSrc(deal.merchant_logo)}
+              alt={deal.merchant_name}
+              className="w-4 h-4 rounded-full object-cover bg-slate-100 border border-slate-200"
+              onError={(e) => { (e.target as HTMLImageElement).src = 'https://via.placeholder.com/40?text=M' }}
+            />
+          )}
+          <p className="text-xs text-slate-500 truncate">{deal.merchant_name}</p>
+        </div>
         <h3 className="font-semibold text-slate-800 text-sm line-clamp-2 mb-1">{deal.title}</h3>
-        <p className="text-xs text-slate-500 mb-2">{deal.merchant_name}</p>
         <div className="flex items-center gap-1 text-xs text-cta-500 font-semibold">
           <Clock size={11} /> {timeLeft(deal.valid_until)}
         </div>
@@ -209,7 +221,7 @@ export default function HomePage() {
   })
 
   const { data: blogData } = useQuery({
-    queryKey: ['blog-posts'],
+    queryKey: ['blog-posts-home'],
     queryFn: () => publicApi.getBlogPosts({ page: 1 }).then((r) => r.data.data ?? []),
     staleTime: 10 * 60 * 1000,
   })
@@ -225,6 +237,10 @@ export default function HomePage() {
 
   return (
     <div>
+      <Helmet>
+        <title>Deal Machan – Exclusive Deals, Coupons & Discounts</title>
+        <meta name="description" content="Discover the best local deals, coupons, and flash discounts near you on Deal Machan. Save big with exclusive merchant offers every day." />
+      </Helmet>
 
       {/* ═══ HERO ════════════════════════════════════════════════════════════ */}
       <section
@@ -348,19 +364,8 @@ export default function HomePage() {
       {/* ═══ CATEGORIES ══════════════════════════════════════════════════════ */}
       <section className="py-12">
         <div className="site-container">
-          <SectionHeader title="Browse by Category" subtitle="Find deals in your favourite category" linkTo="/deals" linkLabel="All deals" />
-          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3">
-            {STATIC_CATEGORIES.map((cat) => (
-              <Link
-                key={cat.id}
-                to={`/deals?category=${encodeURIComponent(cat.label)}`}
-                className={`flex flex-col items-center gap-2 p-4 rounded-2xl border text-center hover:shadow-md transition-all ${cat.color}`}
-              >
-                <span className="text-2xl">{cat.emoji}</span>
-                <span className="text-xs font-semibold leading-tight">{cat.label}</span>
-              </Link>
-            ))}
-          </div>
+          <SectionHeader title="Browse by Category" subtitle="Find deals in your favourite category" linkTo="/categories" linkLabel="All categories" />
+          <CategoryGrid compact />
         </div>
       </section>
 

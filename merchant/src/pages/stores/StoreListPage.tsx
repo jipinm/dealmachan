@@ -3,8 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Plus, MapPin, Ticket, Store, Image, CheckCircle, XCircle, ChevronLeft } from 'lucide-react'
 import { storeApi, type Store as StoreType } from '@/api/endpoints/stores'
 import { SkeletonCard } from '@/components/ui/PageLoader'
-
-const API_BASE = 'http://dealmachan-api.local'
+import { getImageUrl } from '@/lib/imageUrl'
 
 function StoreBadge({ status }: { status: string }) {
   return status === 'active'
@@ -13,7 +12,7 @@ function StoreBadge({ status }: { status: string }) {
 }
 
 function StoreCard({ store, onClick }: { store: StoreType; onClick: () => void }) {
-  const coverUrl = store.cover_image ? `${API_BASE}${store.cover_image}` : null
+  const coverUrl = store.cover_image ? getImageUrl(store.cover_image) : null
   return (
     <div onClick={onClick} className="bg-white rounded-2xl shadow-sm overflow-hidden active:scale-[0.98] transition-transform cursor-pointer">
       {/* Cover image */}

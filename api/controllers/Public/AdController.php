@@ -42,6 +42,10 @@ class PublicAdController {
             $params
         );
 
+        foreach ($ads as &$ad) {
+            $ad['media_url'] = imageUrl($ad['media_url']);
+        }
+
         Response::success($ads);
     }
 }

@@ -140,6 +140,54 @@ $st = $card['status'] ?? 'available';
         </div>
     </div>
 
+    <!-- Activation / Audit History -->
+    <?php if (!empty($audit_logs)): ?>
+    <div class="col-12">
+    <div class="card border-0 shadow-sm mt-2">
+        <div class="card-header bg-white fw-semibold">
+            <i class="fas fa-history me-2 text-secondary"></i> Activation &amp; Audit History
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0 small">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Action</th>
+                            <th>Admin</th>
+                            <th>IP</th>
+                            <th>Date &amp; Time</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($audit_logs as $log): ?>
+                        <tr>
+                            <td>
+                                <?php
+                                $actionLabel = match(true) {
+                                    str_contains($log['action'], 'activated')  => '<span class="badge bg-warning text-dark"><i class="fas fa-check-circle me-1"></i>Activated</span>',
+                                    str_contains($log['action'], 'assigned')   => '<span class="badge bg-info"><i class="fas fa-user-tag me-1"></i>Assigned</span>',
+                                    str_contains($log['action'], 'unassigned') => '<span class="badge bg-secondary"><i class="fas fa-unlink me-1"></i>Unassigned</span>',
+                                    str_contains($log['action'], 'deleted')    => '<span class="badge bg-danger"><i class="fas fa-trash me-1"></i>Deleted</span>',
+                                    str_contains($log['action'], 'generated')  => '<span class="badge bg-success"><i class="fas fa-plus me-1"></i>Generated</span>',
+                                    str_contains($log['action'], 'blocked')    => '<span class="badge bg-danger"><i class="fas fa-ban me-1"></i>Blocked</span>',
+                                    default => '<span class="badge bg-light text-dark border">' . escape($log['action']) . '</span>',
+                                };
+                                echo $actionLabel;
+                                ?>
+                            </td>
+                            <td><?= $log['admin_name'] ? escape($log['admin_name']) : '<span class="text-muted">System</span>' ?></td>
+                            <td class="font-monospace text-muted"><?= escape($log['ip_address'] ?? '—') ?></td>
+                            <td><?= formatDateTime($log['created_at']) ?></td>
+                        </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    </div>
+    <?php endif; ?>
+
     <!-- RIGHT -->
     <div class="col-lg-4">
         <!-- Quick Stats -->

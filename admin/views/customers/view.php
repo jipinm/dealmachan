@@ -271,6 +271,236 @@ $typeColors = [
         </div>
         <?php endif; ?>
 
+        <!-- ─── Extended Sub-Views ──────────────────────────────────────── -->
+        <?php
+        $hasExtra = !empty($grievances) || !empty($reviews) || !empty($referrals)
+                 || !empty($savedCoupons) || !empty($favouriteMerchants) || !empty($importantDays);
+        ?>
+        <?php if ($hasExtra): ?>
+        <div class="card border-0 shadow-sm mt-4">
+            <div class="card-header bg-white">
+                <ul class="nav nav-tabs card-header-tabs flex-wrap" id="subTabs" role="tablist">
+                    <?php if (!empty($savedCoupons)): ?>
+                    <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#tab-wallet">
+                        <i class="fas fa-wallet me-1"></i> Wallet <span class="badge bg-secondary ms-1"><?= count($savedCoupons) ?></span>
+                    </a></li>
+                    <?php endif; ?>
+                    <?php if (!empty($grievances)): ?>
+                    <li class="nav-item"><a class="nav-link <?= empty($savedCoupons) ? 'active' : '' ?>" data-bs-toggle="tab" href="#tab-grievances">
+                        <i class="fas fa-comment-alt me-1"></i> Grievances <span class="badge bg-danger ms-1"><?= count($grievances) ?></span>
+                    </a></li>
+                    <?php endif; ?>
+                    <?php if (!empty($reviews)): ?>
+                    <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-reviews">
+                        <i class="fas fa-star me-1"></i> Reviews <span class="badge bg-warning ms-1"><?= count($reviews) ?></span>
+                    </a></li>
+                    <?php endif; ?>
+                    <?php if (!empty($referrals)): ?>
+                    <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-referrals">
+                        <i class="fas fa-user-plus me-1"></i> Referrals <span class="badge bg-info ms-1"><?= count($referrals) ?></span>
+                    </a></li>
+                    <?php endif; ?>
+                    <?php if (!empty($favouriteMerchants)): ?>
+                    <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-favourites">
+                        <i class="fas fa-heart me-1"></i> Favourites <span class="badge bg-primary ms-1"><?= count($favouriteMerchants) ?></span>
+                    </a></li>
+                    <?php endif; ?>
+                    <?php if (!empty($importantDays)): ?>
+                    <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-days">
+                        <i class="fas fa-calendar-heart me-1"></i> Occasions <span class="badge bg-success ms-1"><?= count($importantDays) ?></span>
+                    </a></li>
+                    <?php endif; ?>
+                </ul>
+            </div>
+            <div class="tab-content p-0">
+
+                <!-- Coupon Wallet -->
+                <?php if (!empty($savedCoupons)): ?>
+                <div class="tab-pane fade show active" id="tab-wallet">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0 small">
+                            <thead class="table-light">
+                                <tr><th>Coupon</th><th>Merchant</th><th class="text-center">Discount</th><th class="text-center">Status</th><th>Saved At</th></tr>
+                            </thead>
+                            <tbody>
+                                <?php foreach ($savedCoupons as $cs): ?>
+                                <tr>
+                                    <td class="font-monospace"><?= escape($cs['coupon_code']) ?><br><small class="text-muted"><?= escape($cs['coupon_title']) ?></small></td>
+                                    <td><?= escape($cs['merchant_name']) ?></td>
+                                    <td class="text-center text-success fw-semibold">
+                                        <?= $cs['discount_type'] === 'percentage' ? number_format($cs['discount_value'], 0) . '%' : '₹' . number_format($cs['discount_value'], 0) ?>
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="badge bg-<?= $cs['status'] === 'redeemed' ? 'success' : ($cs['status'] === 'removed' ? 'secondary' : 'primary') ?>">
+                                            <?= ucfirst($cs['status']) ?>
+                                        </span>
+                                    </td>
+                                    <td><?= formatDate($cs['subscribed_at']) ?></td>
+                                </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <?php endif; ?>
+
+                <!-- Grievances -->
+                <?php if (!empty($grievances)): ?>
+                <div class="tab-pane fade <?= empty($savedCoupons) ? 'show active' : '' ?>" id="tab-grievances">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0 small">
+                            <thead class="table-light">
+                                <tr><th>Merchant</th><th>Subject</th><th class="text-center">Status</th><th class="text-center">Priority</th><th>Filed</th><th></th></tr>
+                            </thead>
+                            <tbody>
+                                <?php foreach ($grievances as $g): ?>
+                                <tr>
+                                    <td><?= escape($g['merchant_name']) ?></td>
+                                    <td><?= escape(mb_substr($g['subject'] ?? $g['description'] ?? '', 0, 50)) ?>…</td>
+                                    <td class="text-center">
+                                        <span class="badge bg-<?= match($g['status']) { 'open'=>'danger','in_progress'=>'warning','resolved'=>'success','closed'=>'secondary', default=>'dark' } ?>">
+                                            <?= ucfirst($g['status']) ?>
+                                        </span>
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="badge bg-<?= $g['priority'] === 'urgent' ? 'danger' : ($g['priority'] === 'high' ? 'warning' : 'secondary') ?>">
+                                            <?= ucfirst($g['priority']) ?>
+                                        </span>
+                                    </td>
+                                    <td><?= formatDate($g['created_at']) ?></td>
+                                    <td><a href="<?= BASE_URL ?>grievances/detail?id=<?= $g['id'] ?>" class="btn btn-xs btn-outline-secondary" style="font-size:0.72rem;padding:2px 6px;">View</a></td>
+                                </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <?php endif; ?>
+
+                <!-- Reviews -->
+                <?php if (!empty($reviews)): ?>
+                <div class="tab-pane fade" id="tab-reviews">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0 small">
+                            <thead class="table-light">
+                                <tr><th>Merchant / Store</th><th class="text-center">Rating</th><th>Review</th><th class="text-center">Status</th><th>Date</th></tr>
+                            </thead>
+                            <tbody>
+                                <?php foreach ($reviews as $rv): ?>
+                                <tr>
+                                    <td><?= escape($rv['merchant_name']) ?><?= $rv['store_name'] ? '<br><small class="text-muted">' . escape($rv['store_name']) . '</small>' : '' ?></td>
+                                    <td class="text-center">
+                                        <?php for ($i = 1; $i <= 5; $i++): ?>
+                                        <i class="fas fa-star <?= $i <= $rv['rating'] ? 'text-warning' : 'text-muted opacity-25' ?>"></i>
+                                        <?php endfor; ?>
+                                    </td>
+                                    <td><?= escape(mb_substr($rv['review_text'] ?? '', 0, 60)) ?>…</td>
+                                    <td class="text-center">
+                                        <span class="badge bg-<?= $rv['status'] === 'approved' ? 'success' : ($rv['status'] === 'rejected' ? 'danger' : 'warning') ?>">
+                                            <?= ucfirst($rv['status']) ?>
+                                        </span>
+                                    </td>
+                                    <td><?= formatDate($rv['created_at']) ?></td>
+                                </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <?php endif; ?>
+
+                <!-- Referrals -->
+                <?php if (!empty($referrals)): ?>
+                <div class="tab-pane fade" id="tab-referrals">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0 small">
+                            <thead class="table-light">
+                                <tr><th>Referee</th><th>Phone</th><th class="text-center">Status</th><th class="text-center">Reward</th><th>Date</th></tr>
+                            </thead>
+                            <tbody>
+                                <?php foreach ($referrals as $ref): ?>
+                                <tr>
+                                    <td><?= escape($ref['referee_name']) ?></td>
+                                    <td><?= escape($ref['referee_phone']) ?></td>
+                                    <td class="text-center">
+                                        <span class="badge bg-<?= $ref['status'] === 'rewarded' ? 'success' : ($ref['status'] === 'completed' ? 'info' : 'warning text-dark') ?>">
+                                            <?= ucfirst($ref['status']) ?>
+                                        </span>
+                                    </td>
+                                    <td class="text-center">
+                                        <?php if ($ref['reward_given']): ?>
+                                            <span class="badge bg-success-subtle text-success border border-success-subtle">₹<?= number_format($ref['reward_amount'], 0) ?> paid</span>
+                                        <?php else: ?>
+                                            <span class="text-muted">₹<?= number_format($ref['reward_amount'] ?? 0, 0) ?></span>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td><?= formatDate($ref['created_at']) ?></td>
+                                </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <?php endif; ?>
+
+                <!-- Favourite Merchants -->
+                <?php if (!empty($favouriteMerchants)): ?>
+                <div class="tab-pane fade" id="tab-favourites">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0 small">
+                            <thead class="table-light">
+                                <tr><th>Merchant</th><th class="text-center">Status</th><th>Saved At</th><th></th></tr>
+                            </thead>
+                            <tbody>
+                                <?php foreach ($favouriteMerchants as $fm): ?>
+                                <tr>
+                                    <td class="fw-semibold"><?= escape($fm['business_name']) ?></td>
+                                    <td class="text-center">
+                                        <span class="badge bg-<?= $fm['profile_status'] === 'approved' ? 'success' : 'warning' ?>">
+                                            <?= ucfirst($fm['profile_status']) ?>
+                                        </span>
+                                    </td>
+                                    <td><?= formatDate($fm['saved_at']) ?></td>
+                                    <td><a href="<?= BASE_URL ?>merchants/profile?id=<?= $fm['merchant_id'] ?>" class="btn btn-xs btn-outline-secondary" style="font-size:0.72rem;padding:2px 6px;">View</a></td>
+                                </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <?php endif; ?>
+
+                <!-- Important Days -->
+                <?php if (!empty($importantDays)): ?>
+                <div class="tab-pane fade" id="tab-days">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0 small">
+                            <thead class="table-light">
+                                <tr><th>Event</th><th>Person</th><th class="text-center">Date</th><th>Notes</th></tr>
+                            </thead>
+                            <tbody>
+                                <?php
+                                $months = ['','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+                                foreach ($importantDays as $day):
+                                ?>
+                                <tr>
+                                    <td><span class="badge bg-info-subtle text-info border border-info-subtle"><?= escape($day['event_type']) ?></span>
+                                    <?= $day['event_specify'] ? '<br><small class="text-muted">' . escape($day['event_specify']) . '</small>' : '' ?></td>
+                                    <td><?= $day['person_name'] ? escape($day['person_name']) : '<span class="text-muted">—</span>' ?></td>
+                                    <td class="text-center fw-semibold"><?= $day['event_day'] ?> <?= $months[$day['event_month']] ?></td>
+                                    <td></td>
+                                </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <?php endif; ?>
+
+            </div>
+        </div>
+        <?php endif; ?>
+
     </div>
 
     <!-- Right Sidebar -->

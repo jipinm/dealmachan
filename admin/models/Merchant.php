@@ -328,4 +328,53 @@ class Merchant extends Model {
         $stmt->execute($params);
         return (int)$stmt->fetchColumn() > 0;
     }
+
+    // ─── STORE GALLERY ────────────────────────────────────────────────────────
+
+    public function getStoreGallery($merchantId) {
+        $stmt = $this->db->prepare(
+            "SELECT sg.id, sg.store_id, sg.image_url, sg.caption, sg.display_order,
+                    sg.is_cover, sg.created_at, s.store_name
+             FROM store_gallery sg
+             JOIN stores s ON sg.store_id = s.id
+             WHERE s.merchant_id = ?
+             ORDER BY sg.store_id, sg.display_order ASC, sg.created_at DESC"
+        );
+        $stmt->execute([$merchantId]);
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        // Group by store_id
+        $grouped = [];
+        foreach ($rows as $row) {
+            $grouped[$row['store_id']]['store_name'] = $row['store_name'];
+            $grouped[$row['store_id']]['images'][]   = $row;
+        }
+        return $grouped;
+    }
+
+    public function deleteGalleryImage($imageId, $merchantId) {
+        $stmt = $this->db->prepare(
+            "DELETE sg FROM store_gallery sg
+             JOIN stores s ON sg.store_id = s.id
+             WHERE sg.id = ? AND s.merchant_id = ?"
+        );
+        $stmt->execute([$imageId, $merchantId]);
+        return $stmt->rowCount() > 0;
+    }
+
+    public function setCoverImage($imageId, $storeId, $merchantId) {
+        // Verify the image belongs to this merchant's store
+        $check = $this->db->prepare(
+            "SELECT sg.id FROM store_gallery sg
+             JOIN stores s ON sg.store_id = s.id
+             WHERE sg.id = ? AND sg.store_id = ? AND s.merchant_id = ?"
+        );
+        $check->execute([$imageId, $storeId, $merchantId]);
+        if (!$check->fetch()) return false;
+        // Unset existing cover for this store
+        $this->db->prepare("UPDATE store_gallery SET is_cover = 0 WHERE store_id = ?")->execute([$storeId]);
+        // Set new cover
+        $this->db->prepare("UPDATE store_gallery SET is_cover = 1 WHERE id = ?")->execute([$imageId]);
+        return true;
+    }
 }
+

@@ -75,7 +75,7 @@ class MerchantAuthController {
                 'email'               => $row['email'],
                 'business_name'       => $row['business_name'],
                 'phone'               => $row['phone'],
-                'logo_url'            => $row['business_logo'],
+                'logo_url'            => imageUrl($row['business_logo']),
                 'profile_status'      => $row['profile_status'],
                 'subscription_status' => $row['subscription_status'],
             ],

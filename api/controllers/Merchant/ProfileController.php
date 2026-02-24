@@ -90,7 +90,7 @@ class ProfileController {
         );
 
         Response::success([
-            'profile'      => $profile,
+            'profile'      => array_merge($profile, ['business_logo' => imageUrl($profile['business_logo'])]),
             'stores'       => $storeSummary,
             'labels'       => $labels,
             'subscription' => $subscription,
@@ -208,7 +208,7 @@ class ProfileController {
             [$logoUrl, $merchantId]
         );
 
-        Response::success(['logo_url' => $logoUrl], 'Logo uploaded successfully');
+        Response::success(['logo_url' => imageUrl($logoUrl)], 'Logo uploaded successfully');
     }
 
     // ── POST /merchants/subscription/renew ───────────────────────────────────

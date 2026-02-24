@@ -1,5 +1,5 @@
-import React, { useState } from 'react'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import React, { useState, useEffect } from 'react'
+import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { QRCodeSVG } from 'qrcode.react'
 import { Bookmark, Gift, Clock, X, CheckCircle, XCircle, Loader2, Share2 } from 'lucide-react'
 import { couponsApi } from '@/api/endpoints/coupons'
@@ -8,6 +8,8 @@ import { getApiError } from '@/api/client'
 import { SkeletonRow } from '@/components/ui/SkeletonCard'
 import toast from 'react-hot-toast'
 import { Link } from 'react-router-dom'
+import { Helmet } from 'react-helmet-async'
+import { useInfiniteScroll } from '@/lib/useInfiniteScroll'
 
 type WalletTab = 'saved' | 'gifts' | 'history'
 
@@ -26,6 +28,12 @@ function discountText(type: string, value: number) {
 function QrModal({ coupon, onClose }: { coupon: WalletCoupon | GiftCoupon; onClose: () => void }) {
   const qrValue = (coupon as WalletCoupon).coupon_code ?? `COUPON:${coupon.id}`
 
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
+    document.addEventListener('keydown', handler)
+    return () => document.removeEventListener('keydown', handler)
+  }, [onClose])
+
   const handleShare = async () => {
     const text = `${coupon.title} — ${discountText(coupon.discount_type, coupon.discount_value)}`
     if (navigator.share) {
@@ -37,7 +45,7 @@ function QrModal({ coupon, onClose }: { coupon: WalletCoupon | GiftCoupon; onClo
   }
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-4">
+    <div role="dialog" aria-modal="true" aria-label="Redeem coupon QR code" className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-4">
       <div className="bg-white w-full max-w-xs rounded-3xl p-6 relative animate-in slide-in-from-bottom">
         <button onClick={onClose} className="absolute top-4 right-4 p-1 rounded-full hover:bg-gray-100">
           <X size={18} className="text-gray-500" />
@@ -95,35 +103,55 @@ function SavedCouponCard({ coupon, onRedeem }: { coupon: WalletCoupon; onRedeem:
   })
 
   return (
-    <div className="card p-4 flex gap-3 items-start">
-      <div className="w-12 h-12 rounded-xl gradient-brand flex items-center justify-center shrink-0 text-white font-bold text-sm">
-        {coupon.merchant_name?.charAt(0)?.toUpperCase() ?? '?'}
-      </div>
-      <div className="flex-1 min-w-0">
-        <p className="font-semibold text-gray-900 text-sm truncate">{coupon.title}</p>
-        <p className="text-xs text-gray-400">{coupon.merchant_name}</p>
-        <div className="flex items-center gap-2 mt-1.5">
-          <span className="text-xs font-semibold text-brand-700 bg-brand-50 px-2 py-0.5 rounded-full">
+    <div className="group relative bg-white rounded-2xl shadow-sm border border-gray-100 hover:shadow-md hover:border-brand-100 transition-all duration-200 overflow-hidden flex flex-col">
+      {/* Top colour band */}
+      <div className="h-1.5 w-full gradient-brand" />
+
+      <div className="p-4 flex flex-col flex-1">
+        {/* Merchant avatar + discount badge */}
+        <div className="flex items-start justify-between gap-2 mb-3">
+          <div className="w-10 h-10 rounded-xl gradient-brand flex items-center justify-center shrink-0 text-white font-bold text-base shadow-sm">
+            {coupon.merchant_name?.charAt(0)?.toUpperCase() ?? '?'}
+          </div>
+          <span className="text-xs font-bold text-brand-700 bg-brand-50 border border-brand-100 px-2.5 py-1 rounded-full shrink-0">
             {discountText(coupon.discount_type, coupon.discount_value)}
           </span>
-          {coupon.valid_until && (
-            <span className="text-[10px] text-gray-400">
-              Exp {new Date(coupon.valid_until).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
-            </span>
-          )}
         </div>
-      </div>
-      <div className="flex flex-col gap-1 shrink-0">
-        <button onClick={onRedeem} className="btn-primary text-xs px-3 py-1.5 rounded-lg">
-          Redeem
-        </button>
-        <button
-          onClick={() => removeMutation.mutate()}
-          disabled={removeMutation.isPending}
-          className="text-[10px] text-gray-400 text-center hover:text-red-500 transition-colors"
-        >
-          {removeMutation.isPending ? <Loader2 size={11} className="animate-spin mx-auto" /> : 'Remove'}
-        </button>
+
+        {/* Title + merchant */}
+        <p className="font-semibold text-gray-900 text-sm leading-snug line-clamp-2 mb-0.5">{coupon.title}</p>
+        <p className="text-xs text-gray-400 truncate mb-3">{coupon.merchant_name}</p>
+
+        {/* Expiry */}
+        {coupon.valid_until && (
+          <p className="text-[10px] text-gray-400 flex items-center gap-1 mb-3 mt-auto">
+            <Clock size={10} />
+            Expires {new Date(coupon.valid_until).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+          </p>
+        )}
+
+        {/* Dashed divider */}
+        <div className="border-t border-dashed border-gray-200 mb-3" />
+
+        {/* Actions */}
+        <div className="flex gap-2">
+          <button
+            onClick={onRedeem}
+            className="flex-1 btn-primary text-xs py-2 rounded-xl"
+          >
+            Redeem
+          </button>
+          <button
+            onClick={() => removeMutation.mutate()}
+            disabled={removeMutation.isPending}
+            className="w-9 h-8 flex items-center justify-center rounded-xl border border-gray-200 text-gray-400 hover:border-red-200 hover:text-red-500 hover:bg-red-50 transition-colors shrink-0"
+            title="Remove"
+          >
+            {removeMutation.isPending
+              ? <Loader2 size={12} className="animate-spin" />
+              : <X size={13} />}
+          </button>
+        </div>
       </div>
     </div>
   )
@@ -154,50 +182,60 @@ function GiftCouponCard({ gift }: { gift: GiftCoupon }) {
   const isPending = acceptMutation.isPending || rejectMutation.isPending
 
   return (
-    <div className="card p-4 border border-amber-100 bg-amber-50/50">
-      <div className="flex items-start gap-3">
-        <div className="w-11 h-11 rounded-xl bg-amber-100 flex items-center justify-center shrink-0">
-          <Gift size={18} className="text-amber-600" />
-        </div>
-        <div className="flex-1 min-w-0">
-          <p className="font-semibold text-gray-900 text-sm">{gift.title}</p>
-          <p className="text-xs text-gray-500">{gift.merchant_name}</p>
-          <span className="text-xs font-semibold text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full mt-1 inline-block">
+    <div className="relative bg-white rounded-2xl shadow-sm border border-amber-100 hover:shadow-md transition-all duration-200 overflow-hidden flex flex-col">
+      {/* Top accent */}
+      <div className="h-1.5 w-full bg-gradient-to-r from-amber-400 to-orange-400" />
+
+      <div className="p-4 flex flex-col flex-1">
+        {/* Icon + badge */}
+        <div className="flex items-start justify-between gap-2 mb-3">
+          <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center shrink-0 shadow-sm">
+            <Gift size={18} className="text-amber-600" />
+          </div>
+          <span className="text-xs font-bold text-amber-700 bg-amber-50 border border-amber-200 px-2.5 py-1 rounded-full shrink-0">
             {discountText(gift.discount_type, gift.discount_value)}
           </span>
-          {gift.gifted_at && (
-            <p className="text-[10px] text-gray-400 mt-1">
-              Received {new Date(gift.gifted_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
-            </p>
-          )}
         </div>
-      </div>
 
-      {gift.acceptance_status === 'pending' && (
-        <div className="flex gap-2 mt-3">
-          <button
-            onClick={() => acceptMutation.mutate()}
-            disabled={isPending}
-            className="flex-1 btn-primary text-xs py-2 flex items-center justify-center gap-1"
-          >
-            {acceptMutation.isPending ? <Loader2 size={12} className="animate-spin" /> : <CheckCircle size={12} />}
-            Accept Gift
-          </button>
-          <button
-            onClick={() => rejectMutation.mutate()}
-            disabled={isPending}
-            className="flex-1 btn-outline text-xs py-2 flex items-center justify-center gap-1 text-gray-500"
-          >
-            {rejectMutation.isPending ? <Loader2 size={12} className="animate-spin" /> : <XCircle size={12} />}
-            Decline
-          </button>
-        </div>
-      )}
-      {gift.acceptance_status === 'accepted' && (
-        <p className="text-xs text-emerald-600 font-semibold mt-2 flex items-center gap-1">
-          <CheckCircle size={12} /> Accepted — check Saved tab
-        </p>
-      )}
+        {/* Title + merchant */}
+        <p className="font-semibold text-gray-900 text-sm leading-snug line-clamp-2 mb-0.5">{gift.title}</p>
+        <p className="text-xs text-gray-400 truncate mb-2">{gift.merchant_name}</p>
+
+        {gift.gifted_at && (
+          <p className="text-[10px] text-gray-400 flex items-center gap-1 mb-3 mt-auto">
+            <Clock size={10} />
+            Received {new Date(gift.gifted_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+          </p>
+        )}
+
+        <div className="border-t border-dashed border-amber-100 mb-3" />
+
+        {gift.acceptance_status === 'pending' && (
+          <div className="flex gap-2">
+            <button
+              onClick={() => acceptMutation.mutate()}
+              disabled={isPending}
+              className="flex-1 btn-primary text-xs py-2 rounded-xl flex items-center justify-center gap-1"
+            >
+              {acceptMutation.isPending ? <Loader2 size={12} className="animate-spin" /> : <CheckCircle size={12} />}
+              Accept
+            </button>
+            <button
+              onClick={() => rejectMutation.mutate()}
+              disabled={isPending}
+              className="flex-1 text-xs py-2 rounded-xl border border-gray-200 text-gray-500 hover:border-red-200 hover:text-red-500 hover:bg-red-50 transition-colors flex items-center justify-center gap-1"
+            >
+              {rejectMutation.isPending ? <Loader2 size={12} className="animate-spin" /> : <XCircle size={12} />}
+              Decline
+            </button>
+          </div>
+        )}
+        {gift.acceptance_status === 'accepted' && (
+          <p className="text-xs text-emerald-600 font-semibold flex items-center gap-1">
+            <CheckCircle size={12} /> Accepted — check Saved tab
+          </p>
+        )}
+      </div>
     </div>
   )
 }
@@ -206,7 +244,6 @@ function GiftCouponCard({ gift }: { gift: GiftCoupon }) {
 export default function CouponWalletPage() {
   const [tab, setTab] = useState<WalletTab>('saved')
   const [redeemCoupon, setRedeemCoupon] = useState<WalletCoupon | GiftCoupon | null>(null)
-  const [historyPage, setHistoryPage] = useState(1)
 
   const { data: walletData, isLoading: walletLoading } = useQuery({
     queryKey: ['wallet'],
@@ -214,18 +251,27 @@ export default function CouponWalletPage() {
     staleTime: 30_000,
   })
 
-  const { data: historyData, isLoading: historyLoading } = useQuery({
-    queryKey: ['coupon-history', historyPage],
-    queryFn: () => couponsApi.getHistory({ page: historyPage, per_page: 15 }).then((r) => r.data),
+  const { data: historyData, isLoading: historyLoading, isFetchingNextPage: historyFetchingMore, fetchNextPage: fetchMoreHistory, hasNextPage: historyHasMore } = useInfiniteQuery({
+    queryKey: ['coupon-history-inf'],
+    queryFn: ({ pageParam = 1 }) => couponsApi.getHistory({ page: pageParam as number, per_page: 15 }).then((r) => r.data),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage: any, allPages) => {
+      const total = lastPage?.data?.pagination?.pages ?? 1
+      return allPages.length < total ? allPages.length + 1 : undefined
+    },
     enabled: tab === 'history',
     staleTime: 60_000,
   })
 
   const saved: WalletCoupon[]   = (walletData as any)?.saved ?? []
   const gifts: GiftCoupon[]     = (walletData as any)?.gifts ?? []
-  const history: any[]          = (historyData as any)?.data ?? []
-  const historyPages: number    = (historyData as any)?.pagination?.pages ?? 1
+  const history: any[]          = historyData?.pages.flatMap((p: any) => p?.data?.data ?? []) ?? []
   const pendingGifts            = gifts.filter((g) => g.acceptance_status === 'pending').length
+
+  const historySentinelRef = useInfiniteScroll(
+    () => { if (historyHasMore && !historyFetchingMore) fetchMoreHistory() },
+    !!historyHasMore && !historyFetchingMore && tab === 'history',
+  )
 
   const tabs: Array<{ key: WalletTab; label: string; icon: React.ElementType; count: number | null; badge?: boolean }> = [
     { key: 'saved',   label: 'Saved',   icon: Bookmark, count: saved.length },
@@ -234,7 +280,10 @@ export default function CouponWalletPage() {
   ]
 
   return (
-    <div className="max-w-2xl mx-auto pb-8">
+    <div className="max-w-[1200px] mx-auto pb-8">
+      <Helmet>
+        <title>My Wallet | Deal Machan</title>
+      </Helmet>
       {/* Header */}
       <div className="px-4 pt-5 pb-3">
         <h1 className="font-heading font-bold text-xl text-gray-900">My Wallet</h1>
@@ -266,20 +315,27 @@ export default function CouponWalletPage() {
         </div>
       </div>
 
-      <div className="px-4 space-y-3">
+      <div className="px-4">
         {/* ── Saved ── */}
         {tab === 'saved' && (
           walletLoading
-            ? Array.from({ length: 4 }).map((_, i) => <SkeletonRow key={i} />)
+            ? <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">{Array.from({ length: 6 }).map((_, i) => <SkeletonRow key={i} />)}</div>
             : saved.length > 0
-              ? saved.map((c) => (
-                  <SavedCouponCard key={c.id} coupon={c} onRedeem={() => setRedeemCoupon(c)} />
-                ))
+              ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {saved.map((c) => (
+                    <SavedCouponCard key={c.id} coupon={c} onRedeem={() => setRedeemCoupon(c)} />
+                  ))}
+                </div>
+              )
               : (
-                <div className="text-center py-16">
-                  <p className="text-4xl mb-2">🎟️</p>
-                  <p className="text-gray-500 text-sm">No saved coupons yet.</p>
-                  <Link to="/coupons" className="mt-3 inline-block btn-primary text-sm px-5 py-2">
+                <div className="text-center py-20">
+                  <div className="w-16 h-16 bg-brand-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                    <Bookmark size={28} className="text-brand-300" />
+                  </div>
+                  <p className="font-semibold text-gray-700 mb-1">No saved coupons yet</p>
+                  <p className="text-gray-400 text-sm mb-6">Browse deals and tap Save to add them here.</p>
+                  <Link to="/coupons" className="btn-primary text-sm px-6 py-2.5 rounded-xl">
                     Browse Deals
                   </Link>
                 </div>
@@ -289,13 +345,20 @@ export default function CouponWalletPage() {
         {/* ── Gifts ── */}
         {tab === 'gifts' && (
           walletLoading
-            ? Array.from({ length: 3 }).map((_, i) => <SkeletonRow key={i} />)
+            ? <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">{Array.from({ length: 3 }).map((_, i) => <SkeletonRow key={i} />)}</div>
             : gifts.length > 0
-              ? gifts.map((g) => <GiftCouponCard key={g.gift_id} gift={g} />)
+              ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {gifts.map((g) => <GiftCouponCard key={g.gift_id} gift={g} />)}
+                </div>
+              )
               : (
-                <div className="text-center py-16">
-                  <p className="text-4xl mb-2">🎁</p>
-                  <p className="text-gray-500 text-sm">No gift coupons received yet.</p>
+                <div className="text-center py-20">
+                  <div className="w-16 h-16 bg-amber-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                    <Gift size={28} className="text-amber-300" />
+                  </div>
+                  <p className="font-semibold text-gray-700 mb-1">No gift coupons</p>
+                  <p className="text-gray-400 text-sm">Gift coupons sent to you will appear here.</p>
                 </div>
               )
         )}
@@ -303,55 +366,59 @@ export default function CouponWalletPage() {
         {/* ── History ── */}
         {tab === 'history' && (
           historyLoading
-            ? Array.from({ length: 4 }).map((_, i) => <SkeletonRow key={i} />)
+            ? <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">{Array.from({ length: 6 }).map((_, i) => <SkeletonRow key={i} />)}</div>
             : history.length > 0
               ? (
                 <>
-                  {history.map((r: any) => (
-                    <div key={r.id} className="card p-4 flex items-center gap-3">
-                      <div className="w-11 h-11 rounded-xl bg-emerald-100 flex items-center justify-center shrink-0">
-                        <span className="text-emerald-600 font-bold text-xs">✓</span>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {history.map((r: any) => (
+                      <div key={r.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:border-emerald-100 transition-all duration-200 overflow-hidden flex flex-col">
+                        <div className="h-1.5 w-full bg-gradient-to-r from-emerald-400 to-teal-400" />
+                        <div className="p-4 flex flex-col flex-1">
+                          <div className="flex items-start justify-between gap-2 mb-3">
+                            <div className="w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center shrink-0">
+                              <CheckCircle size={18} className="text-emerald-500" />
+                            </div>
+                            {r.discount_amount > 0 && (
+                              <span className="text-sm font-bold text-emerald-600 bg-emerald-50 border border-emerald-100 px-2.5 py-1 rounded-full shrink-0">
+                                −₹{Number(r.discount_amount).toFixed(2)}
+                              </span>
+                            )}
+                          </div>
+                          <p className="font-semibold text-gray-900 text-sm leading-snug line-clamp-2 mb-0.5">{r.title ?? r.coupon_title}</p>
+                          <p className="text-xs text-gray-400 truncate mb-auto">
+                            {r.merchant_name ?? r.business_name}
+                            {(r.store_name) ? ` · ${r.store_name}` : ''}
+                          </p>
+                          <div className="border-t border-dashed border-gray-100 mt-3 pt-2.5">
+                            <p className="text-[10px] text-gray-400 flex items-center gap-1">
+                              <Clock size={10} />
+                              {new Date(r.redeemed_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                            </p>
+                          </div>
+                        </div>
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-semibold text-gray-900 text-sm truncate">{r.title ?? r.coupon_title}</p>
-                        <p className="text-xs text-gray-400">{r.business_name ?? r.merchant_name} · {r.store_name ?? ''}</p>
-                        <p className="text-[10px] text-gray-400 mt-0.5">
-                          {new Date(r.redeemed_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
-                        </p>
-                      </div>
-                      {r.discount_amount > 0 && (
-                        <span className="text-sm font-bold text-emerald-600 shrink-0">
-                          −₹{r.discount_amount}
-                        </span>
-                      )}
-                    </div>
-                  ))}
+                    ))}
+                  </div>
 
-                  {historyPages > 1 && (
-                    <div className="flex justify-center gap-4 pt-2">
-                      <button
-                        disabled={historyPage === 1}
-                        onClick={() => setHistoryPage(p => p - 1)}
-                        className="btn-outline text-xs px-4 py-2 disabled:opacity-40"
-                      >
-                        ← Prev
-                      </button>
-                      <span className="text-xs text-gray-500 self-center">{historyPage}/{historyPages}</span>
-                      <button
-                        disabled={historyPage >= historyPages}
-                        onClick={() => setHistoryPage(p => p + 1)}
-                        className="btn-outline text-xs px-4 py-2 disabled:opacity-40"
-                      >
-                        Next →
-                      </button>
+                  <div ref={historySentinelRef} className="h-4" />
+                  {historyFetchingMore && (
+                    <div className="flex justify-center py-4">
+                      <Loader2 size={18} className="animate-spin text-brand-500" />
                     </div>
+                  )}
+                  {!historyHasMore && history.length > 0 && (
+                    <p className="text-center text-xs text-gray-400 py-4">All history loaded</p>
                   )}
                 </>
               )
               : (
-                <div className="text-center py-16">
-                  <p className="text-4xl mb-2">🧾</p>
-                  <p className="text-gray-500 text-sm">No redemptions yet.</p>
+                <div className="text-center py-20">
+                  <div className="w-16 h-16 bg-emerald-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                    <Clock size={28} className="text-emerald-300" />
+                  </div>
+                  <p className="font-semibold text-gray-700 mb-1">No redemptions yet</p>
+                  <p className="text-gray-400 text-sm">Your coupon redemption history will appear here.</p>
                 </div>
               )
         )}

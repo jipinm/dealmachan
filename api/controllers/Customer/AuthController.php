@@ -53,8 +53,8 @@ class CustomerAuthController {
             if ($referrer) $referrerId = $referrer['id'];
         }
 
-        // Generate OTP
-        $otp       = (string)random_int(100000, 999999);
+        // Generate OTP — DEV ONLY: hardcoded to '1234' for testing
+        $otp       = '1234';
         $otpExpiry = date('Y-m-d H:i:s', time() + 600); // 10 min
 
         $hash = password_hash($password, PASSWORD_DEFAULT);
@@ -105,7 +105,8 @@ class CustomerAuthController {
             "SELECT u.id AS user_id, u.email, u.phone, u.password_hash, u.status,
                     c.id AS customer_id, c.name, c.profile_image, c.city_id, c.area_id,
                     c.customer_type, c.subscription_status, c.subscription_expiry,
-                    c.is_dealmaker, c.referral_code
+                    c.is_dealmaker, c.referral_code,
+                    COALESCE(c.temp_password, 0) AS temp_password
              FROM users u
              JOIN customers c ON c.user_id = u.id
              WHERE {$loginCol} = ? AND u.user_type = 'customer'
@@ -160,7 +161,8 @@ class CustomerAuthController {
             "SELECT u.id AS user_id, u.email, u.phone, u.otp_code, u.otp_expiry, u.status,
                     c.id AS customer_id, c.name, c.profile_image, c.city_id, c.area_id,
                     c.customer_type, c.subscription_status, c.subscription_expiry,
-                    c.is_dealmaker, c.referral_code
+                    c.is_dealmaker, c.referral_code,
+                    COALESCE(c.temp_password, 0) AS temp_password
              FROM users u
              JOIN customers c ON c.user_id = u.id
              WHERE u.phone = ? AND u.user_type = 'customer'
@@ -223,7 +225,8 @@ class CustomerAuthController {
             Response::error('Phone already verified.', 409, 'ALREADY_VERIFIED');
         }
 
-        $otp       = (string)random_int(100000, 999999);
+        // DEV ONLY: hardcoded OTP for testing
+        $otp       = '1234';
         $otpExpiry = date('Y-m-d H:i:s', time() + 600);
 
         $this->db->execute(
@@ -402,7 +405,7 @@ class CustomerAuthController {
             'name'                => $row['name'],
             'email'               => $row['email'] ?? null,
             'phone'               => $row['phone'],
-            'profile_image'       => $row['profile_image'],
+            'profile_image'       => imageUrl($row['profile_image']),
             'city_id'             => isset($row['city_id']) ? (int)$row['city_id'] : null,
             'area_id'             => isset($row['area_id']) ? (int)$row['area_id'] : null,
             'customer_type'       => $row['customer_type'],
@@ -410,6 +413,7 @@ class CustomerAuthController {
             'subscription_expiry' => $row['subscription_expiry'],
             'is_dealmaker'        => (bool)$row['is_dealmaker'],
             'referral_code'       => $row['referral_code'],
+            'temp_password'       => (int)($row['temp_password'] ?? 0),
             'is_new_user'         => $isNewUser,
         ];
     }

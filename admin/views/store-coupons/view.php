@@ -148,6 +148,13 @@ $statusColors = ['active' => 'success', 'inactive' => 'secondary', 'expired' => 
                     </div>
                     <?php endif; ?>
                 </div>
+                <?php if ($storeCoupon['is_gifted'] && !$storeCoupon['is_redeemed']): ?>
+                <hr>
+                <button class="btn btn-sm btn-warning" onclick="revokeGift(<?= $storeCoupon['id'] ?>)">
+                    <i class="bi bi-x-circle me-1"></i> Revoke Gift Assignment
+                </button>
+                <small class="text-muted ms-2">Removes this coupon from the customer's account (since it hasn't been used yet).</small>
+                <?php endif; ?>
             </div>
         </div>
         <?php endif; ?>
@@ -206,6 +213,29 @@ function confirmDelete(id, code) {
         if (r.isConfirmed) {
             document.getElementById('deleteForm').submit();
         }
+    });
+}
+function revokeGift(id) {
+    Swal.fire({
+        title: 'Revoke Gift?',
+        text: 'This will remove the coupon from the customer\'s account. They will no longer be able to use it.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d97706',
+        confirmButtonText: 'Yes, Revoke'
+    }).then(r => {
+        if (!r.isConfirmed) return;
+        fetch('<?= BASE_URL ?>store-coupons/revoke', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+            body: 'id=' + id
+        }).then(r => r.json()).then(d => {
+            if (d.success) {
+                Swal.fire('Revoked', 'Gift assignment removed.', 'success').then(() => location.reload());
+            } else {
+                Swal.fire('Error', d.error || 'Failed.', 'error');
+            }
+        });
     });
 }
 </script>

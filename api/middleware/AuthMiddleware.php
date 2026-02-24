@@ -11,7 +11,26 @@ class AuthMiddleware {
     private static ?array $currentUser = null;
 
     /**
-     * Require a valid access token. Terminates with 401 on failure.
+     * Optionally verify the token — returns true if authenticated, false if not.
+     * Never terminates. Safe to call on public endpoints that want to customise
+     * their response based on whether the caller is logged in.
+     */
+    public static function optional(): bool {
+        $token = self::extractToken();
+        if (!$token) return false;
+
+        try {
+            $payload = JWT::verifyAccess($token);
+        } catch (\RuntimeException) {
+            return false;
+        }
+
+        self::$currentUser = $payload;
+        return true;
+    }
+
+    /**
+     * Require a valid access token for a MERCHANT. Terminates with 401 on failure.
      */
     public static function require(): array {
         $token = self::extractToken();
@@ -38,6 +57,46 @@ class AuthMiddleware {
 
         if (!$user) {
             Response::unauthorized('Merchant account not found.');
+        }
+
+        if ($user['status'] !== 'active') {
+            Response::forbidden('Your account has been ' . $user['status'] . '. Please contact support.');
+        }
+
+        self::$currentUser = array_merge($payload, $user);
+        return self::$currentUser;
+    }
+
+    /**
+     * Require a valid access token for a CUSTOMER. Terminates with 401 on failure.
+     */
+    public static function requireCustomer(): array {
+        $token = self::extractToken();
+
+        if (!$token) {
+            Response::unauthorized('No authentication token provided.');
+        }
+
+        try {
+            $payload = JWT::verifyAccess($token);
+        } catch (\RuntimeException $e) {
+            Response::unauthorized($e->getMessage());
+        }
+
+        // Verify customer still exists and is active in DB
+        $db   = Database::getInstance();
+        $user = $db->queryOne(
+            "SELECT u.id, u.email, u.phone, u.status,
+                    c.id AS customer_id, c.name, c.customer_type,
+                    c.subscription_status, c.is_dealmaker
+             FROM users u
+             JOIN customers c ON c.user_id = u.id
+             WHERE u.id = ? AND u.user_type = 'customer'",
+            [$payload['sub']]
+        );
+
+        if (!$user) {
+            Response::unauthorized('Customer account not found.');
         }
 
         if ($user['status'] !== 'active') {

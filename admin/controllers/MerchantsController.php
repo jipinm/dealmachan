@@ -85,6 +85,7 @@ class MerchantsController extends Controller {
         $stores  = $this->merchantModel->getStores($id);
         $reviews = $this->merchantModel->getReviews($id, 10);
         $labels  = $this->merchantModel->getMerchantLabels($id);
+        $gallery = $this->merchantModel->getStoreGallery($id);
 
         $this->loadView('merchants/view', [
             'title'        => 'Merchant Profile — ' . escape($merchant['business_name']),
@@ -92,6 +93,7 @@ class MerchantsController extends Controller {
             'stores'       => $stores,
             'reviews'      => $reviews,
             'labels'       => $labels,
+            'gallery'      => $gallery,
             'current_user' => $this->auth->getCurrentUser(),
         ]);
     }
@@ -502,5 +504,28 @@ class MerchantsController extends Controller {
 
         if ($storeId) $this->storeModel->toggleStatus($storeId);
         $this->redirect("merchants/profile?id={$merchantId}");
+    }
+
+    // POST /merchants/delete-gallery-image  – JSON
+    public function deleteGalleryImage(): void {
+        header('Content-Type: application/json');
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') { echo json_encode(['success' => false, 'error' => 'POST only']); return; }
+        $imageId    = (int)($_POST['image_id']    ?? 0);
+        $merchantId = (int)($_POST['merchant_id'] ?? 0);
+        if (!$imageId || !$merchantId) { echo json_encode(['success' => false, 'error' => 'Invalid params']); return; }
+        $ok = $this->merchantModel->deleteGalleryImage($imageId, $merchantId);
+        echo json_encode(['success' => $ok]);
+    }
+
+    // POST /merchants/set-cover-image  – JSON
+    public function setCoverImage(): void {
+        header('Content-Type: application/json');
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') { echo json_encode(['success' => false, 'error' => 'POST only']); return; }
+        $imageId    = (int)($_POST['image_id']    ?? 0);
+        $storeId    = (int)($_POST['store_id']    ?? 0);
+        $merchantId = (int)($_POST['merchant_id'] ?? 0);
+        if (!$imageId || !$storeId || !$merchantId) { echo json_encode(['success' => false, 'error' => 'Invalid params']); return; }
+        $ok = $this->merchantModel->setCoverImage($imageId, $storeId, $merchantId);
+        echo json_encode(['success' => $ok]);
     }
 }

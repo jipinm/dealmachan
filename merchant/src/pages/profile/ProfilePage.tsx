@@ -9,6 +9,7 @@ import type React from 'react'
 import { merchantApi } from '@/api/endpoints/merchant'
 import { useAuthStore } from '@/store/authStore'
 import { SkeletonBlock, SkeletonCard } from '@/components/ui/PageLoader'
+import { getImageUrl } from '@/lib/imageUrl'
 
 function StatPill({ label, value }: { label: string; value: number | string }) {
   return (
@@ -99,7 +100,7 @@ export default function ProfilePage() {
   }
 
   const { profile, stores, labels, subscription, coupons } = data!
-  const logoUrl = profile.business_logo ? `http://dealmachan-api.local${profile.business_logo}` : null
+  const logoUrl = getImageUrl(profile.business_logo)
 
   return (
     <div className="min-h-full bg-gray-50 pb-6">

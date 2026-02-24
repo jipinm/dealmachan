@@ -129,7 +129,7 @@ export default function Sidebar() {
         <div className="mx-4 mt-4 mb-2 p-3 bg-brand-50 rounded-xl flex items-center gap-3">
           <div className="w-9 h-9 rounded-full gradient-brand flex items-center justify-center shrink-0">
             {customer.profile_image ? (
-              <img src={customer.profile_image} alt={customer.name} className="w-9 h-9 rounded-full object-cover" />
+              <img src={customer.profile_image} alt={customer.name} loading="lazy" className="w-9 h-9 rounded-full object-cover" />
             ) : (
               <span className="text-white font-bold text-sm">{customer.name.charAt(0).toUpperCase()}</span>
             )}

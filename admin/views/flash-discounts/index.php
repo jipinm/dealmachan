@@ -62,6 +62,11 @@
             ?>
         </small>
     </div>
+    <div>
+        <a href="<?= BASE_URL ?>flash-discounts/add" class="btn btn-primary btn-sm">
+            <i class="fas fa-plus me-1"></i> Create Flash Discount
+        </a>
+    </div>
 </div>
 
 <!-- Filter bar -->

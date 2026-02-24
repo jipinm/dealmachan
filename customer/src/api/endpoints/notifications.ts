@@ -2,20 +2,23 @@ import { apiClient } from '@/api/client'
 
 export interface Notification {
   id: number
-  notification_type: string
+  type: string
   title: string
   message: string
-  read_status: 0 | 1
+  is_read: 0 | 1
   created_at: string
-  link?: string | null
+  action_url?: string | null
 }
 
 export const notificationsApi = {
   /** Get notification list */
   getAll: (params?: { page?: number; type?: string }) =>
     apiClient.get<{
-      data: Notification[]
-      meta: { total: number; unread: number; page: number }
+      data: {
+        data: Notification[]
+        pagination: { total: number; page: number; per_page: number; pages: number }
+      }
+      meta: null
     }>('/customers/notifications', { params }),
 
   /** Get unread count only (lightweight, for badge) */

@@ -6,6 +6,7 @@ import { authApi } from '@/api/endpoints/auth'
 import { getApiError } from '@/api/client'
 import toast from 'react-hot-toast'
 import AuthLayout from '@/components/layout/AuthLayout'
+import { Helmet } from 'react-helmet-async'
 
 export default function RegisterPage() {
   const navigate = useNavigate()
@@ -41,6 +42,10 @@ export default function RegisterPage() {
       title="Join DealMachan"
       subtitle="Create a free account and start saving on local deals and coupons"
     >
+      <Helmet>
+        <title>Create Account | Deal Machan</title>
+        <meta name="description" content="Join Deal Machan for free and start saving with exclusive coupons, flash deals, and local merchant offers near you." />
+      </Helmet>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label className="block text-sm font-medium text-slate-700 mb-1.5">Full Name</label>

@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { useQuery } from '@tanstack/react-query'
-import { Search, SlidersHorizontal, X } from 'lucide-react'
+import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
+import { Search, SlidersHorizontal, X, Loader2 } from 'lucide-react'
 import { publicApi } from '@/api/endpoints/public'
 import { useLocationStore } from '@/store/locationStore'
 import MerchantCard from '@/components/ui/MerchantCard'
 import CouponCard from '@/components/ui/CouponCard'
 import SkeletonCard, { SkeletonRow } from '@/components/ui/SkeletonCard'
+import { useInfiniteScroll } from '@/lib/useInfiniteScroll'
 
 type TabType = 'merchants' | 'coupons'
 type DiscountFilter = 'all' | 'percentage' | 'flat' | 'free_item'
@@ -23,7 +24,6 @@ export default function ExplorePage() {
   const [tagId, setTagId] = useState<number | null>(searchParams.get('tag') ? Number(searchParams.get('tag')) : null)
   const [discountFilter, setDiscountFilter] = useState<DiscountFilter>('all')
   const [showFilters, setShowFilters] = useState(false)
-  const [page, setPage] = useState(1)
 
   // Sync q from URL on mount
   useEffect(() => {
@@ -34,7 +34,6 @@ export default function ExplorePage() {
   function handleSearch(e: React.FormEvent) {
     e.preventDefault()
     setQ(input.trim())
-    setPage(1)
     setSearchParams((p) => {
       if (input.trim()) p.set('q', input.trim()); else p.delete('q')
       return p
@@ -42,7 +41,7 @@ export default function ExplorePage() {
   }
 
   function clearSearch() {
-    setInput(''); setQ(''); setPage(1)
+    setInput(''); setQ('')
     setSearchParams((p) => { p.delete('q'); return p })
   }
 
@@ -54,51 +53,68 @@ export default function ExplorePage() {
   })
 
   // ── Merchants ─────────────────────────────────────────────────────────────
-  const merchantQuery = useQuery({
-    queryKey: ['explore-merchants', q, cityId, areaId, tagId, page],
-    queryFn: () =>
+  const merchantQuery = useInfiniteQuery({
+    queryKey: ['explore-merchants', q, cityId, areaId, tagId],
+    queryFn: ({ pageParam = 1 }) =>
       publicApi.getMerchants({
         q:        q || undefined,
         city_id:  cityId   ?? undefined,
         area_id:  areaId   ?? undefined,
         tag_id:   tagId    ?? undefined,
-        page,
+        page:     pageParam as number,
         per_page: 12,
-      }).then((r) => r.data.data),
+      }).then((r) => r.data),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage: any, allPages) => {
+      const total = lastPage?.data?.pagination?.pages ?? 1
+      return allPages.length < total ? allPages.length + 1 : undefined
+    },
     staleTime: 60_000,
     enabled: tab === 'merchants',
   })
 
   // ── Coupons ───────────────────────────────────────────────────────────────
-  const couponQuery = useQuery({
-    queryKey: ['explore-coupons', q, cityId, tagId, discountFilter, page],
-    queryFn: () =>
+  const couponQuery = useInfiniteQuery({
+    queryKey: ['explore-coupons', q, cityId, tagId, discountFilter],
+    queryFn: ({ pageParam = 1 }) =>
       publicApi.getCoupons({
         q:             q || undefined,
         city_id:       cityId ?? undefined,
         tag_id:        tagId  ?? undefined,
         discount_type: discountFilter !== 'all' ? discountFilter : undefined,
-        page,
+        page:          pageParam as number,
         per_page: 15,
-      }).then((r) => r.data.data),
+      }).then((r) => r.data),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage: any, allPages) => {
+      const total = lastPage?.data?.pagination?.pages ?? 1
+      return allPages.length < total ? allPages.length + 1 : undefined
+    },
     staleTime: 60_000,
     enabled: tab === 'coupons',
   })
 
-  const merchants       = (merchantQuery.data as any)?.data ?? []
-  const merchantPages   = (merchantQuery.data as any)?.pagination?.pages ?? 1
-  const coupons         = (couponQuery.data  as any)?.data ?? []
-  const couponPages     = (couponQuery.data  as any)?.pagination?.pages ?? 1
+  const merchants       = merchantQuery.data?.pages.flatMap((p: any) => p?.data?.data ?? []) ?? []
+  const coupons         = couponQuery.data?.pages.flatMap((p: any) => p?.data?.data ?? []) ?? []
   const isLoadingM      = merchantQuery.isLoading
   const isLoadingC      = couponQuery.isLoading
 
+  const merchantSentinelRef = useInfiniteScroll(
+    () => { if (merchantQuery.hasNextPage && !merchantQuery.isFetchingNextPage) merchantQuery.fetchNextPage() },
+    !!merchantQuery.hasNextPage && !merchantQuery.isFetchingNextPage && tab === 'merchants',
+  )
+  const couponSentinelRef = useInfiniteScroll(
+    () => { if (couponQuery.hasNextPage && !couponQuery.isFetchingNextPage) couponQuery.fetchNextPage() },
+    !!couponQuery.hasNextPage && !couponQuery.isFetchingNextPage && tab === 'coupons',
+  )
+
   function switchTab(t: TabType) {
-    setTab(t); setPage(1)
+    setTab(t)
     setSearchParams((p) => { p.set('tab', t); return p })
   }
 
   return (
-    <div className="max-w-3xl mx-auto px-4 py-5 space-y-4">
+    <div className="max-w-[1200px] mx-auto px-4 py-5 space-y-4">
       {/* ── Header ─────────────────────────────────────────────────────── */}
       <h1 className="font-heading font-bold text-2xl text-gray-900">Explore</h1>
 
@@ -139,7 +155,7 @@ export default function ExplorePage() {
               <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Category</p>
               <div className="flex flex-wrap gap-1.5">
                 <button
-                  onClick={() => { setTagId(null); setPage(1) }}
+                  onClick={() => { setTagId(null) }}
                   className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
                     tagId === null ? 'bg-brand-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                   }`}
@@ -147,7 +163,7 @@ export default function ExplorePage() {
                 {(tagsData as any[]).map((t) => (
                   <button
                     key={t.id}
-                    onClick={() => { setTagId(t.id); setPage(1) }}
+                    onClick={() => { setTagId(t.id) }}
                     className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
                       tagId === t.id ? 'bg-brand-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                     }`}
@@ -167,7 +183,7 @@ export default function ExplorePage() {
                 {(['all', 'percentage', 'flat', 'free_item'] as DiscountFilter[]).map((type) => (
                   <button
                     key={type}
-                    onClick={() => { setDiscountFilter(type); setPage(1) }}
+                    onClick={() => { setDiscountFilter(type) }}
                     className={`px-3 py-1 rounded-full text-xs font-medium transition-colors capitalize ${
                       discountFilter === type ? 'bg-cta-500 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                     }`}
@@ -208,25 +224,25 @@ export default function ExplorePage() {
       {tab === 'merchants' && (
         <>
           {isLoadingM ? (
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />)}
             </div>
           ) : merchants.length > 0 ? (
             <>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {merchants.map((m: any) => (
                   <MerchantCard key={m.id} merchant={m} showFavourite />
                 ))}
               </div>
-              {/* Pagination */}
-              {merchantPages > 1 && (
-                <div className="flex justify-center gap-2 pt-2">
-                  <button disabled={page <= 1} onClick={() => setPage((p) => p - 1)}
-                    className="px-4 py-2 text-sm rounded-xl border border-gray-200 disabled:opacity-40 hover:bg-gray-50">← Prev</button>
-                  <span className="px-4 py-2 text-sm text-gray-500">{page} / {merchantPages}</span>
-                  <button disabled={page >= merchantPages} onClick={() => setPage((p) => p + 1)}
-                    className="px-4 py-2 text-sm rounded-xl border border-gray-200 disabled:opacity-40 hover:bg-gray-50">Next →</button>
+              {/* Infinite scroll sentinel */}
+              <div ref={merchantSentinelRef} className="h-4" />
+              {merchantQuery.isFetchingNextPage && (
+                <div className="flex justify-center py-4">
+                  <Loader2 size={20} className="animate-spin text-brand-500" />
                 </div>
+              )}
+              {!merchantQuery.hasNextPage && merchants.length > 0 && (
+                <p className="text-center text-xs text-slate-400 py-4">All merchants loaded</p>
               )}
             </>
           ) : (
@@ -252,14 +268,15 @@ export default function ExplorePage() {
                   <CouponCard key={c.id} coupon={c} />
                 ))}
               </div>
-              {couponPages > 1 && (
-                <div className="flex justify-center gap-2 pt-2">
-                  <button disabled={page <= 1} onClick={() => setPage((p) => p - 1)}
-                    className="px-4 py-2 text-sm rounded-xl border border-gray-200 disabled:opacity-40 hover:bg-gray-50">← Prev</button>
-                  <span className="px-4 py-2 text-sm text-gray-500">{page} / {couponPages}</span>
-                  <button disabled={page >= couponPages} onClick={() => setPage((p) => p + 1)}
-                    className="px-4 py-2 text-sm rounded-xl border border-gray-200 disabled:opacity-40 hover:bg-gray-50">Next →</button>
+              {/* Infinite scroll sentinel */}
+              <div ref={couponSentinelRef} className="h-4" />
+              {couponQuery.isFetchingNextPage && (
+                <div className="flex justify-center py-4">
+                  <Loader2 size={20} className="animate-spin text-brand-500" />
                 </div>
+              )}
+              {!couponQuery.hasNextPage && coupons.length > 0 && (
+                <p className="text-center text-xs text-slate-400 py-4">All deals loaded</p>
               )}
             </>
           ) : (

@@ -140,7 +140,18 @@ class StoreCoupon extends Model {
         return $this->db->prepare("UPDATE {$this->table} SET status=?, updated_at=NOW() WHERE id=?")
                         ->execute([$newStatus, $id]);
     }
+    // ─── REVOKE GIFT ──────────────────────────────────────────────────────
 
+    /** Revoke gift assignment (only if not yet redeemed) */
+    public function revokeGift($id) {
+        $stmt = $this->db->prepare(
+            "UPDATE {$this->table}
+             SET is_gifted = 0, gifted_to_customer_id = NULL, gifted_at = NULL, updated_at = NOW()
+             WHERE id = ? AND is_gifted = 1 AND is_redeemed = 0"
+        );
+        $stmt->execute([$id]);
+        return $stmt->rowCount() > 0;
+    }
     // ─── DELETE ───────────────────────────────────────────────────────────────
 
     public function deleteStoreCoupon($id) {

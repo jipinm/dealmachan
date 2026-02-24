@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { Bookmark, BookmarkCheck, Clock, Store } from 'lucide-react'
 import { useState } from 'react'
+import { getImageUrl } from '@/lib/imageUrl'
 
 export interface CouponCardData {
   id: number
@@ -11,7 +12,7 @@ export interface CouponCardData {
   min_purchase?: number | null
   max_discount?: number | null
   valid_until: string
-  coupon_code?: string | null
+  coupon_code?: string | null   // null = guest user; hidden by API
   business_name: string
   business_logo?: string | null
   save_count?: number
@@ -76,7 +77,7 @@ export default function CouponCard({ coupon, onSaveToggle, compact }: Props) {
 
           <div className="flex items-center gap-1.5 mt-1 text-xs text-gray-500">
             {coupon.business_logo
-              ? <img src={coupon.business_logo} alt="" className="w-4 h-4 rounded-full object-cover border border-gray-100" />
+              ? <img src={getImageUrl(coupon.business_logo)} alt="" loading="lazy" className="w-4 h-4 rounded-full object-cover border border-gray-100" />
               : <Store size={12} />
             }
             <span className="truncate">{coupon.store_name || coupon.business_name}</span>

@@ -8,8 +8,7 @@ import { useState } from 'react'
 import toast from 'react-hot-toast'
 import { storeApi } from '@/api/endpoints/stores'
 import { SkeletonBlock } from '@/components/ui/PageLoader'
-
-const API_BASE = 'http://dealmachan-api.local'
+import { getImageUrl } from '@/lib/imageUrl'
 
 const DAY_LABELS: Record<string, string> = {
   mon: 'Mon', tue: 'Tue', wed: 'Wed', thu: 'Thu',
@@ -73,7 +72,7 @@ export default function StoreDetailPage() {
           {/* Cover / Gallery preview */}
           <div className="h-48 bg-gray-100 overflow-hidden relative">
             {coverImage
-              ? <img src={`${API_BASE}${coverImage.image_url}`} alt={store.store_name} className="w-full h-full object-cover" />
+              ? <img src={getImageUrl(coverImage.image_url)} alt={store.store_name} className="w-full h-full object-cover" />
               : <div className="w-full h-full flex items-center justify-center"><ImageIcon size={48} className="text-gray-200" /></div>}
             {store.gallery && store.gallery.length > 0 && (
               <div className="absolute bottom-2 right-2 bg-black/50 text-white text-xs px-2 py-1 rounded-full">

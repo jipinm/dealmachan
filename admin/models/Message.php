@@ -75,7 +75,7 @@ class Message {
 
     // ─── SINGLE MESSAGE / THREAD ─────────────────────────────────────────────
 
-    public function find(int $id): ?array {
+    public function find($id): ?array {
         $stmt = $this->db->prepare(
             "SELECT m.*,
                 CASE m.sender_type
@@ -147,7 +147,7 @@ class Message {
         )->execute([$rootId, $rootId, $adminId]);
     }
 
-    public function delete(int $id): void {
+    public function delete($id): void {
         // Delete message and its replies
         $this->db->prepare("DELETE FROM messages WHERE id = ? OR parent_message_id = ?")->execute([$id, $id]);
     }
@@ -221,6 +221,50 @@ class Message {
             $count++;
         }
         return $count;
+    }
+
+    // Broadcast to customers (all active, or specific list)
+    public function broadcastToCustomers(array $data, array $customerIds = []): int {
+        if (empty($customerIds)) {
+            $customerIds = $this->db->query(
+                "SELECT c.id FROM customers c JOIN users u ON c.user_id = u.id WHERE u.status = 'active'"
+            )->fetchAll(PDO::FETCH_COLUMN);
+        }
+        $count = 0;
+        foreach ($customerIds as $cid) {
+            $this->createNotification(array_merge($data, ['user_id' => $cid, 'user_type' => 'customer']));
+            $count++;
+        }
+        return $count;
+    }
+
+    // Broadcast to merchants (all approved, or specific list)
+    public function broadcastToMerchants(array $data, array $merchantIds = []): int {
+        if (empty($merchantIds)) {
+            $merchantIds = $this->db->query(
+                "SELECT id FROM merchants WHERE profile_status = 'approved'"
+            )->fetchAll(PDO::FETCH_COLUMN);
+        }
+        $count = 0;
+        foreach ($merchantIds as $mid) {
+            $this->createNotification(array_merge($data, ['user_id' => $mid, 'user_type' => 'merchant']));
+            $count++;
+        }
+        return $count;
+    }
+
+    // Count customers for broadcast preview
+    public function countActiveCustomers(): int {
+        return (int)$this->db->query(
+            "SELECT COUNT(*) FROM customers c JOIN users u ON c.user_id = u.id WHERE u.status = 'active'"
+        )->fetchColumn();
+    }
+
+    // Count merchants for broadcast preview
+    public function countApprovedMerchants(): int {
+        return (int)$this->db->query(
+            "SELECT COUNT(*) FROM merchants WHERE profile_status = 'approved'"
+        )->fetchColumn();
     }
 
     // ─── DROPDOWNS ────────────────────────────────────────────────────────────

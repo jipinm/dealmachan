@@ -101,7 +101,25 @@ class StoreCouponsController extends Controller {
         $_SESSION['success'] = 'Store coupon status updated.';
         $this->redirect($redirect);
     }
+    // ─── REVOKE GIFT ──────────────────────────────────────────────────────
 
+    public function revoke(): void {
+        header('Content-Type: application/json');
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            echo json_encode(['success' => false, 'error' => 'POST only']);
+            return;
+        }
+        $id = (int)($_POST['id'] ?? 0);
+        if (!$id) { echo json_encode(['success' => false, 'error' => 'Invalid ID']); return; }
+        $ok = $this->storeCouponModel->revokeGift($id);
+        if ($ok) {
+            logAudit('store_coupon_gift_revoked', $id, 'store_coupon', $this->auth->getCurrentUser()['admin_id']);
+        }
+        echo json_encode([
+            'success' => $ok,
+            'error'   => $ok ? null : 'Cannot revoke: coupon is already redeemed or not gifted.',
+        ]);
+    }
     // ─── DELETE ───────────────────────────────────────────────────────────────
 
     public function delete() {

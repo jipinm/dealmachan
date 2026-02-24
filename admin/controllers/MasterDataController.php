@@ -27,6 +27,7 @@ class MasterDataController extends Controller {
         require_once MODEL_PATH . '/Tag.php';
         require_once MODEL_PATH . '/Profession.php';
         require_once MODEL_PATH . '/DayType.php';
+        require_once MODEL_PATH . '/JobTitle.php';
     }
 
     // ─── OVERVIEW ────────────────────────────────────────────────────────────
@@ -487,6 +488,79 @@ class MasterDataController extends Controller {
         $this->loadView('master-data/day-types', [
             'title'        => 'Day Types - Master Data',
             'dayTypes'     => $model->getAll(),
+            'current_user' => $this->auth->getCurrentUser(),
+        ]);
+    }
+
+    // ─── JOB TITLES ───────────────────────────────────────────────────────────
+
+    public function jobTitles() {
+        $model      = new JobTitle();
+        $profModel  = new Profession();
+
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $this->requireCSRF();
+            $action = $_POST['_action'] ?? '';
+
+            if ($action === 'save') {
+                $id           = (int)($_POST['id'] ?? 0);
+                $professionId = (int)($_POST['profession_id'] ?? 0);
+                $data = [
+                    'job_title_name' => sanitize($_POST['job_title_name'] ?? ''),
+                    'profession_id'  => $professionId,
+                    'status'         => in_array($_POST['status'] ?? '', ['active','inactive']) ? $_POST['status'] : 'active',
+                ];
+
+                if (empty($data['job_title_name'])) {
+                    $_SESSION['error'] = 'Job title name is required.';
+                    $this->redirect('master-data/job-titles');
+                    return;
+                }
+                if (!$professionId) {
+                    $_SESSION['error'] = 'Please select a profession.';
+                    $this->redirect('master-data/job-titles');
+                    return;
+                }
+                if ($model->nameExists($data['job_title_name'], $professionId, $id ?: null)) {
+                    $_SESSION['error'] = "Job title '{$data['job_title_name']}' already exists under that profession.";
+                    $this->redirect('master-data/job-titles');
+                    return;
+                }
+                if ($id) {
+                    $model->update($id, $data);
+                    $_SESSION['success'] = 'Job title updated successfully.';
+                    logAudit('update', 'job_title', $id, $data);
+                } else {
+                    $newId = $model->insert($data);
+                    $_SESSION['success'] = 'Job title added successfully.';
+                    logAudit('create', 'job_title', $newId, $data);
+                }
+
+            } elseif ($action === 'delete') {
+                $id = (int)($_POST['id'] ?? 0);
+                if (!$model->canDelete($id)) {
+                    $_SESSION['error'] = 'Cannot delete: Job title is linked to customers.';
+                } else {
+                    $model->delete($id);
+                    $_SESSION['success'] = 'Job title deleted successfully.';
+                    logAudit('delete', 'job_title', $id);
+                }
+
+            } elseif ($action === 'toggle') {
+                $id = (int)($_POST['id'] ?? 0);
+                $model->toggleStatus($id);
+                $this->json(['success' => true]);
+                return;
+            }
+
+            $this->redirect('master-data/job-titles');
+            return;
+        }
+
+        $this->loadView('master-data/job-titles', [
+            'title'        => 'Job Titles - Master Data',
+            'jobTitles'    => $model->getAllWithStats(),
+            'professions'  => $profModel->getActive(),
             'current_user' => $this->auth->getCurrentUser(),
         ]);
     }

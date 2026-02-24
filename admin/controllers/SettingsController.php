@@ -2,11 +2,13 @@
 require_once CORE_PATH . '/Auth.php';
 require_once MODEL_PATH . '/Admin.php';
 require_once MODEL_PATH . '/User.php';
+require_once MODEL_PATH . '/PlatformSetting.php';
 
 class SettingsController extends Controller {
 
     private $auth;
     private $adminModel;
+    private $platformSetting;
 
     public function __construct() {
         $this->auth = new Auth();
@@ -15,7 +17,8 @@ class SettingsController extends Controller {
             $this->redirect('auth/login');
             return;
         }
-        $this->adminModel = new Admin();
+        $this->adminModel      = new Admin();
+        $this->platformSetting = new PlatformSetting();
     }
 
     // ─── PROFILE ──────────────────────────────────────────────────────────────
@@ -140,6 +143,56 @@ class SettingsController extends Controller {
             'flash_error'   => $_SESSION['error']   ?? null,
         ]);
         unset($_SESSION['success'], $_SESSION['error']);
+    }
+
+    // ─── SYSTEM SETTINGS (super_admin only) ───────────────────────────────────
+
+    public function system() {
+        $current_user = $this->auth->getCurrentUser();
+        if ($current_user['admin_type'] !== 'super_admin') {
+            $_SESSION['error'] = 'Access denied.';
+            $this->redirect('dashboard');
+            return;
+        }
+        $settings = $this->platformSetting->getAll();
+        $this->loadView('settings/system', [
+            'title'         => 'System Settings',
+            'current_user'  => $current_user,
+            'settings'      => $settings,
+            'flash_success' => $_SESSION['success'] ?? null,
+            'flash_error'   => $_SESSION['error']   ?? null,
+        ]);
+        unset($_SESSION['success'], $_SESSION['error']);
+    }
+
+    public function saveSystem() {
+        $current_user = $this->auth->getCurrentUser();
+        if ($current_user['admin_type'] !== 'super_admin') {
+            http_response_code(403); echo json_encode(['error' => 'Access denied']); return;
+        }
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->redirect('settings/system'); return;
+        }
+        $allowed = [
+            'app_name','app_tagline','support_email','support_phone',
+            'referral_reward_amount','welcome_bonus_amount','maintenance_mode',
+            'min_app_version_ios','min_app_version_android',
+            'play_store_url','app_store_url',
+            'facebook_url','instagram_url','twitter_url',
+            'default_city_id','coupon_expiry_days',
+        ];
+        $data = [];
+        foreach ($allowed as $key) {
+            if (isset($_POST[$key])) {
+                $data[$key] = trim($_POST[$key]);
+            }
+        }
+        if ($this->platformSetting->saveMany($data)) {
+            $_SESSION['success'] = 'System settings saved.';
+        } else {
+            $_SESSION['error'] = 'Failed to save settings.';
+        }
+        $this->redirect('settings/system');
     }
 }
 ?>
