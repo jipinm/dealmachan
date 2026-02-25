@@ -10,9 +10,16 @@
  *   Example prod: VITE_API_ORIGIN=https://api.dealmachan.com
  *
  * If the path is already an absolute URL it is returned unchanged.
+ * VITE_API_ORIGIN must be set in the appropriate .env file — no hardcoded fallback.
  */
-const API_ORIGIN: string =
-  (import.meta.env.VITE_API_ORIGIN as string | undefined) || 'http://dealmachan-api.local'
+const API_ORIGIN: string = (import.meta.env.VITE_API_ORIGIN as string | undefined) ?? ''
+
+if (!API_ORIGIN && import.meta.env.DEV) {
+  console.error(
+    '[imageUrl] VITE_API_ORIGIN is not set. Image URLs will be relative and may not resolve correctly.\n' +
+    'Add VITE_API_ORIGIN=http://dealmachan-api.local to your .env file.',
+  )
+}
 
 /**
  * Returns a fully-qualified image URL.

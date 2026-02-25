@@ -31,10 +31,11 @@ class GrievanceController {
             "SELECT g.id, g.subject, g.description, g.status, g.priority,
                     g.created_at, g.resolved_at, g.resolution_notes,
                     c.name  AS customer_name,
-                    c.phone AS customer_phone,
+                    u.phone AS customer_phone,
                     s.store_name
              FROM grievances g
              LEFT JOIN customers c ON c.id = g.customer_id
+             LEFT JOIN users    u ON u.id = c.user_id
              LEFT JOIN stores    s ON s.id = g.store_id
              WHERE {$where}
              ORDER BY
@@ -68,11 +69,12 @@ class GrievanceController {
         $grievance = $this->db->queryOne(
             "SELECT g.*,
                     c.name  AS customer_name,
-                    c.phone AS customer_phone,
-                    c.email AS customer_email,
+                    u.phone AS customer_phone,
+                    u.email AS customer_email,
                     s.store_name
              FROM grievances g
              LEFT JOIN customers c ON c.id = g.customer_id
+             LEFT JOIN users    u ON u.id = c.user_id
              LEFT JOIN stores    s ON s.id = g.store_id
              WHERE g.id = ? AND g.merchant_id = ?",
             [$id, $merchantId]

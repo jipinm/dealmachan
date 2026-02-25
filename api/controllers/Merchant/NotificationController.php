@@ -17,7 +17,7 @@ class NotificationController {
     // ── GET /merchants/notifications ──────────────────────────────────────────
     public function index(): never {
         $merchant = AuthMiddleware::user();
-        $userId   = $merchant['user_id'];
+        $userId   = $merchant['id'] ?? $merchant['sub'];
 
         $page    = max(1, (int)($_GET['page'] ?? 1));
         $limit   = min(50, max(1, (int)($_GET['limit'] ?? DEFAULT_PAGE_SIZE)));
@@ -62,7 +62,7 @@ class NotificationController {
     // ── PUT /merchants/notifications/read-all ─────────────────────────────────
     public function markAllRead(): never {
         $merchant = AuthMiddleware::user();
-        $userId   = $merchant['user_id'];
+        $userId   = $merchant['id'] ?? $merchant['sub'];
 
         $this->db->execute(
             "UPDATE notifications
@@ -77,7 +77,7 @@ class NotificationController {
     // ── PUT /merchants/notifications/:id/read ────────────────────────────────
     public function markRead(int $id): never {
         $merchant = AuthMiddleware::user();
-        $userId   = $merchant['user_id'];
+        $userId   = $merchant['id'] ?? $merchant['sub'];
 
         $notification = $this->db->queryOne(
             "SELECT id FROM notifications WHERE id = ? AND user_id = ? AND user_type = 'merchant'",
