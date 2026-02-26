@@ -185,7 +185,7 @@ export default function MyCardPage() {
 
           <p className="text-center text-xs text-gray-400 mt-4">
             Don't have a card?{' '}
-            <a href="mailto:support@dealmachan.com" className="text-brand-600 hover:underline">
+            <a href={`mailto:${import.meta.env.VITE_SUPPORT_EMAIL}`} className="text-brand-600 hover:underline">
               Contact support
             </a>
           </p>

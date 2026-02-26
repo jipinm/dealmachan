@@ -1,11 +1,19 @@
-import { defineConfig, loadEnv } from 'vitest/config'
+import { defineConfig } from 'vitest/config'
+import { loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
 import path from 'path'
 
 export default defineConfig(({ mode }) => {
   // Load .env / .env.[mode] so we can reference VITE_* vars inside the config
   const env = loadEnv(mode, process.cwd(), '')
-  const apiOrigin = env.VITE_API_ORIGIN || 'http://dealmachan-api.local'
+  const apiOrigin = env.VITE_API_ORIGIN
+
+  if (!apiOrigin) {
+    throw new Error(
+      '[vite.config] VITE_API_ORIGIN is not set.\n' +
+      'Add VITE_API_ORIGIN=http://<your-api-host> to your .env file.',
+    )
+  }
 
   return {
     test: {
@@ -30,7 +38,7 @@ export default defineConfig(({ mode }) => {
       port: 5173,
       proxy: {
         // Proxy /api/* to PHP backend during development
-        // Target is read from VITE_API_ORIGIN in .env (falls back to http://dealmachan-api.local)
+        // Target is read from VITE_API_ORIGIN in .env (required — no trailing slash)
         '/api': {
           target: apiOrigin,
           changeOrigin: true,

@@ -1,8 +1,8 @@
 import axios from 'axios'
 import { useAuthStore } from '@/store/authStore'
 
-// Development: Vite proxies /api → dealmachan-api.local
-// Production:  VITE_API_URL set to full API base
+// Development: VITE_API_URL left unset → falls back to /api, proxied by Vite to VITE_API_ORIGIN
+// Production:  VITE_API_URL set to full API base URL (e.g. https://api.example.com/api)
 const BASE_URL = import.meta.env.VITE_API_URL || '/api'
 
 export const apiClient = axios.create({

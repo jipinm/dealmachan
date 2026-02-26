@@ -31,3 +31,4 @@ Thumbs.db
 # Database files
 database-seed-data.sql
 database-schema-*.sql
+dealmachan.sql

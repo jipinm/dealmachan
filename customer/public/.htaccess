@@ -12,14 +12,21 @@ RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
     Header always set X-XSS-Protection "1; mode=block"
     Header always set Referrer-Policy "strict-origin-when-cross-origin"
     Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains"
-    Header always set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://api.dealmachan.com; font-src 'self' data:; connect-src 'self' https://api.dealmachan.com;"
+    Header always set Permissions-Policy "geolocation=(self), camera=(), microphone=()"
+
+    # Cache static assets aggressively (Vite hashes filenames)
+    <FilesMatch "\.(js|css|woff2?|ttf|eot|svg|png|jpg|jpeg|gif|ico|webp)$">
+        Header set Cache-Control "public, max-age=31536000, immutable"
+    </FilesMatch>
+
+    # Never cache the SPA entry point
+    <FilesMatch "^index\.html$">
+        Header set Cache-Control "no-cache, no-store, must-revalidate"
+    </FilesMatch>
 </IfModule>
 
-# ── Block sensitive files ─────────────────────────────────────────────────────
-RewriteRule ^(\.env|\.git|composer\.(json|lock))$ - [F,L]
-
-# ── Route all requests to index.php ──────────────────────────────────────────
+# ── SPA fallback: serve index.html for all non-file requests ─────────────────
+# This allows React Router to handle client-side navigation
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule ^(.*)$ index.php?url=$1 [QSA,L]
-
+RewriteRule ^ /index.html [L]

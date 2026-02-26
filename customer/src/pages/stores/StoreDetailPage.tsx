@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { publicApi } from '@/api/endpoints/public'
+import { publicApi, PublicMerchant } from '@/api/endpoints/public'
 import { favouritesApi } from '@/api/endpoints/favourites'
 import { Star, MapPin, Phone, Tag, Globe, ChevronRight, Store, Clock, ArrowLeft, MessageSquare, User, Mail, Navigation, Send, Heart, Lock, Loader2 as HeartLoader } from 'lucide-react'
 import RatingStars from '@/components/ui/RatingStars'
@@ -258,7 +258,7 @@ export default function StoreDetailPage() {
               {/* Labels */}
               {merchant.labels?.length > 0 && (
                 <div className="flex flex-wrap gap-1.5 justify-center mt-3">
-                  {merchant.labels.map((l) => (
+                  {merchant.labels.map((l: PublicMerchant['labels'][number]) => (
                     <span key={l.id} className="px-2.5 py-1 bg-brand-50 text-brand-700 text-xs font-medium rounded-full">
                       {l.label_name}
                     </span>
@@ -335,7 +335,7 @@ export default function StoreDetailPage() {
               <section className="mb-8">
                 <h2 className="section-heading mb-4 text-xl">Store Locations</h2>
                 <div className="space-y-3">
-                  {merchant.stores.map((store) => (
+                  {merchant.stores.map((store: PublicMerchant['stores'][number]) => (
                     <div key={store.id} className="card p-4">
                       <div className="flex items-start gap-3">
                         <div className="w-9 h-9 rounded-xl bg-rose-50 flex items-center justify-center flex-shrink-0 mt-0.5">
