@@ -12,7 +12,7 @@ RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
     Header always set X-XSS-Protection "1; mode=block"
     Header always set Referrer-Policy "strict-origin-when-cross-origin"
     Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains"
-    Header always set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://api.dealmachan.com; font-src 'self' data:; connect-src 'self' https://api.dealmachan.com;"
+    Header always set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' cdn.jsdelivr.net cdn.datatables.net code.jquery.com cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' cdn.jsdelivr.net cdn.datatables.net cdnjs.cloudflare.com; font-src 'self' data: cdn.jsdelivr.net cdnjs.cloudflare.com; img-src 'self' data: https://api.dealmachan.com; connect-src 'self' https://api.dealmachan.com;"
 </IfModule>
 
 # ── Block sensitive files ─────────────────────────────────────────────────────

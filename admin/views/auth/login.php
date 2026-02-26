@@ -85,15 +85,6 @@
                             Forgot your password?
                         </a>
                     </div>
-                    
-                    <!-- Footer Info -->
-                    <div class="text-center mt-4 pt-3 border-top">
-                        <small class="text-muted">
-                            <strong>Default Login:</strong><br>
-                            Email: admin@dealmachan.com<br>
-                            Password: Admin@123
-                        </small>
-                    </div>
                 </div>
             </div>
         </div>
