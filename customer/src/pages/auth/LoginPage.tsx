@@ -64,15 +64,7 @@ export default function LoginPage() {
 
         {/* Password */}
         <div>
-          <div className="flex items-center justify-between mb-1.5">
-            <label className="block text-sm font-medium text-slate-700">Password</label>
-            <Link
-              to="/forgot-password"
-              className="text-xs text-brand-600 font-medium hover:text-brand-700 transition-colors"
-            >
-              Forgot password?
-            </Link>
-          </div>
+          <label className="block text-sm font-medium text-slate-700 mb-1.5">Password</label>
           <div className="relative">
             <input
               type={showPassword ? 'text' : 'password'}
@@ -97,6 +89,15 @@ export default function LoginPage() {
           {isPending && <Loader2 size={17} className="animate-spin" />}
           {isPending ? 'Signing in…' : 'Sign In'}
         </button>
+
+        <div className="text-right mt-2">
+          <Link
+            to="/forgot-password"
+            className="text-xs text-brand-600 font-medium hover:text-brand-700 transition-colors"
+          >
+            Forgot password?
+          </Link>
+        </div>
       </form>
 
       {/* Divider */}

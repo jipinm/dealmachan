@@ -28,6 +28,12 @@ define('CORS_ORIGINS', [
     getenv('CUSTOMER_URL')      ?: 'http://localhost:5174',
     // Customer app alternate port (Vite may use 5175 if 5174 is taken)
     'http://localhost:5175',
+    // Customer production build served via Apache vhost (ProxyPass still sends Origin header)
+    'http://dealmachan.local',
+    'http://www.dealmachan.local',
+    // Production domains
+    'https://dealmachan.com',
+    'https://www.dealmachan.com',
 ]);
 
 // Upload

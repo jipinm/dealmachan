@@ -1,8 +1,8 @@
 <?php /* views/reports/engagement.php */ ?>
 
-<div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
+<div class="d-flex align-items-center justify-content-between mb-4">
     <h4 class="mb-0"><i class="bi bi-activity text-info me-2"></i>Engagement Report</h4>
-    <form class="d-flex gap-2 align-items-center flex-wrap" method="GET" action="<?= BASE_URL ?>reports/engagement">
+    <form class="d-flex gap-2 align-items-center" method="GET" action="<?= BASE_URL ?>reports/engagement">
         <input type="date" name="date_from" class="form-control form-control-sm" value="<?= escape($from) ?>">
         <span class="text-muted small">to</span>
         <input type="date" name="date_to" class="form-control form-control-sm" value="<?= escape($to) ?>">

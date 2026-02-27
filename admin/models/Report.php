@@ -480,27 +480,27 @@ class Report {
         $p = [':from' => $from, ':to' => $to];
 
         $surveyResponses  = $this->scalar("SELECT COUNT(*) FROM survey_responses WHERE DATE(submitted_at) BETWEEN :from AND :to", $p);
-        $contestEntries   = $this->scalar("SELECT COUNT(*) FROM contest_participants WHERE DATE(entered_at) BETWEEN :from AND :to", $p);
-        $referrals        = $this->scalar("SELECT COUNT(*) FROM referrals WHERE DATE(created_at) BETWEEN :from AND :to", $p);
-        $referralsCompleted= $this->scalar("SELECT COUNT(*) FROM referrals WHERE status='completed' AND DATE(created_at) BETWEEN :from AND :to", $p);
-        $referralsRewarded = $this->scalar("SELECT COUNT(*) FROM referrals WHERE reward_given=1 AND DATE(created_at) BETWEEN :from AND :to", $p);
-        $rewardAmount      = (float)$this->scalar("SELECT COALESCE(SUM(reward_amount),0) FROM referrals WHERE reward_given=1 AND DATE(created_at) BETWEEN :from AND :to", $p);
-        $dealmakerTasks    = $this->scalar("SELECT COUNT(*) FROM dealmaker_tasks WHERE DATE(created_at) BETWEEN :from AND :to", $p);
-        $dealmakerCompleted= $this->scalar("SELECT COUNT(*) FROM dealmaker_tasks WHERE status='completed' AND DATE(created_at) BETWEEN :from AND :to", $p);
+        $contestEntries   = $this->scalar("SELECT COUNT(*) FROM contest_participants WHERE DATE(participated_at) BETWEEN :from AND :to", $p);
+        $referrals          = $this->scalar("SELECT COUNT(*) FROM referrals WHERE DATE(created_at) BETWEEN :from AND :to", $p);
+        $completedReferrals = $this->scalar("SELECT COUNT(*) FROM referrals WHERE status='completed' AND DATE(created_at) BETWEEN :from AND :to", $p);
+        $referralsRewarded  = $this->scalar("SELECT COUNT(*) FROM referrals WHERE status='rewarded' AND DATE(created_at) BETWEEN :from AND :to", $p);
+        $rewardsPaid        = (float)$this->scalar("SELECT COALESCE(SUM(reward_amount),0) FROM referrals WHERE status='rewarded' AND DATE(created_at) BETWEEN :from AND :to", $p);
+        $dealmakerTasks     = $this->scalar("SELECT COUNT(*) FROM dealmaker_tasks WHERE DATE(assigned_at) BETWEEN :from AND :to", $p);
+        $completedTasks     = $this->scalar("SELECT COUNT(*) FROM dealmaker_tasks WHERE status='completed' AND DATE(assigned_at) BETWEEN :from AND :to", $p);
 
-        return compact('surveyResponses','contestEntries','referrals','referralsCompleted',
-                       'referralsRewarded','rewardAmount','dealmakerTasks','dealmakerCompleted');
+        return compact('surveyResponses','contestEntries','referrals','completedReferrals',
+                       'referralsRewarded','rewardsPaid','dealmakerTasks','completedTasks');
     }
 
     public function getTopContestsByParticipation(string $from, string $to, int $limit = 10): array {
         $stmt = $this->db->prepare("
             SELECT co.id, co.title, co.status,
-                   COUNT(cp.id) AS participant_count
+                   COUNT(cp.id) AS entries
             FROM contests co
             LEFT JOIN contest_participants cp ON cp.contest_id = co.id
-                AND DATE(cp.entered_at) BETWEEN :from AND :to
+                AND DATE(cp.participated_at) BETWEEN :from AND :to
             GROUP BY co.id
-            ORDER BY participant_count DESC
+            ORDER BY entries DESC
             LIMIT :lim
         ");
         $stmt->execute([':from' => $from, ':to' => $to, ':lim' => $limit]);
@@ -510,12 +510,12 @@ class Report {
     public function getTopSurveysByResponse(string $from, string $to, int $limit = 10): array {
         $stmt = $this->db->prepare("
             SELECT sv.id, sv.title, sv.status,
-                   COUNT(sr.id) AS response_count
+                   COUNT(sr.id) AS responses
             FROM surveys sv
             LEFT JOIN survey_responses sr ON sr.survey_id = sv.id
                 AND DATE(sr.submitted_at) BETWEEN :from AND :to
             GROUP BY sv.id
-            ORDER BY response_count DESC
+            ORDER BY responses DESC
             LIMIT :lim
         ");
         $stmt->execute([':from' => $from, ':to' => $to, ':lim' => $limit]);

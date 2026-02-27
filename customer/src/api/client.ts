@@ -83,7 +83,12 @@ export interface ApiError {
 export function getApiError(err: unknown): string {
   if (axios.isAxiosError(err)) {
     const data = err.response?.data as { message?: string } | undefined
-    return data?.message ?? err.message ?? 'Something went wrong.'
+    // Guard against non-JSON responses (e.g. Apache returning HTML on misconfigured routes)
+    if (typeof data?.message === 'string' && data.message.trim()) {
+      return data.message
+    }
+    return err.message ?? 'Something went wrong.'
   }
+  if (err instanceof Error) return err.message
   return 'An unexpected error occurred.'
 }
