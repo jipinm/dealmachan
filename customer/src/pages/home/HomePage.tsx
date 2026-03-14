@@ -4,7 +4,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useState } from 'react'
 import {
   Search, MapPin, Zap, Tag, Store, ArrowRight, ChevronRight,
-  Star, Clock, Percent, Gift, Heart, Shield, TrendingUp, Lock,
+  Clock, Percent, Gift, Heart, Shield, TrendingUp, Lock,
 } from 'lucide-react'
 import { publicApi, type TopCoupon, type FlashDiscount, type PublicStore } from '@/api/endpoints/public'
 import { useLocationStore } from '@/store/locationStore'

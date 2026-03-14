@@ -23,7 +23,6 @@ function daysLeft(until: string | null): { text: string; urgent: boolean } | nul
 }
 
 import { getImageUrl } from '@/lib/imageUrl'
-import { slugify } from '@/lib/slugify'
 import { Helmet } from 'react-helmet-async'
 
 function imgSrc(path: string | null): string {
