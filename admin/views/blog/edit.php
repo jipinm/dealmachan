@@ -1,4 +1,4 @@
-<?php /* views/blog/edit.php */
+﻿<?php /* views/blog/edit.php */
 $d = $old ?? $post;
 $slugEdited = !empty($old['slug']) ? '1' : '0';
 ?>
@@ -84,9 +84,10 @@ $slugEdited = !empty($old['slug']) ? '1' : '0';
                 <div class="card-header fw-semibold">Featured Image</div>
                 <div class="card-body">
                     <?php if ($post['featured_image']): ?>
-                    <img src="<?= BASE_URL ?>public/<?= escape($post['featured_image']) ?>"
+                    <img src="<?= imageUrl($post['featured_image']) ?>"
                          class="img-fluid w-100 rounded mb-2"
-                         style="max-height:150px;object-fit:cover;" alt="">
+                         style="max-height:150px;object-fit:cover;" alt=""
+                         onerror="this.src='<?= imageUrl('') ?>'">
                     <?php endif; ?>
                     <input type="file" name="featured_image" class="form-control" accept="image/*">
                     <div class="form-text">Max 5 MB. Leave blank to keep current.</div>

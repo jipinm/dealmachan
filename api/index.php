@@ -12,6 +12,7 @@ require_once __DIR__ . '/config/JWT.php';
 require_once __DIR__ . '/helpers/Response.php';
 require_once __DIR__ . '/helpers/Validator.php';
 require_once __DIR__ . '/helpers/Image.php';
+require_once __DIR__ . '/helpers/FeatureGate.php';
 require_once __DIR__ . '/middleware/CorsMiddleware.php';
 require_once __DIR__ . '/middleware/AuthMiddleware.php';
 
@@ -171,6 +172,11 @@ if (matchRoute('POST', 'merchants/profile/logo', $path)) {
     loadController('Merchant', 'ProfileController');
     (new ProfileController())->uploadLogo();
 }
+if (matchRoute('PUT', 'merchants/profile/password', $path)) {
+    AuthMiddleware::require();
+    loadController('Merchant', 'ProfileController');
+    (new ProfileController())->changePassword($body);
+}
 if (matchRoute('POST', 'merchants/subscription/renew', $path)) {
     AuthMiddleware::require();
     loadController('Merchant', 'ProfileController');
@@ -242,10 +248,107 @@ if (matchRoute('GET', 'public/areas', $path)) {
     $areas  = $db->query("SELECT id, area_name, city_id FROM areas {$where} ORDER BY area_name");
     Response::success($areas);
 }
+if (matchRoute('GET', 'public/locations', $path)) {
+    $areaId = !empty($_GET['area_id']) ? (int)$_GET['area_id'] : null;
+    if (!$areaId) { Response::error('area_id is required', 400); }
+    $db   = Database::getInstance();
+    $locs = $db->query(
+        "SELECT id, location_name, latitude, longitude
+         FROM locations
+         WHERE area_id = ? AND status = 'active'
+         ORDER BY location_name",
+        [$areaId]
+    );
+    Response::success($locs);
+}
 if (matchRoute('GET', 'public/home', $path)) {
     loadController('Public', 'HomeController');
     (new HomeController())->index($_GET);
 }
+// ---------- Public: Store Browse (Issue 3) ----------
+if (matchRoute('GET', 'public/stores', $path)) {
+    loadController('Public', 'StoreBrowseController');
+    (new StoreBrowseController())->index($_GET);
+}
+if (matchRoute('GET', 'public/stores/:id/coupons', $path)) {
+    loadController('Public', 'StoreBrowseController');
+    (new StoreBrowseController())->coupons((int)param('id'), $_GET);
+}
+if (matchRoute('GET', 'public/stores/:id', $path)) {
+    loadController('Public', 'StoreBrowseController');
+    (new StoreBrowseController())->show((int)param('id'));
+}
+if (matchRoute('POST', 'public/stores/:id/reviews', $path)) {
+    loadController('Public', 'StoreBrowseController');
+    CustomerMiddleware::required();
+    (new StoreBrowseController())->submitReview((int)param('id'), json_decode(file_get_contents('php://input'), true) ?? []);
+}
+
+// ---------- Public: Categories (Issue 1, 9) ----------
+if (matchRoute('GET', 'public/categories', $path)) {
+    $db   = Database::getInstance();
+    $cats = $db->query(
+        "SELECT id, name, icon, color_code FROM categories WHERE status = 'active' ORDER BY name"
+    );
+    Response::success($cats);
+}
+if (matchRoute('GET', 'public/categories/:id/sub-categories', $path)) {
+    $db   = Database::getInstance();
+    $subs = $db->query(
+        "SELECT id, category_id, name, icon FROM sub_categories WHERE category_id = ? AND status = 'active' ORDER BY name",
+        [(int)param('id')]
+    );
+    Response::success($subs);
+}
+
+// ---------- Public: Card Configurations (C11) ----------
+if (matchRoute('GET', 'public/card-configurations', $path)) {
+    $db     = Database::getInstance();
+    $cityId = !empty($_GET['city_id']) ? (int)$_GET['city_id'] : null;
+    $where  = ["cc.status = 'active'", "cc.is_publicly_selectable = 1"];
+    $params = [];
+    if ($cityId) {
+        $where[]  = "(NOT EXISTS (SELECT 1 FROM card_config_cities ccc WHERE ccc.config_id = cc.id)
+                      OR EXISTS (SELECT 1 FROM card_config_cities ccc WHERE ccc.config_id = cc.id AND ccc.city_id = ?))";
+        $params[] = $cityId;
+    }
+    $configs = $db->query(
+        "SELECT cc.id, cc.name, cc.classification, cc.features_html, cc.price,
+                cc.max_live_coupons, cc.coupon_authorization, cc.card_image_front, cc.card_image_back,
+                cc.validity_days
+         FROM card_configurations cc
+         WHERE " . implode(' AND ', $where) . "
+         ORDER BY cc.classification, cc.name",
+        $params
+    );
+    foreach ($configs as &$cfg) {
+        $cfg['partners'] = $db->query(
+            "SELECT id, partner_type, partner_image, url FROM card_config_partners
+             WHERE config_id = ? ORDER BY partner_type DESC, sort_order",
+            [$cfg['id']]
+        );
+    }
+    unset($cfg);
+    Response::success($configs);
+}
+if (matchRoute('GET', 'public/card-configurations/:id', $path)) {
+    $db     = Database::getInstance();
+    $config = $db->queryOne(
+        "SELECT * FROM card_configurations WHERE id = ? AND status = 'active'",
+        [(int)param('id')]
+    );
+    if (!$config) { Response::error('Not found', 404); }
+    $config['partners']            = $db->query(
+        "SELECT * FROM card_config_partners WHERE config_id = ? ORDER BY partner_type DESC, sort_order",
+        [$config['id']]
+    );
+    $config['sub_classifications'] = $db->query(
+        "SELECT s.name FROM card_config_sub_class_map m JOIN card_sub_classifications s ON s.id = m.sub_class_id WHERE m.config_id = ?",
+        [$config['id']]
+    );
+    Response::success($config);
+}
+
 if (matchRoute('GET', 'public/merchants', $path)) {
     loadController('Public', 'MerchantBrowseController');
     (new MerchantBrowseController())->index($_GET);
@@ -503,6 +606,17 @@ if (matchRoute('PUT', 'merchants/grievances/:id/resolve', $path)) {
     $user = AuthMiddleware::require();
     (new GrievanceController())->resolve($user, (int)param('id'));
 }
+// Grievance message thread (Issue 6)
+if (matchRoute('GET', 'merchants/grievances/:id/messages', $path)) {
+    loadController('Merchant', 'GrievanceController');
+    $user = AuthMiddleware::require();
+    (new GrievanceController())->messages($user, (int)param('id'));
+}
+if (matchRoute('POST', 'merchants/grievances/:id/messages', $path)) {
+    loadController('Merchant', 'GrievanceController');
+    $user = AuthMiddleware::require();
+    (new GrievanceController())->addMessage($user, (int)param('id'), $body);
+}
 
 // ---------- Reviews ----------
 if (matchRoute('GET', 'merchants/reviews', $path)) {
@@ -598,6 +712,16 @@ if (matchRoute('POST', 'merchants/flash-discounts/:id/redeem', $path)) {
     $user = AuthMiddleware::require();
     (new FlashDiscountController())->redeem($user, (int)param('id'), $body);
 }
+if (matchRoute('POST', 'merchants/flash-discounts/:id/image', $path)) {
+    loadController('Merchant', 'FlashDiscountController');
+    $user = AuthMiddleware::require();
+    (new FlashDiscountController())->uploadImage($user, (int)param('id'));
+}
+if (matchRoute('DELETE', 'merchants/flash-discounts/:id/image', $path)) {
+    loadController('Merchant', 'FlashDiscountController');
+    $user = AuthMiddleware::require();
+    (new FlashDiscountController())->deleteImage($user, (int)param('id'));
+}
 
 // ---------- Customer Profile ----------
 if (matchRoute('GET', 'customers/profile', $path)) {
@@ -624,11 +748,13 @@ if (matchRoute('GET', 'customers/coupons/history', $path)) {
 }
 if (matchRoute('POST', 'customers/coupons/:id/save', $path)) {
     $user = AuthMiddleware::requireCustomer();
+    AuthMiddleware::requireActiveCard($user);
     loadController('Customer', 'CouponController');
     (new CustomerCouponController())->save($user, (int)param('id'));
 }
 if (matchRoute('POST', 'customers/coupons/:id/subscribe', $path)) {
     $user = AuthMiddleware::requireCustomer();
+    AuthMiddleware::requireActiveCard($user);
     loadController('Customer', 'CouponController');
     (new CustomerCouponController())->subscribe($user, (int)param('id'));
 }
@@ -639,6 +765,7 @@ if (matchRoute('DELETE', 'customers/coupons/:id/save', $path)) {
 }
 if (matchRoute('POST', 'customers/coupons/redeem', $path)) {
     $user = AuthMiddleware::requireCustomer();
+    AuthMiddleware::requireActiveCard($user);
     loadController('Customer', 'CouponController');
     (new CustomerCouponController())->redeem($user, $body);
 }
@@ -803,15 +930,26 @@ if (matchRoute('GET', 'customers/contests/:id', $path)) {
 }
 if (matchRoute('POST', 'customers/contests/:id/participate', $path)) {
     $user = AuthMiddleware::requireCustomer();
+    AuthMiddleware::requireActiveCard($user);
     loadController('Customer', 'ContestController');
     (new ContestController())->participate($user, (int)param('id'), $body);
 }
 
-// ---------- Customer Card ----------
+// ---------- Customer Card (Issue 10) ----------
+if (matchRoute('POST', 'customers/card/request-auth-code', $path)) {
+    $user = AuthMiddleware::requireCustomer();
+    loadController('Customer', 'CardController');
+    (new CardController())->requestAuthCode($user, $body);
+}
 if (matchRoute('POST', 'customers/card/activate', $path)) {
     $user = AuthMiddleware::requireCustomer();
     loadController('Customer', 'CardController');
     (new CardController())->activate($user, $body);
+}
+if (matchRoute('POST', 'customers/card/select', $path)) {
+    $user = AuthMiddleware::requireCustomer();
+    loadController('Customer', 'CardController');
+    (new CardController())->selectCard($user, $body);
 }
 if (matchRoute('GET', 'customers/card', $path)) {
     $user = AuthMiddleware::requireCustomer();

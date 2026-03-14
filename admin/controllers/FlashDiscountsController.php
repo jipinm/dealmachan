@@ -29,6 +29,15 @@ class FlashDiscountsController extends Controller {
         }
 
         $this->flashDiscountModel = new FlashDiscount();
+
+        // Ensure junction table exists before any query runs
+        $db = Database::getInstance()->getConnection();
+        $db->exec("CREATE TABLE IF NOT EXISTS `flash_discount_stores` (
+            `flash_discount_id` int(10) unsigned NOT NULL,
+            `store_id`          int(10) unsigned NOT NULL,
+            PRIMARY KEY (`flash_discount_id`,`store_id`),
+            KEY `idx_fds_store` (`store_id`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
     }
 
     // ─── LIST ─────────────────────────────────────────────────────────────────
@@ -78,10 +87,23 @@ class FlashDiscountsController extends Controller {
         $flashDiscount = $this->flashDiscountModel->findWithDetails($id);
         if (!$flashDiscount) { $this->redirectWithError('flash-discounts', 'Flash discount not found.'); return; }
 
+        $db = Database::getInstance()->getConnection();
+        $stmtFdCats = $db->prepare(
+            "SELECT c.name AS category_name, sc.name AS sub_category_name
+             FROM flash_discount_categories fdc
+             JOIN categories c ON c.id = fdc.category_id
+             LEFT JOIN sub_categories sc ON sc.id = fdc.sub_category_id
+             WHERE fdc.flash_discount_id = ?
+             ORDER BY c.name, sc.name"
+        );
+        $stmtFdCats->execute([$id]);
+        $fdCategoryDetails = $stmtFdCats->fetchAll(PDO::FETCH_ASSOC);
+
         $this->loadView('flash-discounts/view', [
-            'title'         => 'Flash Discount — ' . escape($flashDiscount['title']),
-            'flashDiscount' => $flashDiscount,
-            'current_user'  => $this->auth->getCurrentUser(),
+            'title'            => 'Flash Discount &mdash; ' . escape($flashDiscount['title']),
+            'flashDiscount'    => $flashDiscount,
+            'fdCategoryDetails'=> $fdCategoryDetails,
+            'current_user'     => $this->auth->getCurrentUser(),
         ]);
     }
 
@@ -96,7 +118,7 @@ class FlashDiscountsController extends Controller {
 
         $this->flashDiscountModel->toggleStatus($id);
         $cu = $this->auth->getCurrentUser();
-        logAudit('flash_discount_toggled', $id, 'flash_discount', $cu['id']);
+        logAudit('flash_discount_toggled', 'flash_discount', $id);
         $_SESSION['success'] = 'Flash discount status updated.';
         $this->redirect($redirect);
     }
@@ -110,9 +132,15 @@ class FlashDiscountsController extends Controller {
         }
 
         $merchantModel = new Merchant();
+        $db = Database::getInstance()->getConnection();
+        $categories = $db->query("SELECT id, name FROM categories WHERE status='active' ORDER BY name")->fetchAll(PDO::FETCH_ASSOC);
+        require_once MODEL_PATH . '/City.php';
+        $cityModel = new City();
         $this->loadView('flash-discounts/add', [
             'title'        => 'Create Flash Discount',
             'merchants'    => $merchantModel->getAllWithDetails(['limit' => 200]),
+            'categories'   => $categories,
+            'cities'       => $cityModel->getActive(),
             'current_user' => $this->auth->getCurrentUser(),
         ]);
     }
@@ -133,13 +161,48 @@ class FlashDiscountsController extends Controller {
 
         $merchantModel = new Merchant();
         $storeModel    = new Store();
+        $db = Database::getInstance()->getConnection();
+        $categories = $db->query("SELECT id, name FROM categories WHERE status='active' ORDER BY name")->fetchAll(PDO::FETCH_ASSOC);
+        $stmtCat = $db->prepare("SELECT category_id, sub_category_id FROM flash_discount_categories WHERE flash_discount_id = ?");
+        $stmtCat->execute([$id]);
+        $catRows = $stmtCat->fetchAll(PDO::FETCH_ASSOC);
+        $selectedCategoryIds = array_column($catRows, 'category_id');
+        $selectedSubCategoryIds = array_values(array_filter(array_column($catRows, 'sub_category_id')));
+        $subCategories = [];
+        if (!empty($selectedCategoryIds)) {
+            $inCats = implode(',', array_map('intval', $selectedCategoryIds));
+            $subCategories = $db->query("SELECT id, name, category_id FROM sub_categories WHERE category_id IN ({$inCats}) AND status='active' ORDER BY name")->fetchAll(PDO::FETCH_ASSOC);
+        }
+        require_once MODEL_PATH . '/City.php';
+        $cityModel = new City();
+        $stmtLoc = $db->prepare(
+            "SELECT fdl.city_id, fdl.area_id, fdl.location_id, ci.city_name,
+                    a.area_name, l.location_name
+             FROM flash_discount_locations fdl
+             JOIN cities ci ON ci.id = fdl.city_id
+             LEFT JOIN areas a  ON a.id  = fdl.area_id
+             LEFT JOIN locations l ON l.id = fdl.location_id
+             WHERE fdl.flash_discount_id = ?"
+        );
+        $stmtLoc->execute([$id]);
+        $existingLocations = $stmtLoc->fetchAll(PDO::FETCH_ASSOC);
 
+        $stmtStores = $db->prepare("SELECT store_id FROM flash_discount_stores WHERE flash_discount_id = ?");
+        $stmtStores->execute([$id]);
+        $selectedStoreIds = array_column($stmtStores->fetchAll(PDO::FETCH_ASSOC), 'store_id');
         $this->loadView('flash-discounts/edit', [
-            'title'         => 'Edit Flash Discount — ' . escape($fd['title']),
-            'flashDiscount' => $fd,
-            'merchants'     => $merchantModel->getAllWithDetails(['limit' => 200]),
-            'stores'        => $fd['merchant_id'] ? $storeModel->getByMerchant($fd['merchant_id']) : [],
-            'current_user'  => $this->auth->getCurrentUser(),
+            'title'              => 'Edit Flash Discount &mdash; ' . escape($fd['title']),
+            'flashDiscount'      => $fd,
+            'merchants'          => $merchantModel->getAllWithDetails(['limit' => 200]),
+            'stores'             => $fd['merchant_id'] ? $storeModel->getByMerchant($fd['merchant_id']) : [],
+            'categories'            => $categories,
+            'selectedCategoryIds'   => $selectedCategoryIds,
+            'selectedSubCategoryIds'=> $selectedSubCategoryIds,
+            'subCategories'         => $subCategories,
+            'cities'                => $cityModel->getActive(),
+            'existingLocations'  => $existingLocations,
+            'selectedStoreIds'   => $selectedStoreIds,
+            'current_user'       => $this->auth->getCurrentUser(),
         ]);
     }
 
@@ -151,7 +214,7 @@ class FlashDiscountsController extends Controller {
         $title          = sanitize($_POST['title']               ?? '');
         $description    = trim($_POST['description']             ?? '');
         $merchantId     = (int)($_POST['merchant_id']            ?? 0);
-        $storeId        = !empty($_POST['store_id']) ? (int)$_POST['store_id'] : null;
+        $storeIds       = array_filter(array_map('intval', $_POST['store_ids'] ?? []));
         $discountPct    = (float)($_POST['discount_percentage']  ?? 0);
         $validFrom      = trim($_POST['valid_from']              ?? '');
         $validUntil     = trim($_POST['valid_until']             ?? '');
@@ -182,7 +245,7 @@ class FlashDiscountsController extends Controller {
         // ── Banner image upload ──
         $bannerImage = null;
         if (!empty($_FILES['banner_image']['name'])) {
-            $uploadDir  = ROOT_PATH . '/public/uploads/flash-banners/';
+            $uploadDir  = API_FLASH_UPLOAD_DIR;
             $allowedExt = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
             $ext        = strtolower(pathinfo($_FILES['banner_image']['name'], PATHINFO_EXTENSION));
 
@@ -208,7 +271,7 @@ class FlashDiscountsController extends Controller {
 
         $data = [
             'merchant_id'          => $merchantId,
-            'store_id'             => $storeId,
+            'store_id'             => null,
             'title'                => $title,
             'description'          => $description !== '' ? $description : null,
             'discount_percentage'  => $discountPct,
@@ -225,12 +288,32 @@ class FlashDiscountsController extends Controller {
 
         if ($fdId) {
             $this->flashDiscountModel->updateFlashDiscount($fdId, $data);
-            logAudit('flash_discount_updated', $fdId, 'flash_discounts', $cu['id']);
+            // Ensure multi-store junction table exists
+            $db = Database::getInstance()->getConnection();
+            $db->exec("CREATE TABLE IF NOT EXISTS `flash_discount_stores` (
+                `flash_discount_id` int(10) unsigned NOT NULL,
+                `store_id`          int(10) unsigned NOT NULL,
+                PRIMARY KEY (`flash_discount_id`,`store_id`),
+                KEY `idx_fds_store` (`store_id`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+            // Sync locations and categories
+            $db = Database::getInstance()->getConnection();
+            $this->syncFDLocationsAndCategories($db, $fdId, $storeIds);
+            logAudit('flash_discount_updated', 'flash_discounts', $fdId);
             $_SESSION['success'] = "Flash discount '{$title}' updated.";
             $this->redirect("flash-discounts/detail?id={$fdId}");
         } else {
             $newId = $this->flashDiscountModel->createFlashDiscount($data);
-            logAudit('flash_discount_created', $newId, 'flash_discounts', $cu['id']);
+            // Ensure multi-store junction table exists then sync
+            $db = Database::getInstance()->getConnection();
+            $db->exec("CREATE TABLE IF NOT EXISTS `flash_discount_stores` (
+                `flash_discount_id` int(10) unsigned NOT NULL,
+                `store_id`          int(10) unsigned NOT NULL,
+                PRIMARY KEY (`flash_discount_id`,`store_id`),
+                KEY `idx_fds_store` (`store_id`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+            $this->syncFDLocationsAndCategories($db, $newId, $storeIds);
+            logAudit('flash_discount_created', 'flash_discounts', $newId);
             $_SESSION['success'] = "Flash discount '{$title}' created.";
             $this->redirect("flash-discounts/detail?id={$newId}");
         }
@@ -248,6 +331,66 @@ class FlashDiscountsController extends Controller {
 
     // ─── DELETE ───────────────────────────────────────────────────────────────
 
+    private function syncFDLocationsAndCategories(\PDO $db, int $fdId, array $storeIds): void {
+        // Sync flash_discount_stores junction table
+        $db->prepare("DELETE FROM flash_discount_stores WHERE flash_discount_id = ?")->execute([$fdId]);
+        if (!empty($storeIds)) {
+            $ins = $db->prepare("INSERT IGNORE INTO flash_discount_stores (flash_discount_id, store_id) VALUES (?, ?)");
+            foreach ($storeIds as $sid) { $ins->execute([$fdId, $sid]); }
+        }
+
+        // Locations
+        $cityIds     = array_filter(array_map('intval', (array)($_POST['location_city_ids']     ?? [])));
+        $areaIds     = array_filter(array_map('intval', (array)($_POST['location_area_ids']     ?? [])));
+        $locationIds = array_filter(array_map('intval', (array)($_POST['location_location_ids'] ?? [])));
+
+        $db->prepare("DELETE FROM flash_discount_locations WHERE flash_discount_id = ?")->execute([$fdId]);
+
+        if (!empty($cityIds)) {
+            $ins = $db->prepare("INSERT INTO flash_discount_locations (flash_discount_id, city_id, area_id, location_id) VALUES (?, ?, ?, ?)");
+            foreach ($cityIds as $i => $cid) {
+                $ins->execute([$fdId, $cid, $areaIds[$i] ?: null, $locationIds[$i] ?: null]);
+            }
+        } elseif (!empty($storeIds)) {
+            $store = $db->prepare("SELECT city_id, area_id, location_id FROM stores WHERE id = ?");
+            $store->execute([reset($storeIds)]);
+            $s = $store->fetch(PDO::FETCH_ASSOC);
+            if ($s && $s['city_id']) {
+                $db->prepare("INSERT INTO flash_discount_locations (flash_discount_id, city_id, area_id, location_id) VALUES (?, ?, ?, ?)")
+                   ->execute([$fdId, $s['city_id'], $s['area_id'] ?: null, $s['location_id'] ?: null]);
+            }
+        }
+
+        // Categories + sub-categories
+        $categoryIds    = array_filter(array_map('intval', (array)($_POST['category_ids']     ?? [])));
+        $subCategoryIds = array_filter(array_map('intval', (array)($_POST['sub_category_ids'] ?? [])));
+        $db->prepare("DELETE FROM flash_discount_categories WHERE flash_discount_id = ?")->execute([$fdId]);
+
+        if (!empty($categoryIds)) {
+            $ins = $db->prepare("INSERT INTO flash_discount_categories (flash_discount_id, category_id) VALUES (?, ?)");
+            foreach ($categoryIds as $cid) {
+                $ins->execute([$fdId, $cid]);
+            }
+            if (!empty($subCategoryIds)) {
+                $updSubCat = $db->prepare(
+                    "UPDATE flash_discount_categories
+                     SET sub_category_id = ?
+                     WHERE flash_discount_id = ? AND category_id = (SELECT category_id FROM sub_categories WHERE id = ? LIMIT 1)"
+                );
+                foreach ($subCategoryIds as $subCatId) {
+                    $updSubCat->execute([$subCatId, $fdId, $subCatId]);
+                }
+            }
+        } elseif (!empty($storeIds)) {
+            $sc = $db->prepare("SELECT category_id FROM store_categories WHERE store_id = ?");
+            $sc->execute([reset($storeIds)]);
+            $ins = $db->prepare("INSERT INTO flash_discount_categories (flash_discount_id, category_id) VALUES (?, ?)");
+            foreach ($sc->fetchAll(PDO::FETCH_COLUMN) as $cid) {
+                $ins->execute([$fdId, $cid]);
+            }
+        }
+    }
+
     public function delete() {
         $this->requireCSRF();
         $id = (int)($_POST['id'] ?? 0);
@@ -259,7 +402,7 @@ class FlashDiscountsController extends Controller {
         try {
             $this->flashDiscountModel->deleteFlashDiscount($id);
             $cu = $this->auth->getCurrentUser();
-            logAudit('flash_discount_deleted', $id, 'flash_discounts', $cu['id']);
+            logAudit('flash_discount_deleted', 'flash_discounts', $id);
             $_SESSION['success'] = "Flash discount '{$fd['title']}' deleted.";
         } catch (Exception $e) {
             $_SESSION['error'] = 'Cannot delete flash discount: ' . $e->getMessage();

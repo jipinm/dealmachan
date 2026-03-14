@@ -9,10 +9,13 @@ class JWT {
 
     /**
      * Create an access token (short-lived).
+     *
+     * @param array $extraClaims Optional extra claims merged into the payload
+     *                           (e.g. ['access_scope' => 'store', 'store_id' => 5]).
      */
-    public static function createAccessToken(int $merchantId, string $email, string $adminType = 'merchant'): string {
+    public static function createAccessToken(int $merchantId, string $email, string $adminType = 'merchant', array $extraClaims = []): string {
         $now = time();
-        return self::encode([
+        return self::encode(array_merge([
             'iss'         => 'deal-machan-api',
             'sub'         => $merchantId,
             'email'       => $email,
@@ -20,7 +23,7 @@ class JWT {
             'role'        => $adminType,
             'iat'         => $now,
             'exp'         => $now + JWT_ACCESS_EXPIRY,
-        ]);
+        ], $extraClaims));
     }
 
     /**

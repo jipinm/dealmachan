@@ -82,11 +82,11 @@ $daysLeft = (int)ceil((strtotime($sub['expiry_date']) - time()) / 86400);
                     </div>
                     <div class="col-sm-6">
                         <dt class="text-muted small">Payment Amount</dt>
-                        <dd>₹<?= $sub['payment_amount'] !== null ? number_format($sub['payment_amount'], 2) : '—' ?></dd>
+                        <dd>₹<?= $sub['payment_amount'] !== null ? number_format($sub['payment_amount'], 2) : '&mdash;' ?></dd>
                     </div>
                     <div class="col-sm-6">
                         <dt class="text-muted small">Payment Method</dt>
-                        <dd><?= $sub['payment_method'] ? ucfirst($sub['payment_method']) : '—' ?></dd>
+                        <dd><?= $sub['payment_method'] ? ucfirst($sub['payment_method']) : '&mdash;' ?></dd>
                     </div>
                     <div class="col-sm-6">
                         <dt class="text-muted small">User Status</dt>
@@ -120,7 +120,7 @@ $daysLeft = (int)ceil((strtotime($sub['expiry_date']) - time()) / 86400);
                                 <td class="text-muted small"><?= date('d M Y', strtotime($h['start_date'])) ?></td>
                                 <td class="text-muted small"><?= date('d M Y', strtotime($h['expiry_date'])) ?></td>
                                 <td><span class="badge bg-<?= $statusColors[$h['status']] ?? 'secondary' ?>"><?= ucfirst($h['status']) ?></span></td>
-                                <td>₹<?= $h['payment_amount'] !== null ? number_format($h['payment_amount'], 0) : '—' ?></td>
+                                <td>₹<?= $h['payment_amount'] !== null ? number_format($h['payment_amount'], 0) : '&mdash;' ?></td>
                             </tr>
                         <?php endforeach; ?>
                         </tbody>

@@ -1,8 +1,10 @@
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams, useNavigate, Link } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
 import { ChevronLeft, Trophy, Clock, Users, CheckCircle2, Medal } from 'lucide-react'
 import { contestsApi, type ContestDetail } from '@/api/endpoints/contests'
+import { profileApi } from '@/api/endpoints/profile'
+import { useAuthStore } from '@/store/authStore'
 
 // ── Helpers ───────────────────────────────────────────────────────────────
 function formatDate(d: string | null) {
@@ -49,6 +51,15 @@ function WinnersSection({ contest }: { contest: ContestDetail }) {
 // ── Participate button ────────────────────────────────────────────────────
 function ParticipateButton({ contest }: { contest: ContestDetail }) {
   const qc = useQueryClient()
+  const { isAuthenticated } = useAuthStore()
+
+  const { data: cardData, isSuccess: cardLoaded } = useQuery({
+    queryKey: ['my-card'],
+    queryFn: () => profileApi.getCard().then((r) => r.data.data),
+    enabled: isAuthenticated,
+    staleTime: 300_000,
+  })
+
   const mutation = useMutation({
     mutationFn: () => contestsApi.participate(contest.id),
     onSuccess: (res) => {
@@ -80,6 +91,19 @@ function ParticipateButton({ contest }: { contest: ContestDetail }) {
     return (
       <div className="flex items-center justify-center gap-2 bg-green-50 border border-green-200 rounded-xl py-3 text-sm font-semibold text-green-700">
         <CheckCircle2 size={18} /> You're entered!
+      </div>
+    )
+  }
+
+  const hasActiveCard = (cardData as any)?.status === 'active'
+  if (isAuthenticated && cardLoaded && !hasActiveCard) {
+    return (
+      <div className="rounded-xl bg-amber-50 border border-amber-200 p-4 space-y-2">
+        <p className="text-sm font-semibold text-amber-800">Active card required</p>
+        <p className="text-xs text-amber-600">You need an active Deal Machan card to participate in contests.</p>
+        <Link to="/loyalty/cards" className="inline-block text-xs font-semibold text-brand-600 hover:underline">
+          Get a card →
+        </Link>
       </div>
     )
   }

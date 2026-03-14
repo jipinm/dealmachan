@@ -15,6 +15,12 @@ const DAY_LABELS: Record<string, string> = {
   fri: 'Fri', sat: 'Sat', sun: 'Sun',
 }
 
+function formatHours(val: string | { open: string; close: string; closed: boolean }): string {
+  if (typeof val === 'string') return val
+  if (val.closed) return 'Closed'
+  return `${val.open} – ${val.close}`
+}
+
 export default function StoreDetailPage() {
   const { id }      = useParams<{ id: string }>()
   const navigate    = useNavigate()
@@ -120,7 +126,7 @@ export default function StoreDetailPage() {
                   <div key={day} className="flex items-center justify-between py-1.5 border-b border-gray-50 last:border-0">
                     <span className="text-sm text-gray-600 font-medium">{DAY_LABELS[day] ?? day}</span>
                     <span className="text-sm text-gray-800 flex items-center gap-1.5">
-                      <Clock size={12} className="text-gray-300" />{hours}
+                      <Clock size={12} className="text-gray-300" />{formatHours(hours)}
                     </span>
                   </div>
                 ))}

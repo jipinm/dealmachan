@@ -3,7 +3,7 @@ $fd     = $flashDiscount;
 $fdForm = $_SESSION['flash_discount_form'] ?? [];
 unset($_SESSION['flash_discount_form']);
 
-// Format datetime values for datetime-local input (MySQL → HTML)
+// Format datetime values for datetime-local input (MySQL &rarr; HTML)
 function fmtDt($val) {
     if (!$val) return '';
     return date('Y-m-d\TH:i', strtotime($val));
@@ -103,8 +103,9 @@ function fmtDt($val) {
                     <?php if (!empty($fd['banner_image'])): ?>
                     <div class="mb-2">
                         <p class="form-text mb-1">Current banner:</p>
-                        <img src="<?= BASE_URL ?>public/<?= escape($fd['banner_image']) ?>"
-                             alt="Current banner" class="img-thumbnail" style="max-height:120px;">
+                        <img src="<?= imageUrl($fd['banner_image']) ?>"
+                             alt="Current banner" class="img-thumbnail" style="max-height:120px;"
+                             onerror="this.src='<?= imageUrl('') ?>'">
                     </div>
                     <?php endif; ?>
                     <input type="file" name="banner_image" class="form-control"
@@ -114,6 +115,62 @@ function fmtDt($val) {
                     <div id="bannerPreview" class="mt-2 d-none">
                         <img id="bannerImg" src="" alt="Preview" class="img-thumbnail" style="max-height:160px;">
                     </div>
+                </div>
+            </div>
+
+            <!-- Location Targeting -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header fw-semibold">
+                    <i class="fas fa-map-marker-alt me-2 text-danger"></i> Location Targeting
+                </div>
+                <div class="card-body">
+                    <p class="form-text mb-2">Leave empty to auto-populate from the selected store&rsquo;s location.</p>
+                    <div id="locationRows">
+                    <?php foreach ($existingLocations ?? [] as $loc): ?>
+                        <div class="location-row row g-2 mb-2 align-items-end">
+                            <div class="col-sm-4">
+                                <label class="form-label form-label-sm">City</label>
+                                <select name="location_city_ids[]" class="form-select form-select-sm row-city"
+                                        onchange="rowLoadAreas(this)">
+                                    <option value="">&mdash; City &mdash;</option>
+                                    <?php foreach ($cities as $c): ?>
+                                    <option value="<?= $c['id'] ?>" <?= $loc['city_id'] == $c['id'] ? 'selected' : '' ?>>
+                                        <?= escape($c['city_name']) ?>
+                                    </option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                            <div class="col-sm-4">
+                                <label class="form-label form-label-sm">Area</label>
+                                <select name="location_area_ids[]" class="form-select form-select-sm row-area"
+                                        onchange="rowLoadLocations(this)">
+                                    <option value="">&mdash; Area &mdash;</option>
+                                    <?php if (!empty($loc['area_id'])): ?>
+                                    <option value="<?= $loc['area_id'] ?>" selected><?= escape($loc['area_name']) ?></option>
+                                    <?php endif; ?>
+                                </select>
+                            </div>
+                            <div class="col-sm-3">
+                                <label class="form-label form-label-sm">Location</label>
+                                <select name="location_location_ids[]" class="form-select form-select-sm row-location">
+                                    <option value="">&mdash; Location &mdash;</option>
+                                    <?php if (!empty($loc['location_id'])): ?>
+                                    <option value="<?= $loc['location_id'] ?>" selected><?= escape($loc['location_name']) ?></option>
+                                    <?php endif; ?>
+                                </select>
+                            </div>
+                            <div class="col-sm-1">
+                                <button type="button" class="btn btn-outline-danger btn-sm"
+                                        onclick="this.closest('.location-row').remove()">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                    </div>
+                    <button type="button" class="btn btn-outline-secondary btn-sm mt-2" onclick="addLocationRow()">
+                        <i class="fas fa-plus me-1"></i> Add Location Row
+                    </button>
                 </div>
             </div>
 
@@ -131,9 +188,9 @@ function fmtDt($val) {
                     <div class="mb-3">
                         <label class="form-label">Merchant <span class="text-danger">*</span></label>
                         <select name="merchant_id" id="merchant_id" class="form-select select2-single"
-                                data-placeholder="Select merchant…" required
-                                onchange="loadStores(this.value, null)">
-                            <option value="">— Select Merchant —</option>
+                                data-placeholder="Select merchant&hellip;" required
+                                onchange="loadStores(this.value, [])">
+                            <option value="">&mdash; Select Merchant &mdash;</option>
                             <?php foreach ($merchants as $m): ?>
                                 <option value="<?= $m['id'] ?>" <?= $fd['merchant_id'] == $m['id'] ? 'selected' : '' ?>>
                                     <?= escape($m['business_name']) ?>
@@ -143,10 +200,10 @@ function fmtDt($val) {
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Store</label>
-                        <select name="store_id" id="store_id" class="form-select select2-single" data-placeholder="All Stores">
-                            <option value="">All Stores</option>
+                        <select name="store_ids[]" id="store_id" class="form-select select2-multiple" multiple
+                                data-placeholder="All Stores (leave blank)">
                             <?php foreach ($stores as $s): ?>
-                                <option value="<?= $s['id'] ?>" <?= $fd['store_id'] == $s['id'] ? 'selected' : '' ?>>
+                                <option value="<?= $s['id'] ?>" <?= in_array($s['id'], $selectedStoreIds ?? []) ? 'selected' : '' ?>>
                                     <?= escape($s['store_name']) ?>
                                 </option>
                             <?php endforeach; ?>
@@ -180,6 +237,38 @@ function fmtDt($val) {
             </div>
             <?php endif; ?>
 
+            <!-- Business Categories -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header fw-semibold">
+                    <i class="fas fa-tags me-2 text-primary"></i> Categories
+                </div>
+                <div class="card-body">
+                    <p class="form-text mb-2">Leave empty to auto-populate from the selected store&rsquo;s categories.</p>
+                    <select name="category_ids[]" id="fdCategories" class="form-select select2" multiple
+                            data-placeholder="Select categories&hellip;">
+                        <?php foreach ($categories as $cat): ?>
+                            <option value="<?= $cat['id'] ?>"
+                                <?= in_array($cat['id'], $selectedCategoryIds ?? []) ? 'selected' : '' ?>>
+                                <?= escape($cat['name']) ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                    <div class="mt-3">
+                        <label class="form-label">Sub-categories</label>
+                        <select name="sub_category_ids[]" id="fdSubCategories" class="form-select select2" multiple
+                                data-placeholder="Select categories first&hellip;">
+                            <?php foreach ($subCategories ?? [] as $sc): ?>
+                                <option value="<?= $sc['id'] ?>"
+                                    <?= in_array($sc['id'], $selectedSubCategoryIds ?? []) ? 'selected' : '' ?>>
+                                    <?= escape($sc['name']) ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                        <p class="form-text">Optional. Automatically loaded when categories are changed.</p>
+                    </div>
+                </div>
+            </div>
+
             <!-- Submit -->
             <div class="d-grid gap-2">
                 <button type="submit" class="btn btn-primary">
@@ -193,7 +282,35 @@ function fmtDt($val) {
 </form>
 
 <script>
-var CURRENT_STORE_ID = <?= json_encode($fd['store_id']) ?>;
+var CURRENT_STORE_IDS     = <?= json_encode(array_values(array_map('intval', $selectedStoreIds ?? []))) ?>;
+var PRESELECTED_FD_SUB_IDS = <?= json_encode(array_values(array_map('intval', $selectedSubCategoryIds ?? []))) ?>;
+
+function loadFDSubCategories(preselectIds) {
+    const catSel = document.getElementById('fdCategories');
+    const subSel = document.getElementById('fdSubCategories');
+    const catIds = Array.from(catSel.selectedOptions).map(o => o.value).filter(Boolean);
+    subSel.innerHTML = '<option value="">Loading…</option>';
+    if (!catIds.length) { subSel.innerHTML = '<option value="">Select categories first…</option>'; if (window.$) $(subSel).trigger('change'); return; }
+    const qs = catIds.map(id => `category_id[]=${encodeURIComponent(id)}`).join('&');
+    fetch(`<?= BASE_URL ?>master-data/sub-categories-json?${qs}`)
+        .then(r => r.json())
+        .then(data => {
+            subSel.innerHTML = '';
+            const pre = Array.isArray(preselectIds) ? preselectIds.map(Number) : [];
+            const seen = new Set();
+            data.forEach(s => {
+                if (seen.has(s.name)) return;
+                seen.add(s.name);
+                const opt = document.createElement('option');
+                opt.value = s.id;
+                opt.textContent = s.name;
+                if (pre.includes(parseInt(s.id))) opt.selected = true;
+                subSel.appendChild(opt);
+            });
+            if (window.$) $(subSel).trigger('change');
+        })
+        .catch(() => { subSel.innerHTML = '<option value="">Error loading sub-categories</option>'; });
+}
 
 function previewBanner(input) {
     const preview = document.getElementById('bannerPreview');
@@ -206,23 +323,98 @@ function previewBanner(input) {
     }
 }
 
-function loadStores(merchantId, preselectStoreId) {
+function loadStores(merchantId, preselectIds) {
     const sel = document.getElementById('store_id');
-    sel.innerHTML = '<option value="">All Stores</option>';
-    if (!merchantId) return;
+    sel.innerHTML = '';
+    if (!merchantId) { if (window.$) $(sel).trigger('change.select2'); return; }
     fetch(`<?= BASE_URL ?>coupons/stores-json?merchant_id=${merchantId}`)
         .then(r => r.json())
         .then(stores => {
             stores.forEach(s => {
                 const opt = document.createElement('option');
                 opt.value = s.id;
-                opt.textContent = s.name;
-                if (preselectStoreId && s.id == preselectStoreId) opt.selected = true;
+                opt.textContent = s.store_name;
+                if (preselectIds && preselectIds.includes(parseInt(s.id))) opt.selected = true;
                 sel.appendChild(opt);
             });
             if (window.$) $(sel).trigger('change.select2');
         })
         .catch(() => {});
+}
+
+function addLocationRow() {
+    const container = document.getElementById('locationRows');
+    const row = document.createElement('div');
+    row.className = 'location-row row g-2 mb-2 align-items-end';
+    row.innerHTML = `
+        <div class="col-sm-4">
+            <label class="form-label form-label-sm">City</label>
+            <select name="location_city_ids[]" class="form-select form-select-sm row-city"
+                    onchange="rowLoadAreas(this)">
+                <option value="">&mdash; City &mdash;</option>
+                <?php foreach ($cities as $c): ?>
+                <option value="<?= $c['id'] ?>"><?= escape($c['city_name']) ?></option>
+                <?php endforeach; ?>
+            </select>
+        </div>
+        <div class="col-sm-4">
+            <label class="form-label form-label-sm">Area</label>
+            <select name="location_area_ids[]" class="form-select form-select-sm row-area"
+                    onchange="rowLoadLocations(this)" disabled>
+                <option value="">&mdash; Area &mdash;</option>
+            </select>
+        </div>
+        <div class="col-sm-3">
+            <label class="form-label form-label-sm">Location</label>
+            <select name="location_location_ids[]" class="form-select form-select-sm row-location" disabled>
+                <option value="">&mdash; Location &mdash;</option>
+            </select>
+        </div>
+        <div class="col-sm-1">
+            <button type="button" class="btn btn-outline-danger btn-sm" onclick="this.closest('.location-row').remove()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>`;
+    container.appendChild(row);
+}
+
+function rowLoadAreas(citySelect) {
+    const row       = citySelect.closest('.location-row');
+    const areaSel   = row.querySelector('.row-area');
+    const locSel    = row.querySelector('.row-location');
+    areaSel.innerHTML = '<option value="">&mdash; Area &mdash;</option>';
+    locSel.innerHTML  = '<option value="">&mdash; Location &mdash;</option>';
+    areaSel.disabled  = true;
+    locSel.disabled   = true;
+    if (!citySelect.value) return;
+    fetch(`<?= BASE_URL ?>master-data/areas-json?city_id=${citySelect.value}`)
+        .then(r => r.json())
+        .then(areas => {
+            areas.forEach(a => {
+                const o = document.createElement('option');
+                o.value = a.id; o.textContent = a.area_name;
+                areaSel.appendChild(o);
+            });
+            areaSel.disabled = false;
+        }).catch(() => {});
+}
+
+function rowLoadLocations(areaSelect) {
+    const row    = areaSelect.closest('.location-row');
+    const locSel = row.querySelector('.row-location');
+    locSel.innerHTML = '<option value="">&mdash; Location &mdash;</option>';
+    locSel.disabled  = true;
+    if (!areaSelect.value) return;
+    fetch(`<?= BASE_URL ?>master-data/locations-json?area_id=${areaSelect.value}`)
+        .then(r => r.json())
+        .then(locs => {
+            locs.forEach(l => {
+                const o = document.createElement('option');
+                o.value = l.id; o.textContent = l.location_name;
+                locSel.appendChild(o);
+            });
+            locSel.disabled = false;
+        }).catch(() => {});
 }
 
 document.addEventListener('DOMContentLoaded', function () {
@@ -231,11 +423,22 @@ document.addEventListener('DOMContentLoaded', function () {
             $(el).select2({ theme: 'bootstrap-5', placeholder: el.dataset.placeholder, allowClear: true });
         }
     });
+    if (window.$) {
+        $('#fdCategories').select2({ theme: 'bootstrap-5', placeholder: 'Select categories…' });
+        $('#fdSubCategories').select2({ theme: 'bootstrap-5', placeholder: 'Select categories first…' });
+        $('#store_id').select2({ theme: 'bootstrap-5', placeholder: 'All Stores (leave blank)', allowClear: true });
+        $('#fdCategories').on('change', function() { loadFDSubCategories([]); });
+    }
 
-    // Pre-load stores for the existing merchant, then select the current store
+    // Pre-load stores for the existing merchant, then pre-select the current stores
     var merchantSel = document.getElementById('merchant_id');
     if (merchantSel && merchantSel.value) {
-        loadStores(merchantSel.value, CURRENT_STORE_ID);
+        loadStores(merchantSel.value, CURRENT_STORE_IDS);
+    }
+
+    // Pre-populate sub-categories for pre-selected categories on edit load
+    if (document.getElementById('fdCategories').selectedOptions.length > 0) {
+        loadFDSubCategories(PRESELECTED_FD_SUB_IDS);
     }
 });
 </script>

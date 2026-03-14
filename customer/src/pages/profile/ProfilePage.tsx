@@ -7,6 +7,7 @@ import {
 import { useAuthStore } from '@/store/authStore'
 import { profileApi } from '@/api/endpoints/profile'
 import { couponsApi } from '@/api/endpoints/coupons'
+import { getImageUrl } from '@/lib/imageUrl'
 import { Helmet } from 'react-helmet-async'
 
 interface MenuSection {
@@ -139,7 +140,7 @@ export default function ProfilePage() {
         <Link to="/profile/card" className="block mb-4">
           <div className="rounded-2xl overflow-hidden shadow-brand relative h-28">
             {card.card_image ? (
-              <img src={card.card_image} alt="My Card" loading="lazy" className="w-full h-full object-cover" />
+              <img src={getImageUrl(card.card_image)} alt="My Card" loading="lazy" className="w-full h-full object-cover" />
             ) : (
               <div className="w-full h-full gradient-brand flex flex-col justify-between p-4">
                 <p className="text-white/60 text-[10px] uppercase tracking-widest">Deal Machan</p>
@@ -246,7 +247,7 @@ export default function ProfilePage() {
                 <h2 className="font-heading font-bold text-base text-gray-800 mb-3">Loyalty Card</h2>
                 <div className="rounded-2xl overflow-hidden shadow-brand relative h-36">
                   {card.card_image ? (
-                    <img src={card.card_image} alt="My Card" loading="lazy" className="w-full h-full object-cover" />
+                    <img src={getImageUrl(card.card_image)} alt="My Card" loading="lazy" className="w-full h-full object-cover" />
                   ) : (
                     <div className="w-full h-full gradient-brand flex flex-col justify-between p-4">
                       <p className="text-white/60 text-[10px] uppercase tracking-widest">Deal Machan</p>

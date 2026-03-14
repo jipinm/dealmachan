@@ -3,15 +3,7 @@ class Lead extends Model {
 
     protected $table = 'merchant_leads';
 
-    private function ensureTable(): void {
-        $sql = file_get_contents(ROOT_PATH . '/migrations/create_merchant_leads.sql');
-        foreach (array_filter(array_map('trim', explode(';', $sql))) as $stmt) {
-            if ($stmt) { try { $this->db->exec($stmt); } catch (Exception $e) {} }
-        }
-    }
-
     public function getAll(string $status = '', int $page = 1, int $perPage = 30): array {
-        $this->ensureTable();
         $where  = $status ? "WHERE ml.status = ?" : "";
         $params = $status ? [$status] : [];
         $offset = ($page - 1) * $perPage;
@@ -28,7 +20,6 @@ class Lead extends Model {
     }
 
     public function countByStatus($status = ''): int {
-        $this->ensureTable();
         $where  = $status ? "WHERE status = ?" : "";
         $params = $status ? [$status] : [];
         $stmt = $this->db->prepare("SELECT COUNT(*) FROM merchant_leads $where");

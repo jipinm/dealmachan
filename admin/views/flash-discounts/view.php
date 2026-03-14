@@ -91,11 +91,11 @@ $statusColors = ['active' => 'success', 'inactive' => 'secondary', 'expired' => 
                     </div>
                     <div class="col-sm-6">
                         <div class="text-muted small mb-1">Valid From</div>
-                        <div><?= $flashDiscount['valid_from'] ? formatDateTime($flashDiscount['valid_from']) : '<span class="text-muted">—</span>' ?></div>
+                        <div><?= $flashDiscount['valid_from'] ? formatDateTime($flashDiscount['valid_from']) : '<span class="text-muted">&mdash;</span>' ?></div>
                     </div>
                     <div class="col-sm-6">
                         <div class="text-muted small mb-1">Valid Until</div>
-                        <div><?= $flashDiscount['valid_until'] ? formatDateTime($flashDiscount['valid_until']) : '<span class="text-muted">—</span>' ?></div>
+                        <div><?= $flashDiscount['valid_until'] ? formatDateTime($flashDiscount['valid_until']) : '<span class="text-muted">&mdash;</span>' ?></div>
                     </div>
                     <div class="col-12">
                         <div class="text-muted small mb-1">Description</div>
@@ -126,6 +126,33 @@ $statusColors = ['active' => 'success', 'inactive' => 'secondary', 'expired' => 
                         <?= $pct ?>%
                     </div>
                 </div>
+            </div>
+        </div>
+        <?php endif; ?>
+
+        <!-- Categories & Sub-categories -->
+        <?php if (!empty($fdCategoryDetails)): ?>
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white fw-semibold border-bottom">
+                <i class="fas fa-tags me-2 text-primary"></i> Category Targeting
+            </div>
+            <div class="card-body pb-2">
+                <?php
+                $grouped = [];
+                foreach ($fdCategoryDetails as $row) {
+                    $cName = $row['category_name'];
+                    if (!isset($grouped[$cName])) $grouped[$cName] = [];
+                    if ($row['sub_category_name']) $grouped[$cName][] = $row['sub_category_name'];
+                }
+                foreach ($grouped as $catName => $subCats):
+                ?>
+                <div class="mb-2">
+                    <span class="badge bg-primary me-1 mb-1 px-3 py-2"><?= escape($catName) ?></span>
+                    <?php foreach ($subCats as $sc): ?>
+                        <span class="badge bg-secondary me-1 mb-1 px-2 py-1 small"><?= escape($sc) ?></span>
+                    <?php endforeach; ?>
+                </div>
+                <?php endforeach; ?>
             </div>
         </div>
         <?php endif; ?>

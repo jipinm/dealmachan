@@ -1,7 +1,7 @@
 import { NavLink, useNavigate } from 'react-router-dom'
 import {
   Home, Compass, Ticket, Zap, User, Bell, MessageSquare,
-  ChevronRight, LogOut, Gift, History
+  ChevronRight, LogOut, Gift, History, CreditCard
 } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
 import { useQuery } from '@tanstack/react-query'
@@ -28,13 +28,14 @@ const NAV_SECTIONS: NavSection[] = [
   {
     label: 'My Deals',
     items: [
-      { to: '/wallet',   icon: Ticket,  label: 'Wallet',
+      { to: '/wallet',        icon: Ticket,     label: 'Wallet',
         children: [
           { to: '/wallet',         label: 'Saved Coupons' },
           { to: '/wallet/gifts',   label: 'Gift Inbox' },
           { to: '/wallet/history', label: 'Redeemed' },
         ],
       },
+      { to: '/loyalty-cards', icon: CreditCard, label: 'Membership' },
     ],
   },
   {

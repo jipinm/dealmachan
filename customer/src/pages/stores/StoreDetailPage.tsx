@@ -1,9 +1,9 @@
 import { useState } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { publicApi, PublicMerchant } from '@/api/endpoints/public'
+import { publicApi, type PublicStoreDetail, type StoreReview } from '@/api/endpoints/public'
 import { favouritesApi } from '@/api/endpoints/favourites'
-import { Star, MapPin, Phone, Tag, Globe, ChevronRight, Store, Clock, ArrowLeft, MessageSquare, User, Mail, Navigation, Send, Heart, Lock, Loader2 as HeartLoader } from 'lucide-react'
+import { Star, MapPin, Phone, Tag, ChevronRight, Store, Clock, ArrowLeft, MessageSquare, User, Mail, Navigation, Send, Heart, Lock, Loader2 as HeartLoader } from 'lucide-react'
 import RatingStars from '@/components/ui/RatingStars'
 import { getImageUrl } from '@/lib/imageUrl'
 import { slugify } from '@/lib/slugify'
@@ -92,15 +92,31 @@ export default function StoreDetailPage() {
   const navigate = useNavigate()
   const [rating, setRating] = useState(0)
   const [reviewText, setReviewText] = useState('')
-  const [showHours, setShowHours] = useState<number | null>(null)
+  const [showHours, setShowHours] = useState(false)
   const [reviewSubmitted, setReviewSubmitted] = useState(false)
 
-  // ── Favourite state ──────────────────────────────────────────────────────
-  const merchantId = Number(id)
+  // ── Store data ───────────────────────────────────────────────────────────
+  const { data: storeDetail, isLoading } = useQuery({
+    queryKey: ['store', id],
+    queryFn: () =>
+      publicApi.getStore(Number(id)).then((r) => {
+        const payload = (r.data as any).data
+        return payload as { store: PublicStoreDetail; coupons: any[]; reviews: StoreReview[] }
+      }),
+    enabled: !!id,
+  })
+
+  const store = storeDetail?.store
+  const coupons = storeDetail?.coupons ?? []
+  const reviews = storeDetail?.reviews ?? []
+
+  // ── Favourite state (merchant-scoped, derived from loaded store) ─────────
+  const merchantIdForFav = store?.merchant_id ?? 0
+
   const { data: favData } = useQuery({
-    queryKey: ['fav-check', merchantId],
-    queryFn: () => favouritesApi.check(merchantId).then((r) => r.is_favourite ?? false),
-    enabled: !!id && isAuthenticated,
+    queryKey: ['fav-check', merchantIdForFav],
+    queryFn: () => favouritesApi.check(merchantIdForFav).then((r) => r.is_favourite ?? false),
+    enabled: !!store && isAuthenticated,
     staleTime: 60_000,
   })
   const isFavourited = favData === true
@@ -109,11 +125,11 @@ export default function StoreDetailPage() {
     mutationFn: () => {
       if (!isAuthenticated) throw new Error('login')
       return isFavourited
-        ? favouritesApi.remove(merchantId)
-        : favouritesApi.add(merchantId)
+        ? favouritesApi.remove(merchantIdForFav)
+        : favouritesApi.add(merchantIdForFav)
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['fav-check', merchantId] })
+      queryClient.invalidateQueries({ queryKey: ['fav-check', merchantIdForFav] })
       queryClient.invalidateQueries({ queryKey: ['favourites'] })
       toast.success(isFavourited ? 'Removed from favourites' : 'Added to favourites')
     },
@@ -126,40 +142,14 @@ export default function StoreDetailPage() {
     },
   })
 
-  const { data: merchant, isLoading } = useQuery({
-    queryKey: ['merchant', id],
-    queryFn: () => publicApi.getMerchant(Number(id)).then((r) => {
-      const payload = (r.data as any).data
-      // API returns { merchant: {...}, stores: [...], coupons: [...] }
-      // Merge merchant fields with stores so component can access both naturally
-      return { ...(payload.merchant ?? payload), stores: payload.stores ?? [] } as any
-    }),
-    enabled: !!id,
-  })
-
-  const { data: coupons } = useQuery({
-    queryKey: ['merchant-coupons', id],
-    queryFn: () => publicApi.getMerchantCoupons(Number(id)).then((r) => r.data.data ?? []),
-    enabled: !!id,
-  })
-
-  const { data: reviewsData } = useQuery({
-    queryKey: ['merchant-reviews', id],
-    queryFn: () => publicApi.getMerchantReviews(Number(id)).then((r) => r.data.data ?? []),
-    enabled: !!id,
-    staleTime: 300_000,
-  })
-
-  const reviews = (reviewsData as any[]) ?? []
-
   const reviewMutation = useMutation({
     mutationFn: (vars: { rating: number; review_text?: string }) =>
-      publicApi.submitReview(Number(id), vars),
+      publicApi.submitStoreReview(Number(id), vars),
     onSuccess: () => {
       setReviewSubmitted(true)
       setRating(0)
       setReviewText('')
-      queryClient.invalidateQueries({ queryKey: ['merchant-reviews', id] })
+      queryClient.invalidateQueries({ queryKey: ['store', id] })
     },
   })
 
@@ -175,7 +165,7 @@ export default function StoreDetailPage() {
     )
   }
 
-  if (!merchant) {
+  if (!store) {
     return (
       <div className="site-container py-20 text-center text-slate-400">
         <Store size={48} className="mx-auto mb-4 opacity-30" />
@@ -190,8 +180,8 @@ export default function StoreDetailPage() {
   return (
     <div>
       <Helmet>
-        <title>{`${merchant.business_name} | Deal Machan`}</title>
-        <meta name="description" content={`${merchant.business_name} on Deal Machan – browse exclusive deals, coupons, and store information. Find the best offers near you.`} />
+        <title>{`${store.store_name} | Deal Machan`}</title>
+        <meta name="description" content={`${store.store_name} in ${store.area_name ?? store.city_name ?? 'your area'} – browse exclusive deals, coupons, and store information on Deal Machan.`} />
       </Helmet>
       {/* Breadcrumb */}
       <div className="bg-white border-b border-slate-100">
@@ -201,27 +191,30 @@ export default function StoreDetailPage() {
             <ChevronRight size={13} />
             <Link to="/stores" className="hover:text-brand-600">Stores</Link>
             <ChevronRight size={13} />
-            <span className="text-slate-800 font-medium truncate max-w-[200px]">{merchant.business_name}</span>
+            <span className="text-slate-800 font-medium truncate max-w-[200px]">{store.store_name}</span>
           </nav>
         </div>
       </div>
 
       <div className="site-container py-8">
         <div className="lg:grid lg:grid-cols-[300px,1fr] lg:gap-8">
-          {/* Sidebar: merchant info */}
+          {/* Sidebar: store info */}
           <aside>
             <div className="card p-6 mb-5 sticky top-24">
-              <div className="w-24 h-24 rounded-2xl bg-slate-100 overflow-hidden mx-auto mb-4">
-                {merchant.business_logo ? (
-                  <img src={imgSrc(merchant.business_logo)} alt={merchant.business_name} loading="lazy" className="w-full h-full object-cover" />
+              {/* Store image */}
+              <div className="w-full h-32 rounded-2xl bg-slate-100 overflow-hidden mb-4">
+                {(store.store_image || store.business_logo) ? (
+                  <img src={imgSrc(store.store_image ?? store.business_logo)} alt={store.store_name} loading="lazy" className="w-full h-full object-cover" />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center">
                     <Store size={36} className="text-slate-300" />
                   </div>
                 )}
               </div>
+
+              {/* Store name + favourite */}
               <div className="flex items-center justify-between mb-2">
-                <h1 className="font-heading font-bold text-xl text-slate-800 flex-1 text-center">{merchant.business_name}</h1>
+                <h1 className="font-heading font-bold text-xl text-slate-800 flex-1">{store.store_name}</h1>
                 <button
                   onClick={() => favMutation.mutate()}
                   disabled={favMutation.isPending}
@@ -234,41 +227,101 @@ export default function StoreDetailPage() {
                   }
                 </button>
               </div>
-              <div className="flex items-center justify-center gap-1.5 mb-4">
-                <RatingStars
-                  rating={merchant.avg_rating ?? 0}
-                  size={15}
-                  showValue
-                  reviewCount={merchant.total_reviews ?? 0}
-                />
+
+              {/* Rating */}
+              <div className="flex items-center gap-1.5 mb-3">
+                <RatingStars rating={store.avg_rating ?? 0} size={15} showValue reviewCount={store.total_reviews ?? 0} />
               </div>
-              {merchant.business_description && (
-                <p className="text-sm text-slate-500 leading-relaxed mb-4 text-center">{merchant.business_description}</p>
+
+              {/* Description */}
+              {store.description && (
+                <p className="text-sm text-slate-500 leading-relaxed mb-3">{store.description}</p>
               )}
-              {merchant.website_url && (
-                <a
-                  href={merchant.website_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-2 text-sm text-brand-600 hover:underline justify-center mb-3"
-                >
-                  <Globe size={14} /> Website
+
+              {/* Address */}
+              {store.address && (
+                <div className="flex items-start gap-2 text-sm text-slate-500 mb-2">
+                  <MapPin size={14} className="flex-shrink-0 mt-0.5 text-slate-400" />
+                  <span className="leading-relaxed">
+                    {store.address}
+                    {store.area_name ? `, ${store.area_name}` : ''}
+                    {store.city_name ? `, ${store.city_name}` : ''}
+                  </span>
+                </div>
+              )}
+
+              {/* Phone */}
+              {store.phone && (
+                <a href={`tel:${store.phone}`} className="flex items-center gap-2 text-sm text-brand-600 hover:underline mb-2">
+                  <Phone size={13} /> {store.phone}
                 </a>
               )}
-              {/* Labels */}
-              {merchant.labels?.length > 0 && (
-                <div className="flex flex-wrap gap-1.5 justify-center mt-3">
-                  {merchant.labels.map((l: PublicMerchant['labels'][number]) => (
-                    <span key={l.id} className="px-2.5 py-1 bg-brand-50 text-brand-700 text-xs font-medium rounded-full">
-                      {l.label_name}
+
+              {/* Email */}
+              {store.email && (
+                <a href={`mailto:${store.email}`} className="flex items-center gap-2 text-sm text-brand-600 hover:underline mb-2">
+                  <Mail size={13} /> {store.email}
+                </a>
+              )}
+
+              {/* Directions */}
+              {store.latitude && store.longitude && (
+                <a
+                  href={`https://www.google.com/maps/dir/?api=1&destination=${store.latitude},${store.longitude}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 text-sm text-emerald-600 hover:underline mb-2"
+                >
+                  <Navigation size={13} /> Get Directions
+                </a>
+              )}
+
+              {/* Opening hours */}
+              {store.opening_hours?.length > 0 && (
+                <div className="mt-3">
+                  <TodayHours hours={store.opening_hours} />
+                  <button
+                    onClick={() => setShowHours(!showHours)}
+                    className="mt-1 text-[11px] text-slate-400 hover:text-brand-600 underline"
+                  >
+                    {showHours ? 'Hide hours' : 'View all hours'}
+                  </button>
+                  {showHours && <OpeningHoursGrid hours={store.opening_hours} />}
+                </div>
+              )}
+
+              {/* Categories */}
+              {store.categories?.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 mt-4">
+                  {store.categories.map((cat) => (
+                    <span key={cat.id} className="px-2.5 py-1 bg-brand-50 text-brand-700 text-xs font-medium rounded-full">
+                      {cat.name}
                     </span>
                   ))}
                 </div>
               )}
+
+              {/* Merchant attribution */}
+              <div className="mt-4 pt-4 border-t border-slate-100">
+                <Link
+                  to={`/merchants/${store.merchant_id}`}
+                  className="flex items-center gap-2 text-sm text-slate-500 hover:text-brand-600 transition-colors group"
+                >
+                  <div className="w-8 h-8 rounded-full bg-slate-100 overflow-hidden flex-shrink-0">
+                    {store.business_logo ? (
+                      <img src={imgSrc(store.business_logo)} alt={store.business_name} className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-slate-400 text-xs font-bold">{store.business_name?.charAt(0)}</div>
+                    )}
+                  </div>
+                  <span className="truncate group-hover:underline">{store.business_name}</span>
+                  <ChevronRight size={13} className="flex-shrink-0 ml-auto" />
+                </Link>
+              </div>
             </div>
           </aside>
 
-          {/* Main: coupons + stores */}
+          {/* Main: deals + reviews */}
           <main>
             {/* Active deals */}
             <section className="mb-8">
@@ -292,7 +345,7 @@ export default function StoreDetailPage() {
                       {c.banner_image && (
                         <div className="h-24 rounded-xl overflow-hidden mb-2 -mx-0">
                           <img
-                            src={c.banner_image}
+                            src={imgSrc(c.banner_image)}
                             alt={c.title}
                             className="w-full h-full object-cover"
                             onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
@@ -329,62 +382,6 @@ export default function StoreDetailPage() {
                 </div>
               )}
             </section>
-
-            {/* Store locations */}
-            {merchant.stores?.length > 0 && (
-              <section className="mb-8">
-                <h2 className="section-heading mb-4 text-xl">Store Locations</h2>
-                <div className="space-y-3">
-                  {merchant.stores.map((store: PublicMerchant['stores'][number]) => (
-                    <div key={store.id} className="card p-4">
-                      <div className="flex items-start gap-3">
-                        <div className="w-9 h-9 rounded-xl bg-rose-50 flex items-center justify-center flex-shrink-0 mt-0.5">
-                          <MapPin size={16} className="text-cta-500" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="font-semibold text-slate-800 text-sm">{store.store_name}</p>
-                          <p className="text-xs text-slate-500 leading-relaxed">{store.address}{store.area_name ? `, ${store.area_name}` : ''}{store.city_name ? `, ${store.city_name}` : ''}</p>
-                          <TodayHours hours={store.opening_hours} />
-                          <div className="flex flex-wrap items-center gap-3 mt-2">
-                            {store.phone && (
-                              <a href={`tel:${store.phone}`} className="flex items-center gap-1 text-xs text-brand-600 hover:underline">
-                                <Phone size={11} /> {store.phone}
-                              </a>
-                            )}
-                            {store.email && (
-                              <a href={`mailto:${store.email}`} className="flex items-center gap-1 text-xs text-brand-600 hover:underline">
-                                <Mail size={11} /> {store.email}
-                              </a>
-                            )}
-                            {store.latitude && store.longitude && (
-                              <a
-                                href={`https://www.google.com/maps/dir/?api=1&destination=${store.latitude},${store.longitude}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="flex items-center gap-1 text-xs text-emerald-600 hover:underline"
-                              >
-                                <Navigation size={11} /> Directions
-                              </a>
-                            )}
-                          </div>
-                          {store.opening_hours?.length > 0 && (
-                            <button
-                              onClick={() => setShowHours(showHours === store.id ? null : store.id)}
-                              className="mt-2 text-[11px] text-slate-400 hover:text-brand-600 underline"
-                            >
-                              {showHours === store.id ? 'Hide hours' : 'Opening hours'}
-                            </button>
-                          )}
-                          {showHours === store.id && (
-                            <OpeningHoursGrid hours={store.opening_hours} />
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </section>
-            )}
 
             {/* Reviews */}
             <section>

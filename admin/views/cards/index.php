@@ -30,7 +30,7 @@
             <?php
             $from = min($totalCount, ($currentPage - 1) * $perPage + 1);
             $to   = min($totalCount, $currentPage * $perPage);
-            echo $totalCount ? "Showing {$from}–{$to} of {$totalCount}" : 'No cards found';
+            echo $totalCount ? "Showing {$from}&ndash;{$to} of {$totalCount}" : 'No cards found';
             ?>
         </small>
     </div>
@@ -146,7 +146,7 @@
                         <?php elseif ($c['admin_name']): ?>
                             <i class="fas fa-user-shield text-muted me-1"></i><?= escape($c['admin_name']) ?>
                         <?php else: ?>
-                            <span class="text-muted">—</span>
+                            <span class="text-muted">&mdash;</span>
                         <?php endif; ?>
                     </td>
                     <td>
@@ -162,7 +162,7 @@
                         <?php endif; ?>
                     </td>
                     <td class="small text-muted"><?= formatDate($c['generated_at']) ?></td>
-                    <td class="small text-muted"><?= $c['activated_at'] ? formatDate($c['activated_at']) : '—' ?></td>
+                    <td class="small text-muted"><?= $c['activated_at'] ? formatDate($c['activated_at']) : '&mdash;' ?></td>
                     <td class="text-end" style="white-space:nowrap">
                         <?php if ($c['status'] === 'assigned'): ?>
                         <form method="POST" action="<?= BASE_URL ?>/cards/activate" class="d-inline">

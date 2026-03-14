@@ -25,9 +25,9 @@ $statusBadge = match($referral['status']) {
                     <dt class="col-5 text-muted">Reward Amount</dt>  <dd class="col-7">₹<?= number_format($referral['reward_amount'] ?? 0, 2) ?></dd>
                     <dt class="col-5 text-muted">Reward Given</dt>   <dd class="col-7">
                         <?php if ($referral['reward_given']): ?>
-                            <span class="badge bg-success"><i class="bi bi-check2 me-1"></i>Yes — Paid</span>
+                            <span class="badge bg-success"><i class="bi bi-check2 me-1"></i>Yes &mdash; Paid</span>
                         <?php else: ?>
-                            <span class="badge bg-light text-dark border">No — Pending</span>
+                            <span class="badge bg-light text-dark border">No &mdash; Pending</span>
                         <?php endif; ?>
                     </dd>
                     <dt class="col-5 text-muted">Created</dt>        <dd class="col-7"><?= date('d M Y H:i', strtotime($referral['created_at'])) ?></dd>

@@ -33,6 +33,11 @@ class ReviewController {
             $where  .= ' AND r.status = ?';
             $binds[] = $params['status'];
         }
+        // Store-scoped users can only see reviews for their own store
+        if (($user['access_scope'] ?? 'merchant') === 'store' && !empty($user['store_id'])) {
+            $where  .= ' AND r.store_id = ?';
+            $binds[] = (int)$user['store_id'];
+        }
 
         $rows = $this->db->query(
             "SELECT r.id, r.rating, r.review_text, r.status, r.created_at,

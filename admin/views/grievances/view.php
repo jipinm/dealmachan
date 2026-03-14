@@ -234,7 +234,7 @@ $detailUrl      = 'grievances/detail?id=' . $grievance['id'];
             </div>
         </div>
 
-        <!-- Danger Zone — Force Close -->
+        <!-- Danger Zone &mdash; Force Close -->
         <?php if (!in_array($grievance['status'], ['closed'])): ?>
         <div class="card border-danger border-opacity-25 shadow-sm mb-4">
             <div class="card-header bg-danger-subtle text-danger fw-semibold border-bottom border-danger border-opacity-25">

@@ -1,7 +1,7 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { ChevronLeft, Plus, X, Zap, Trash2, Edit2, Store as StoreIcon } from 'lucide-react'
+import { ChevronLeft, ImagePlus, Plus, X, Zap, Trash2, Edit2, Store as StoreIcon } from 'lucide-react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -13,6 +13,8 @@ import {
   type RedeemFlashDiscountPayload,
 } from '@/api/endpoints/flashDiscounts'
 import { storeApi } from '@/api/endpoints/stores'
+import { useAuthStore } from '@/store/authStore'
+import { getImageUrl } from '@/lib/imageUrl'
 
 // ── Form schema ───────────────────────────────────────────────────────────────
 
@@ -43,11 +45,27 @@ function FlashDiscountFormModal({
   onClose: () => void
 }) {
   const qc = useQueryClient()
+  const isStoreAdmin  = useAuthStore(s => s.isStoreAdmin())
+  const scopedStoreId = useAuthStore(s => s.scopedStoreId())
 
   const { data: stores = [] } = useQuery({
     queryKey: ['stores'],
     queryFn:  () => storeApi.list().then(r => r.data.data),
+    enabled:  !isStoreAdmin,
   })
+
+  const [bannerImage, setBannerImage]                 = useState<string | null>(editing?.banner_image ?? null)
+  const [uploadingImg, setUploadingImg]               = useState(false)
+  const [removingImg, setRemovingImg]                 = useState(false)
+  const fileInputRef                                  = useRef<HTMLInputElement>(null)
+  const [pendingImageFile, setPendingImageFile]       = useState<File | null>(null)
+  const [pendingImagePreview, setPendingImagePreview] = useState<string | null>(null)
+  const createFileInputRef                            = useRef<HTMLInputElement>(null)
+  const pendingPreviewUrlRef                          = useRef<string | null>(null)
+
+  useEffect(() => {
+    return () => { if (pendingPreviewUrlRef.current) URL.revokeObjectURL(pendingPreviewUrlRef.current) }
+  }, [])
 
   const { register, handleSubmit, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(schema),
@@ -63,8 +81,25 @@ function FlashDiscountFormModal({
   })
 
   const createMutation = useMutation({
-    mutationFn: (data: CreateFlashDiscountPayload) => flashDiscountApi.create(data),
-    onSuccess: () => { toast.success('Flash discount created!'); qc.invalidateQueries({ queryKey: ['flash-discounts'] }); onClose() },
+    mutationFn: async (data: CreateFlashDiscountPayload) => {
+      const res = await flashDiscountApi.create(data)
+      let _imageUploadFailed = false
+      if (pendingImageFile) {
+        try { await flashDiscountApi.uploadImage(res.data.data.id, pendingImageFile) }
+        catch { _imageUploadFailed = true }
+      }
+      return { ...res.data, _imageUploadFailed }
+    },
+    onSuccess: (data: any) => {
+      if (data._imageUploadFailed) {
+        toast.success('Flash discount created!')
+        toast.error('Image upload failed — re-upload from the edit form.', { duration: 5000 })
+      } else {
+        toast.success('Flash discount created!')
+      }
+      qc.invalidateQueries({ queryKey: ['flash-discounts'] })
+      onClose()
+    },
     onError: () => toast.error('Failed to create'),
   })
 
@@ -74,12 +109,59 @@ function FlashDiscountFormModal({
     onError: () => toast.error('Failed to update'),
   })
 
+  async function handleImageUpload(file: File) {
+    setUploadingImg(true)
+    try {
+      const res = await flashDiscountApi.uploadImage(editing!.id, file)
+      setBannerImage(res.data.data.banner_image)
+      qc.invalidateQueries({ queryKey: ['flash-discounts'] })
+      toast.success('Image uploaded!')
+    } catch (e: any) {
+      toast.error(e?.response?.data?.message ?? 'Upload failed')
+    } finally {
+      setUploadingImg(false)
+    }
+  }
+
+  async function handleImageRemove() {
+    setRemovingImg(true)
+    try {
+      await flashDiscountApi.deleteImage(editing!.id)
+      setBannerImage(null)
+      qc.invalidateQueries({ queryKey: ['flash-discounts'] })
+      toast.success('Image removed')
+    } catch (e: any) {
+      toast.error(e?.response?.data?.message ?? 'Remove failed')
+    } finally {
+      setRemovingImg(false)
+    }
+  }
+
+  function handlePendingImageSelect(file: File) {
+    if (pendingPreviewUrlRef.current) URL.revokeObjectURL(pendingPreviewUrlRef.current)
+    const url = URL.createObjectURL(file)
+    pendingPreviewUrlRef.current = url
+    setPendingImageFile(file)
+    setPendingImagePreview(url)
+  }
+
+  function handlePendingImageClear() {
+    if (pendingPreviewUrlRef.current) URL.revokeObjectURL(pendingPreviewUrlRef.current)
+    pendingPreviewUrlRef.current = null
+    setPendingImageFile(null)
+    setPendingImagePreview(null)
+  }
+
   const onSubmit = (values: FormData) => {
     const payload: CreateFlashDiscountPayload = {
       title:               values.title,
       description:         values.description || undefined,
       discount_percentage: parseFloat(values.discount_percentage),
-      store_id:            values.store_id ? parseInt(values.store_id) : undefined,
+      // For store admins the backend enforces their store_id; pass it
+      // explicitly so the form stays consistent.
+      store_id:            isStoreAdmin && scopedStoreId
+                             ? scopedStoreId
+                             : values.store_id ? parseInt(values.store_id) : undefined,
       valid_from:          values.valid_from || undefined,
       valid_until:         values.valid_until || undefined,
       max_redemptions:     values.max_redemptions ? parseInt(values.max_redemptions) : undefined,
@@ -115,10 +197,16 @@ function FlashDiscountFormModal({
 
           <div>
             <label className="block text-xs font-medium text-gray-600 mb-1">Store (optional)</label>
-            <select {...register('store_id')} className="input-field">
-              <option value="">All stores</option>
-              {stores.map(s => <option key={s.id} value={s.id}>{s.store_name}</option>)}
-            </select>
+            {isStoreAdmin ? (
+              <p className="input-field bg-gray-50 text-gray-500 cursor-not-allowed">
+                Your assigned store
+              </p>
+            ) : (
+              <select {...register('store_id')} className="input-field">
+                <option value="">All stores</option>
+                {stores.map(s => <option key={s.id} value={s.id}>{s.store_name}</option>)}
+              </select>
+            )}
           </div>
 
           <div className="grid grid-cols-2 gap-3">
@@ -140,6 +228,72 @@ function FlashDiscountFormModal({
           <div>
             <label className="block text-xs font-medium text-gray-600 mb-1">Description</label>
             <textarea {...register('description')} rows={3} placeholder="Optional details…" className="w-full text-sm border border-gray-200 rounded-xl px-3 py-2.5 resize-none focus:outline-none focus:ring-2 focus:ring-brand-300" />
+          </div>
+
+          {/* Deal Image */}
+          <div>
+            <label className="block text-xs font-medium text-gray-600 mb-1">Deal Image</label>
+            {editing ? (
+              <>
+                {bannerImage ? (
+                  <div className="relative">
+                    <img src={getImageUrl(bannerImage)} alt="Flash deal banner"
+                      className="w-full h-36 object-cover rounded-xl bg-slate-100" />
+                    <button type="button" onClick={handleImageRemove} disabled={removingImg}
+                      className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white rounded-full p-1.5 disabled:opacity-50">
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                ) : (
+                  <div onClick={() => fileInputRef.current?.click()}
+                    className="border-2 border-dashed border-gray-200 rounded-xl h-28 flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-brand-400 hover:bg-brand-50 transition-colors">
+                    {uploadingImg ? <span className="text-sm text-gray-500">Uploading…</span> : (
+                      <>
+                        <ImagePlus size={22} className="text-gray-400" />
+                        <span className="text-sm text-gray-500">Tap to upload deal image</span>
+                        <span className="text-xs text-gray-400">JPEG, PNG or WebP · max 5MB</span>
+                      </>
+                    )}
+                  </div>
+                )}
+                <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden"
+                  onChange={(e) => { const f = e.target.files?.[0]; if (f) handleImageUpload(f); e.target.value = '' }} />
+                {bannerImage && (
+                  <button type="button" onClick={() => fileInputRef.current?.click()} disabled={uploadingImg}
+                    className="mt-2 w-full border border-brand-300 text-brand-600 text-sm font-semibold py-2 rounded-xl hover:bg-brand-50 transition-colors disabled:opacity-50">
+                    {uploadingImg ? 'Uploading…' : 'Replace Image'}
+                  </button>
+                )}
+              </>
+            ) : (
+              <>
+                {pendingImagePreview ? (
+                  <div className="relative">
+                    <img src={pendingImagePreview} alt="Deal image preview"
+                      className="w-full h-36 object-cover rounded-xl bg-slate-100" />
+                    <button type="button" onClick={handlePendingImageClear}
+                      className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white rounded-full p-1.5">
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                ) : (
+                  <div onClick={() => createFileInputRef.current?.click()}
+                    className="border-2 border-dashed border-gray-200 rounded-xl h-28 flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-brand-400 hover:bg-brand-50 transition-colors">
+                    <ImagePlus size={22} className="text-gray-400" />
+                    <span className="text-sm text-gray-500">Tap to add a deal image</span>
+                    <span className="text-xs text-gray-400">JPEG, PNG or WebP · max 5MB</span>
+                  </div>
+                )}
+                <input ref={createFileInputRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden"
+                  onChange={(e) => { const f = e.target.files?.[0]; if (f) handlePendingImageSelect(f); e.target.value = '' }} />
+                {pendingImagePreview && (
+                  <button type="button" onClick={() => createFileInputRef.current?.click()}
+                    className="mt-2 w-full border border-brand-300 text-brand-600 text-sm font-semibold py-2 rounded-xl hover:bg-brand-50 transition-colors">
+                    Replace Image
+                  </button>
+                )}
+              </>
+            )}
           </div>
 
           <button type="submit" disabled={isPending} className="btn-primary w-full">
@@ -276,6 +430,9 @@ function DiscountCard({
           </span>
         </div>
       </div>
+      {item.banner_image && (
+        <img src={getImageUrl(item.banner_image)} alt={item.title} className="w-full h-36 object-cover" />
+      )}
       <div className="px-4 py-3">
         <p className="font-semibold text-gray-800 text-sm">{item.title}</p>
         {item.description && <p className="text-xs text-gray-500 mt-0.5">{item.description}</p>}
@@ -313,10 +470,15 @@ export default function FlashDiscountPage() {
   const [showModal, setModal]   = useState(false)
   const [editing, setEditing]   = useState<FlashDiscount | null>(null)
   const [redeeming, setRedeeming] = useState<FlashDiscount | null>(null)
+  const isStoreAdmin  = useAuthStore(s => s.isStoreAdmin())
+  const scopedStoreId = useAuthStore(s => s.scopedStoreId())
 
   const { data: discounts = [], isLoading } = useQuery({
-    queryKey: ['flash-discounts'],
-    queryFn:  () => flashDiscountApi.list().then(r => r.data.data),
+    queryKey: ['flash-discounts', scopedStoreId],
+    queryFn:  () => {
+      const params = isStoreAdmin && scopedStoreId ? { store_id: scopedStoreId } : undefined
+      return flashDiscountApi.list(params).then(r => r.data.data)
+    },
   })
 
   const deleteMutation = useMutation({

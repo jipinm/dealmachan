@@ -47,14 +47,14 @@
                     <tr>
                         <td class="text-muted small"><?= $i + 1 ?></td>
                         <td class="fw-semibold"><?= escape($loc['location_name']) ?></td>
-                        <td><?= escape($loc['area_name'] ?? '—') ?></td>
-                        <td><span class="badge bg-primary bg-opacity-10 text-primary"><?= escape($loc['city_name'] ?? '—') ?></span></td>
+                        <td><?= escape($loc['area_name'] ?? '&mdash;') ?></td>
+                        <td><span class="badge bg-primary bg-opacity-10 text-primary"><?= escape($loc['city_name'] ?? '&mdash;') ?></span></td>
                         <td class="small text-muted">
                             <?php if ($loc['latitude'] && $loc['longitude']): ?>
                             <a href="https://maps.google.com/?q=<?= $loc['latitude'] ?>,<?= $loc['longitude'] ?>" target="_blank" class="text-decoration-none">
                                 <i class="fas fa-map-marker-alt text-danger me-1"></i><?= $loc['latitude'] ?>, <?= $loc['longitude'] ?>
                             </a>
-                            <?php else: ?><span class="text-muted">—</span><?php endif; ?>
+                            <?php else: ?><span class="text-muted">&mdash;</span><?php endif; ?>
                         </td>
                         <td class="text-center">
                             <form method="POST" action="<?= BASE_URL ?>master-data/locations" class="d-inline">

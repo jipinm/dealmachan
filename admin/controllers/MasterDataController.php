@@ -589,4 +589,165 @@ class MasterDataController extends Controller {
         $this->json($locations);
     }
 
+    // ─── CATEGORIES ──────────────────────────────────────────────────────────
+
+    public function categories() {
+        $db = Database::getInstance()->getConnection();
+
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $this->requireCSRF();
+            $action = $_POST['_action'] ?? '';
+
+            if ($action === 'save') {
+                $id   = (int)($_POST['id'] ?? 0);
+                $name = sanitize($_POST['name'] ?? '');
+                $icon = sanitize($_POST['icon'] ?? '');
+                $color = sanitize($_POST['color_code'] ?? '');
+                $status = in_array($_POST['status'] ?? '', ['active','inactive']) ? $_POST['status'] : 'active';
+
+                if (empty($name)) {
+                    $_SESSION['error'] = 'Category name is required.';
+                } else {
+                    if ($id) {
+                        $stmt = $db->prepare("UPDATE categories SET name=?, icon=?, color_code=?, status=? WHERE id=?");
+                        $stmt->execute([$name, $icon ?: null, $color ?: null, $status, $id]);
+                        $_SESSION['success'] = 'Category updated successfully.';
+                        logAudit('update', 'category', $id, compact('name','status'));
+                    } else {
+                        $stmt = $db->prepare("INSERT INTO categories (name, icon, color_code, status) VALUES (?,?,?,?)");
+                        $stmt->execute([$name, $icon ?: null, $color ?: null, $status]);
+                        $_SESSION['success'] = 'Category added successfully.';
+                        logAudit('create', 'category', (int)$db->lastInsertId(), compact('name'));
+                    }
+                }
+
+            } elseif ($action === 'delete') {
+                $id = (int)($_POST['id'] ?? 0);
+                $usedInStores = $db->query("SELECT COUNT(*) AS c FROM store_categories WHERE category_id={$id}")->fetch()['c'];
+                if ($usedInStores > 0) {
+                    $_SESSION['error'] = 'Cannot delete: Category is assigned to stores.';
+                } else {
+                    $db->exec("DELETE FROM categories WHERE id={$id}");
+                    $_SESSION['success'] = 'Category deleted.';
+                    logAudit('delete', 'category', $id);
+                }
+
+            } elseif ($action === 'toggle') {
+                $id = (int)($_POST['id'] ?? 0);
+                $db->exec("UPDATE categories SET status = IF(status='active','inactive','active') WHERE id={$id}");
+                $this->json(['success' => true]);
+                return;
+            }
+
+            $this->redirect('master-data/categories');
+            return;
+        }
+
+        $stmt = $db->query(
+            "SELECT c.*,
+                    (SELECT COUNT(*) FROM sub_categories sc WHERE sc.category_id = c.id) AS sub_count,
+                    (SELECT COUNT(*) FROM store_categories stc WHERE stc.category_id = c.id) AS store_count
+             FROM categories c ORDER BY c.name"
+        );
+        $categories = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $this->loadView('master-data/categories', [
+            'title'        => 'Categories - Master Data',
+            'categories'   => $categories,
+            'current_user' => $this->auth->getCurrentUser(),
+        ]);
+    }
+
+    // ─── SUB-CATEGORIES ──────────────────────────────────────────────────────
+
+    public function subCategories() {
+        $db = Database::getInstance()->getConnection();
+
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $this->requireCSRF();
+            $action = $_POST['_action'] ?? '';
+
+            if ($action === 'save') {
+                $id         = (int)($_POST['id'] ?? 0);
+                $catId      = (int)($_POST['category_id'] ?? 0);
+                $name       = sanitize($_POST['name'] ?? '');
+                $icon       = sanitize($_POST['icon'] ?? '');
+                $status     = in_array($_POST['status'] ?? '', ['active','inactive']) ? $_POST['status'] : 'active';
+
+                if (empty($name) || !$catId) {
+                    $_SESSION['error'] = 'Category and name are required.';
+                } else {
+                    if ($id) {
+                        $stmt = $db->prepare("UPDATE sub_categories SET category_id=?, name=?, icon=?, status=? WHERE id=?");
+                        $stmt->execute([$catId, $name, $icon ?: null, $status, $id]);
+                        $_SESSION['success'] = 'Sub-category updated.';
+                        logAudit('update', 'sub_category', $id, compact('name', 'catId'));
+                    } else {
+                        $stmt = $db->prepare("INSERT INTO sub_categories (category_id, name, icon, status) VALUES (?,?,?,?)");
+                        $stmt->execute([$catId, $name, $icon ?: null, $status]);
+                        $_SESSION['success'] = 'Sub-category added.';
+                        logAudit('create', 'sub_category', (int)$db->lastInsertId(), compact('name', 'catId'));
+                    }
+                }
+
+            } elseif ($action === 'delete') {
+                $id = (int)($_POST['id'] ?? 0);
+                $db->exec("DELETE FROM sub_categories WHERE id={$id}");
+                $_SESSION['success'] = 'Sub-category deleted.';
+                logAudit('delete', 'sub_category', $id);
+
+            } elseif ($action === 'toggle') {
+                $id = (int)($_POST['id'] ?? 0);
+                $db->exec("UPDATE sub_categories SET status = IF(status='active','inactive','active') WHERE id={$id}");
+                $this->json(['success' => true]);
+                return;
+            }
+
+            $this->redirect('master-data/sub-categories');
+            return;
+        }
+
+        $catId = (int)($_GET['category_id'] ?? 0);
+        $where = $catId ? "WHERE sc.category_id = {$catId}" : '';
+
+        $stmt = $db->query(
+            "SELECT sc.*, cat.name AS category_name,
+                    (SELECT COUNT(*) FROM store_categories stc WHERE stc.sub_category_id = sc.id) AS store_count
+             FROM sub_categories sc
+             JOIN categories cat ON cat.id = sc.category_id
+             {$where}
+             ORDER BY cat.name, sc.name"
+        );
+        $subCategories = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $catStmt    = $db->query("SELECT id, name FROM categories WHERE status='active' ORDER BY name");
+        $categories = $catStmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $this->loadView('master-data/sub-categories', [
+            'title'          => 'Sub-Categories - Master Data',
+            'sub_categories' => $subCategories,
+            'categories'     => $categories,
+            'filter_cat_id'  => $catId,
+            'current_user'   => $this->auth->getCurrentUser(),
+        ]);
+    }
+
+    /**
+     * JSON: sub-categories for one or more categories (dependent dropdown)
+     * URL: /master-data/sub-categories-json?category_id[]=X&category_id[]=Y
+     */
+    public function subCategoriesJson() {
+        $db = Database::getInstance()->getConnection();
+        // Accept both category_id (scalar) and category_id[] (array)
+        $raw = $_GET['category_id'] ?? [];
+        if (!is_array($raw)) $raw = [$raw];
+        $catIds = array_values(array_filter(array_map('intval', $raw)));
+        if (empty($catIds)) { $this->json([]); return; }
+        $placeholders = implode(',', array_fill(0, count($catIds), '?'));
+        $stmt = $db->prepare("SELECT MIN(id) AS id, name, category_id FROM sub_categories WHERE category_id IN ({$placeholders}) AND status = 'active' GROUP BY category_id, name ORDER BY name");
+        $stmt->execute($catIds);
+        $this->json($stmt->fetchAll(PDO::FETCH_ASSOC));
+    }
+
 }
+

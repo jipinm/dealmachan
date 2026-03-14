@@ -13,7 +13,7 @@
     </div>
 </div>
 
-<form method="POST" action="<?= BASE_URL ?>/coupons/edit?id=<?= $coupon['id'] ?>" id="couponForm">
+<form method="POST" action="<?= BASE_URL ?>/coupons/edit?id=<?= $coupon['id'] ?>" id="couponForm" enctype="multipart/form-data">
     <input type="hidden" name="csrf_token" value="<?= generateCSRFToken() ?>">
 
     <div class="row g-4">
@@ -56,23 +56,42 @@
                     <div class="row g-3">
                         <div class="col-sm-6">
                             <label class="form-label">Discount Type <span class="text-danger">*</span></label>
-                            <select name="discount_type" class="form-select" id="discountType" required onchange="updateDiscountLabels()">
+                            <select name="discount_type" class="form-select" id="discountType" required onchange="updateDiscountFields()">
                                 <option value="percentage" <?= $coupon['discount_type'] === 'percentage' ? 'selected' : '' ?>>Percentage (%)</option>
                                 <option value="fixed"      <?= $coupon['discount_type'] === 'fixed'      ? 'selected' : '' ?>>Fixed Amount (₹)</option>
+                                <option value="bogo"       <?= $coupon['discount_type'] === 'bogo'       ? 'selected' : '' ?>>Buy X Get Y (BOGO)</option>
+                                <option value="addon"      <?= $coupon['discount_type'] === 'addon'      ? 'selected' : '' ?>>Free Add-on / Freebie</option>
                             </select>
                         </div>
-                        <div class="col-sm-6">
+                        <div class="col-sm-6 <?= in_array($coupon['discount_type'], ['bogo','addon']) ? 'd-none' : '' ?>" id="discountValueCol">
                             <label class="form-label" id="discountValueLabel">
                                 <?= $coupon['discount_type'] === 'percentage' ? 'Discount Value (%)' : 'Discount Value (₹)' ?>
                                 <span class="text-danger">*</span>
                             </label>
                             <div class="input-group">
-                                <input type="number" name="discount_value" class="form-control" min="0.01" step="0.01" required
+                                <input type="number" name="discount_value" id="discount_value" class="form-control" min="0.01" step="0.01"
                                        value="<?= escape($coupon['discount_value']) ?>">
                                 <span class="input-group-text" id="discountSymbol">
                                     <?= $coupon['discount_type'] === 'percentage' ? '%' : '₹' ?>
                                 </span>
                             </div>
+                        </div>
+                        <!-- BOGO fields -->
+                        <div class="col-sm-6 <?= $coupon['discount_type'] !== 'bogo' ? 'd-none' : '' ?>" id="bogoRow">
+                            <label class="form-label">Buy Quantity <span class="text-danger">*</span></label>
+                            <input type="number" name="bogo_buy_quantity" class="form-control" min="1"
+                                   value="<?= escape($coupon['bogo_buy_quantity'] ?? '') ?>" placeholder="e.g. 1">
+                        </div>
+                        <div class="col-sm-6 <?= $coupon['discount_type'] !== 'bogo' ? 'd-none' : '' ?>" id="bogoGetRow">
+                            <label class="form-label">Get Quantity (Free) <span class="text-danger">*</span></label>
+                            <input type="number" name="bogo_get_quantity" class="form-control" min="1"
+                                   value="<?= escape($coupon['bogo_get_quantity'] ?? '') ?>" placeholder="e.g. 1">
+                        </div>
+                        <!-- Addon field -->
+                        <div class="col-12 <?= $coupon['discount_type'] !== 'addon' ? 'd-none' : '' ?>" id="addonRow">
+                            <label class="form-label">Free Item Description <span class="text-danger">*</span></label>
+                            <input type="text" name="addon_item_description" class="form-control" maxlength="255"
+                                   value="<?= escape($coupon['addon_item_description'] ?? '') ?>" placeholder="e.g. Free garlic bread">
                         </div>
                         <div class="col-sm-6">
                             <label class="form-label">Min Purchase Amount (₹)</label>
@@ -125,10 +144,93 @@
                     <select name="tags[]" class="form-select select2-multiple" multiple data-placeholder="Select tags…">
                         <?php foreach ($tags as $tag): ?>
                             <option value="<?= $tag['id'] ?>" <?= in_array($tag['id'], $selectedTags) ? 'selected' : '' ?>>
-                                <?= escape($tag['name']) ?>
+                                <?= escape($tag['tag_name']) ?>
                             </option>
                         <?php endforeach; ?>
                     </select>
+                </div>
+            </div>
+
+            <!-- Categories & Sub-categories (Issue 9a) -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header fw-semibold"><i class="fas fa-layer-group me-2 text-primary"></i>Category Targeting</div>
+                <div class="card-body">
+                    <label class="form-label">Categories</label>
+                    <select name="category_ids[]" id="couponCategories" class="form-select select2-multiple" multiple data-placeholder="All categories…">
+                        <?php foreach ($categories as $cat): ?>
+                            <option value="<?= $cat['id'] ?>" <?= in_array($cat['id'], $selectedCategoryIds ?? []) ? 'selected' : '' ?>>
+                                <?= escape($cat['name']) ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                    <div class="form-text">Leave blank to apply to all categories.</div>
+                    <div class="mt-3">
+                        <label class="form-label">Sub-categories</label>
+                        <select name="sub_category_ids[]" id="couponSubCategories" class="form-select select2-multiple" multiple data-placeholder="Select categories first…">
+                            <?php foreach ($subCategories ?? [] as $sc): ?>
+                                <option value="<?= $sc['id'] ?>" <?= in_array($sc['id'], $selectedSubCategoryIds ?? []) ? 'selected' : '' ?>>
+                                    <?= escape($sc['name']) ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                        <div class="form-text">Optional. Automatically loaded when categories are changed.</div>
+                    </div>
+                </div>
+            </div>
+
+                    <!-- Location Targeting (area/location level) -->
+                    <div class="card shadow-sm mb-4">
+                        <div class="card-header fw-semibold"><i class="fas fa-map-pin me-2 text-success"></i>Location Targeting <span class="badge bg-info text-dark ms-1">Optional</span></div>
+                        <div class="card-body">
+                            <div class="form-text mb-2">Restrict to specific areas/locations. Leave empty to use the store’s city automatically.</div>
+                            <div id="locationRows">
+                                <?php foreach ($existingLocations ?? [] as $loc): ?>
+                                <div class="row g-2 align-items-center mb-2 location-row" data-area-id="<?= (int)($loc['area_id'] ?? 0) ?>" data-location-id="<?= (int)($loc['location_id'] ?? 0) ?>">
+                                    <div class="col-4">
+                                        <select name="location_city_ids[]" class="form-select form-select-sm loc-city" onchange="rowLoadAreas(this)">
+                                            <option value="">City…</option>
+                                            <?php foreach ($cities as $city): ?>
+                                            <option value="<?= $city['id'] ?>" <?= $loc['city_id'] == $city['id'] ? 'selected' : '' ?>><?= escape($city['city_name']) ?></option>
+                                            <?php endforeach; ?>
+                                        </select>
+                                    </div>
+                                    <div class="col-3">
+                                        <select name="location_area_ids[]" class="form-select form-select-sm loc-area" onchange="rowLoadLocations(this)">
+                                            <option value="">Any area</option>
+                                            <?php if ($loc['area_id']): ?><option value="<?= $loc['area_id'] ?>" selected><?= escape($loc['area_name'] ?? '') ?></option><?php endif; ?>
+                                        </select>
+                                    </div>
+                                    <div class="col-3">
+                                        <select name="location_location_ids[]" class="form-select form-select-sm loc-location">
+                                            <option value="">Any loc</option>
+                                            <?php if ($loc['location_id']): ?><option value="<?= $loc['location_id'] ?>" selected><?= escape($loc['location_name'] ?? '') ?></option><?php endif; ?>
+                                        </select>
+                                    </div>
+                                    <div class="col-2">
+                                        <button type="button" class="btn btn-outline-danger btn-sm w-100" onclick="this.closest('.location-row').remove()"><i class="fas fa-times"></i></button>
+                                    </div>
+                                </div>
+                                <?php endforeach; ?>
+                            </div>
+                            <button type="button" class="btn btn-outline-secondary btn-sm mt-2" onclick="addLocationRow()">
+                                <i class="fas fa-plus me-1"></i> Add Location Row
+                            </button>
+                        </div>
+                    </div>
+
+            <!-- City Targeting (Admin only, Issue 9b) -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header fw-semibold"><i class="fas fa-map-marker-alt me-2 text-danger"></i>City Targeting <span class="badge bg-warning text-dark ms-1">Admin Only</span></div>
+                <div class="card-body">
+                    <label class="form-label">Additional Cities</label>
+                    <select name="city_ids[]" class="form-select select2-multiple" multiple data-placeholder="Store's city only (default)…">
+                        <?php foreach ($cities as $city): ?>
+                            <option value="<?= $city['id'] ?>" <?= in_array($city['id'], $selectedCityIds ?? []) ? 'selected' : '' ?>>
+                                <?= escape($city['city_name']) ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                    <div class="form-text">Leave blank to restrict to the store's registered city.</div>
                 </div>
             </div>
         </div>
@@ -143,7 +245,7 @@
                         <label class="form-label">Merchant <span class="text-danger">*</span></label>
                         <select name="merchant_id" id="merchant_id" class="form-select select2-single"
                                 data-placeholder="Select merchant…" required onchange="loadStores(this.value)">
-                            <option value="">— Select Merchant —</option>
+                            <option value="">&mdash; Select Merchant &mdash;</option>
                             <?php foreach ($merchants as $m): ?>
                                 <option value="<?= $m['id'] ?>" <?= $coupon['merchant_id'] == $m['id'] ? 'selected' : '' ?>>
                                     <?= escape($m['business_name']) ?>
@@ -153,14 +255,15 @@
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Store</label>
-                        <select name="store_id" id="store_id" class="form-select select2-single" data-placeholder="All Stores">
-                            <option value="">All Stores</option>
+                        <select name="store_ids[]" id="store_id" class="form-select select2-multiple" multiple
+                                data-placeholder="All Stores (leave blank)">
                             <?php foreach ($stores as $s): ?>
-                                <option value="<?= $s['id'] ?>" <?= $coupon['store_id'] == $s['id'] ? 'selected' : '' ?>>
-                                    <?= escape($s['name']) ?>
+                                <option value="<?= $s['id'] ?>" <?= in_array($s['id'], $selectedStoreIds ?? []) ? 'selected' : '' ?>>
+                                    <?= escape($s['store_name']) ?>
                                 </option>
                             <?php endforeach; ?>
                         </select>
+                        <div class="form-text">Leave blank to apply to all merchant stores.</div>
                     </div>
                 </div>
             </div>
@@ -193,6 +296,33 @@
                 </div>
             </div>
 
+            <!-- Banner Image -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header fw-semibold"><i class="fas fa-image me-2 text-info"></i>Banner Image</div>
+                <div class="card-body">
+                    <input type="hidden" name="banner_image_path" id="banner_image_path" value="">
+                    <?php if (!empty($coupon['banner_image'])): ?>
+                    <div class="mb-2" id="currentBannerWrap">
+                        <p class="text-muted small mb-1">Current image:</p>
+                        <img src="<?= imageUrl($coupon['banner_image']) ?>"
+                             alt="Current banner" class="img-fluid rounded" style="max-height:160px"
+                             onerror="this.src='<?= imageUrl('') ?>'">
+                    </div>
+                    <?php endif; ?>
+                    <input type="file" name="banner_image" id="banner_image" class="form-control"
+                           accept="image/jpeg,image/png,image/gif,image/webp">
+                    <div class="form-text">Leave blank to keep current image. JPG, PNG, GIF or WebP, max 2 MB. Image uploads immediately for preview.</div>
+                    <div id="bannerUploadStatus" class="mt-2 d-none">
+                        <div id="bannerUploadSpinner" class="text-muted small d-none"><i class="fas fa-spinner fa-spin me-1"></i>Uploading…</div>
+                        <div id="bannerUploadError" class="alert alert-danger py-1 px-2 small d-none"></div>
+                    </div>
+                    <div id="bannerPreview" class="mt-2 d-none">
+                        <img id="bannerPreviewImg" src="" alt="New image preview" class="img-fluid rounded" style="max-height:160px">
+                        <div id="bannerReadyMsg" class="small text-muted mt-1 d-none"><i class="fas fa-check-circle text-success me-1"></i>New image ready to save</div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Metadata -->
             <div class="card shadow-sm mb-4 text-muted small">
                 <div class="card-body">
@@ -221,35 +351,112 @@ function generateCode() {
     document.getElementById('coupon_code').value = code;
 }
 
-function updateDiscountLabels() {
-    const type = document.getElementById('discountType').value;
-    const label  = document.getElementById('discountValueLabel');
-    const symbol = document.getElementById('discountSymbol');
+function updateDiscountFields() {
+    const type     = document.getElementById('discountType').value;
+    const valCol   = document.getElementById('discountValueCol');
+    const valInput = document.getElementById('discount_value');
+    const label    = document.getElementById('discountValueLabel');
+    const symbol   = document.getElementById('discountSymbol');
+    const bogoRow  = document.getElementById('bogoRow');
+    const bogoGet  = document.getElementById('bogoGetRow');
+    const addonRow = document.getElementById('addonRow');
+
+    valCol.classList.toggle('d-none',  type === 'bogo' || type === 'addon');
+    bogoRow.classList.toggle('d-none', type !== 'bogo');
+    bogoGet.classList.toggle('d-none', type !== 'bogo');
+    addonRow.classList.toggle('d-none', type !== 'addon');
+
+    valInput.required = (type === 'percentage' || type === 'fixed');
     if (type === 'percentage') {
         label.innerHTML  = 'Discount Value (%) <span class="text-danger">*</span>';
         symbol.textContent = '%';
-    } else {
+    } else if (type === 'fixed') {
         label.innerHTML  = 'Discount Value (₹) <span class="text-danger">*</span>';
         symbol.textContent = '₹';
     }
 }
 
-function loadStores(merchantId, selectedStoreId) {
+function loadCouponSubCategories(preselectIds) {
+    const catSel = document.getElementById('couponCategories');
+    const subSel = document.getElementById('couponSubCategories');
+    const catIds = Array.from(catSel.selectedOptions).map(o => o.value).filter(Boolean);
+    subSel.innerHTML = '<option value="">Loading…</option>';
+    if (!catIds.length) { subSel.innerHTML = '<option value="">Select categories first…</option>'; if (window.$) $(subSel).trigger('change'); return; }
+    const qs = catIds.map(id => `category_id[]=${encodeURIComponent(id)}`).join('&');
+    fetch(`<?= BASE_URL ?>master-data/sub-categories-json?${qs}`)
+        .then(r => r.json())
+        .then(data => {
+            subSel.innerHTML = '';
+            const pre = Array.isArray(preselectIds) ? preselectIds.map(Number) : [];
+            const seen = new Set();
+            data.forEach(s => {
+                if (seen.has(s.name)) return;
+                seen.add(s.name);
+                const opt = document.createElement('option');
+                opt.value = s.id;
+                opt.textContent = s.name;
+                if (pre.includes(parseInt(s.id))) opt.selected = true;
+                subSel.appendChild(opt);
+            });
+            if (window.$) $(subSel).trigger('change');
+        })
+        .catch(() => { subSel.innerHTML = '<option value="">Error loading sub-categories</option>'; });
+}
+
+function loadStores(merchantId) {
     const sel = document.getElementById('store_id');
-    sel.innerHTML = '<option value="">All Stores</option>';
-    if (!merchantId) return;
-    fetch(`<?= BASE_URL ?>/coupons/stores-json?merchant_id=${merchantId}`)
+    sel.innerHTML = '';
+    if (!merchantId) { if (window.$) $(sel).trigger('change'); return; }
+    fetch(`<?= BASE_URL ?>coupons/stores-json?merchant_id=${merchantId}`)
         .then(r => r.json())
         .then(stores => {
             stores.forEach(s => {
                 const opt = document.createElement('option');
                 opt.value = s.id;
-                opt.textContent = s.name;
-                if (selectedStoreId && s.id == selectedStoreId) opt.selected = true;
+                opt.textContent = s.store_name;
                 sel.appendChild(opt);
             });
             if (window.$) $(sel).trigger('change');
         });
+}
+
+function addLocationRow() {
+    const container = document.getElementById('locationRows');
+    const row = document.createElement('div');
+    row.className = 'row g-2 align-items-center mb-2 location-row';
+    row.innerHTML = `
+        <div class="col-4"><select name="location_city_ids[]" class="form-select form-select-sm loc-city" onchange="rowLoadAreas(this)">
+            <option value="">City…</option>
+            <?php foreach ($cities as $city): ?><option value="<?= $city['id'] ?>"><?= escape($city['city_name']) ?></option><?php endforeach; ?>
+        </select></div>
+        <div class="col-3"><select name="location_area_ids[]" class="form-select form-select-sm loc-area" onchange="rowLoadLocations(this)">
+            <option value="">Any area</option>
+        </select></div>
+        <div class="col-3"><select name="location_location_ids[]" class="form-select form-select-sm loc-location">
+            <option value="">Any loc</option>
+        </select></div>
+        <div class="col-2"><button type="button" class="btn btn-outline-danger btn-sm w-100" onclick="this.closest('.location-row').remove()"><i class="fas fa-times"></i></button></div>`;
+    container.appendChild(row);
+}
+function rowLoadAreas(citySelect) {
+    const row = citySelect.closest('.location-row');
+    const areaSel = row.querySelector('.loc-area');
+    const locSel  = row.querySelector('.loc-location');
+    areaSel.innerHTML = '<option value="">Any area</option>';
+    locSel.innerHTML  = '<option value="">Any loc</option>';
+    if (!citySelect.value) return;
+    fetch(`<?= BASE_URL ?>master-data/areas-json?city_id=${citySelect.value}`)
+        .then(r => r.json())
+        .then(data => data.forEach(a => areaSel.insertAdjacentHTML('beforeend', `<option value="${a.id}">${a.area_name}</option>`)));
+}
+function rowLoadLocations(areaSelect) {
+    const row = areaSelect.closest('.location-row');
+    const locSel = row.querySelector('.loc-location');
+    locSel.innerHTML = '<option value="">Any loc</option>';
+    if (!areaSelect.value) return;
+    fetch(`<?= BASE_URL ?>master-data/locations-json?area_id=${areaSelect.value}`)
+        .then(r => r.json())
+        .then(data => data.forEach(l => locSel.insertAdjacentHTML('beforeend', `<option value="${l.id}">${l.location_name}</option>`)));
 }
 
 document.addEventListener('DOMContentLoaded', function () {
@@ -264,6 +471,73 @@ document.addEventListener('DOMContentLoaded', function () {
         const pos = this.selectionStart;
         this.value = this.value.toUpperCase();
         this.setSelectionRange(pos, pos);
+    });
+
+    // Pre-populate sub-categories for the pre-selected categories on edit load
+    var PRESELECTED_SUB_CAT_IDS = <?= json_encode(array_values(array_map('intval', $selectedSubCategoryIds ?? []))) ?>;
+    if (document.getElementById('couponCategories').selectedOptions.length > 0) {
+        loadCouponSubCategories(PRESELECTED_SUB_CAT_IDS);
+    }
+    $('#couponCategories').on('change', function() { loadCouponSubCategories([]); });
+
+    // Banner image: show blob preview immediately, upload in background to get saved path
+    document.getElementById('banner_image').addEventListener('change', function () {
+        const file       = this.files && this.files[0];
+        const preview    = document.getElementById('bannerPreview');
+        const previewImg = document.getElementById('bannerPreviewImg');
+        const pathInput  = document.getElementById('banner_image_path');
+        const spinner    = document.getElementById('bannerUploadSpinner');
+        const errDiv     = document.getElementById('bannerUploadError');
+        const statusWrap = document.getElementById('bannerUploadStatus');
+        const readyMsg   = document.getElementById('bannerReadyMsg');
+
+        // Reset state
+        preview.classList.add('d-none');
+        previewImg.src = '';
+        pathInput.value = '';
+        spinner.classList.add('d-none');
+        errDiv.classList.add('d-none');
+        statusWrap.classList.add('d-none');
+        readyMsg.classList.add('d-none');
+
+        if (!file) return;
+
+        // Show local blob preview immediately — no network needed
+        previewImg.src = URL.createObjectURL(file);
+        preview.classList.remove('d-none');
+
+        // Upload in background to store on the API server
+        const csrf = document.querySelector('input[name="csrf_token"]').value;
+        const fd   = new FormData();
+        fd.append('banner_image', file);
+        fd.append('csrf_token', csrf);
+
+        statusWrap.classList.remove('d-none');
+        spinner.classList.remove('d-none');
+        fetch(`<?= BASE_URL ?>coupons/upload-banner`, { method: 'POST', body: fd })
+            .then(r => r.json())
+            .then(data => {
+                spinner.classList.add('d-none');
+                statusWrap.classList.add('d-none');
+                if (data.success) {
+                    pathInput.value = data.path;
+                    readyMsg.classList.remove('d-none');
+                } else {
+                    preview.classList.add('d-none');
+                    previewImg.src = '';
+                    errDiv.textContent = data.error || 'Upload failed.';
+                    errDiv.classList.remove('d-none');
+                    statusWrap.classList.remove('d-none');
+                }
+            })
+            .catch(() => {
+                spinner.classList.add('d-none');
+                preview.classList.add('d-none');
+                previewImg.src = '';
+                errDiv.textContent = 'Upload failed. Please try again.';
+                errDiv.classList.remove('d-none');
+                statusWrap.classList.remove('d-none');
+            });
     });
 });
 </script>

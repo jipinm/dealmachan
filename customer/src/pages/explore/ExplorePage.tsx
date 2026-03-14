@@ -4,12 +4,12 @@ import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
 import { Search, SlidersHorizontal, X, Loader2 } from 'lucide-react'
 import { publicApi } from '@/api/endpoints/public'
 import { useLocationStore } from '@/store/locationStore'
-import MerchantCard from '@/components/ui/MerchantCard'
+import StoreCard from '@/components/ui/StoreCard'
 import CouponCard from '@/components/ui/CouponCard'
 import SkeletonCard, { SkeletonRow } from '@/components/ui/SkeletonCard'
 import { useInfiniteScroll } from '@/lib/useInfiniteScroll'
 
-type TabType = 'merchants' | 'coupons'
+type TabType = 'stores' | 'coupons'
 type DiscountFilter = 'all' | 'percentage' | 'flat' | 'free_item'
 
 // SORT_OPTIONS reserved for future use
@@ -18,10 +18,10 @@ export default function ExplorePage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const { cityId, areaId } = useLocationStore()
 
-  const [tab, setTab]     = useState<TabType>((searchParams.get('tab') as TabType) ?? 'merchants')
-  const [q, setQ]         = useState(searchParams.get('q') ?? '')
-  const [input, setInput] = useState(q)
-  const [tagId, setTagId] = useState<number | null>(searchParams.get('tag') ? Number(searchParams.get('tag')) : null)
+  const [tab, setTab]         = useState<TabType>((searchParams.get('tab') as TabType) ?? 'stores')
+  const [q, setQ]             = useState(searchParams.get('q') ?? '')
+  const [input, setInput]     = useState(q)
+  const [categoryId, setCategoryId] = useState<number | null>(searchParams.get('category') ? Number(searchParams.get('category')) : null)
   const [discountFilter, setDiscountFilter] = useState<DiscountFilter>('all')
   const [showFilters, setShowFilters] = useState(false)
 
@@ -45,24 +45,24 @@ export default function ExplorePage() {
     setSearchParams((p) => { p.delete('q'); return p })
   }
 
-  // ── Tags ──────────────────────────────────────────────────────────────────
-  const { data: tagsData } = useQuery({
-    queryKey: ['tags'],
-    queryFn:  () => publicApi.getTags().then((r) => r.data.data ?? []),
+  // ── Categories ────────────────────────────────────────────────────────────
+  const { data: categoriesData } = useQuery({
+    queryKey: ['categories'],
+    queryFn:  () => publicApi.getCategories().then((r) => r.data.data ?? []),
     staleTime: Infinity,
   })
 
-  // ── Merchants ─────────────────────────────────────────────────────────────
-  const merchantQuery = useInfiniteQuery({
-    queryKey: ['explore-merchants', q, cityId, areaId, tagId],
+  // ── Stores ────────────────────────────────────────────────────────────────
+  const storeQuery = useInfiniteQuery({
+    queryKey: ['explore-stores', q, cityId, areaId, categoryId],
     queryFn: ({ pageParam = 1 }) =>
-      publicApi.getMerchants({
-        q:        q || undefined,
-        city_id:  cityId   ?? undefined,
-        area_id:  areaId   ?? undefined,
-        tag_id:   tagId    ?? undefined,
-        page:     pageParam as number,
-        per_page: 12,
+      publicApi.getStores({
+        q:           q || undefined,
+        city_id:     cityId      ?? undefined,
+        area_id:     areaId      ?? undefined,
+        category_id: categoryId  ?? undefined,
+        page:        pageParam as number,
+        per_page:    12,
       }).then((r) => r.data),
     initialPageParam: 1,
     getNextPageParam: (lastPage: any, allPages) => {
@@ -70,17 +70,16 @@ export default function ExplorePage() {
       return allPages.length < total ? allPages.length + 1 : undefined
     },
     staleTime: 60_000,
-    enabled: tab === 'merchants',
+    enabled: tab === 'stores',
   })
 
-  // ── Coupons ───────────────────────────────────────────────────────────────
+  // ── Coupons ────────────────────────────────────────────────────────────
   const couponQuery = useInfiniteQuery({
-    queryKey: ['explore-coupons', q, cityId, tagId, discountFilter],
+    queryKey: ['explore-coupons', q, cityId, categoryId, discountFilter],
     queryFn: ({ pageParam = 1 }) =>
       publicApi.getCoupons({
         q:             q || undefined,
         city_id:       cityId ?? undefined,
-        tag_id:        tagId  ?? undefined,
         discount_type: discountFilter !== 'all' ? discountFilter : undefined,
         page:          pageParam as number,
         per_page: 15,
@@ -94,14 +93,14 @@ export default function ExplorePage() {
     enabled: tab === 'coupons',
   })
 
-  const merchants       = merchantQuery.data?.pages.flatMap((p: any) => p?.data?.data ?? []) ?? []
+  const stores          = storeQuery.data?.pages.flatMap((p: any) => p?.data?.data ?? []) ?? []
   const coupons         = couponQuery.data?.pages.flatMap((p: any) => p?.data?.data ?? []) ?? []
-  const isLoadingM      = merchantQuery.isLoading
+  const isLoadingS      = storeQuery.isLoading
   const isLoadingC      = couponQuery.isLoading
 
-  const merchantSentinelRef = useInfiniteScroll(
-    () => { if (merchantQuery.hasNextPage && !merchantQuery.isFetchingNextPage) merchantQuery.fetchNextPage() },
-    !!merchantQuery.hasNextPage && !merchantQuery.isFetchingNextPage && tab === 'merchants',
+  const storeSentinelRef = useInfiniteScroll(
+    () => { if (storeQuery.hasNextPage && !storeQuery.isFetchingNextPage) storeQuery.fetchNextPage() },
+    !!storeQuery.hasNextPage && !storeQuery.isFetchingNextPage && tab === 'stores',
   )
   const couponSentinelRef = useInfiniteScroll(
     () => { if (couponQuery.hasNextPage && !couponQuery.isFetchingNextPage) couponQuery.fetchNextPage() },
@@ -139,7 +138,7 @@ export default function ExplorePage() {
           type="button"
           onClick={() => setShowFilters((v) => !v)}
           className={`px-3 rounded-xl border transition-colors flex items-center gap-1 text-sm font-medium ${
-            showFilters || tagId ? 'bg-brand-600 text-white border-brand-600' : 'bg-white border-gray-200 text-gray-600'
+            showFilters || categoryId ? 'bg-brand-600 text-white border-brand-600' : 'bg-white border-gray-200 text-gray-600'
           }`}
         >
           <SlidersHorizontal size={15} />
@@ -149,26 +148,26 @@ export default function ExplorePage() {
       {/* ── Filter panel ────────────────────────────────────────────────── */}
       {showFilters && (
         <div className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm space-y-3">
-          {/* Tags */}
-          {tagsData && tagsData.length > 0 && (
+          {/* Categories */}
+          {categoriesData && categoriesData.length > 0 && (
             <div>
               <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Category</p>
               <div className="flex flex-wrap gap-1.5">
                 <button
-                  onClick={() => { setTagId(null) }}
+                  onClick={() => { setCategoryId(null) }}
                   className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
-                    tagId === null ? 'bg-brand-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    categoryId === null ? 'bg-brand-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                   }`}
                 >All</button>
-                {(tagsData as any[]).map((t) => (
+                {(categoriesData as any[]).map((c) => (
                   <button
-                    key={t.id}
-                    onClick={() => { setTagId(t.id) }}
+                    key={c.id}
+                    onClick={() => { setCategoryId(c.id) }}
                     className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
-                      tagId === t.id ? 'bg-brand-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      categoryId === c.id ? 'bg-brand-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                     }`}
                   >
-                    {t.icon && <span className="mr-1">{t.icon}</span>}{t.tag_name}
+                    {c.icon && <span className="mr-1">{c.icon}</span>}{c.name}
                   </button>
                 ))}
               </div>
@@ -199,7 +198,7 @@ export default function ExplorePage() {
 
       {/* ── Tabs ────────────────────────────────────────────────────────── */}
       <div className="flex bg-gray-100 rounded-xl p-1 gap-1">
-        {(['merchants', 'coupons'] as TabType[]).map((t) => (
+        {(['stores', 'coupons'] as TabType[]).map((t) => (
           <button
             key={t}
             onClick={() => switchTab(t)}
@@ -220,35 +219,35 @@ export default function ExplorePage() {
         </div>
       )}
 
-      {/* ── Merchants Tab ─────────────────────────────────────────────────── */}
-      {tab === 'merchants' && (
+      {/* ── Stores Tab ─────────────────────────────────────────────────────── */}
+      {tab === 'stores' && (
         <>
-          {isLoadingM ? (
+          {isLoadingS ? (
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />)}
             </div>
-          ) : merchants.length > 0 ? (
+          ) : stores.length > 0 ? (
             <>
               <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {merchants.map((m: any) => (
-                  <MerchantCard key={m.id} merchant={m} showFavourite />
+                {stores.map((s: any) => (
+                  <StoreCard key={s.id} store={s} />
                 ))}
               </div>
               {/* Infinite scroll sentinel */}
-              <div ref={merchantSentinelRef} className="h-4" />
-              {merchantQuery.isFetchingNextPage && (
+              <div ref={storeSentinelRef} className="h-4" />
+              {storeQuery.isFetchingNextPage && (
                 <div className="flex justify-center py-4">
                   <Loader2 size={20} className="animate-spin text-brand-500" />
                 </div>
               )}
-              {!merchantQuery.hasNextPage && merchants.length > 0 && (
-                <p className="text-center text-xs text-slate-400 py-4">All merchants loaded</p>
+              {!storeQuery.hasNextPage && stores.length > 0 && (
+                <p className="text-center text-xs text-slate-400 py-4">All stores loaded</p>
               )}
             </>
           ) : (
             <div className="text-center py-12">
               <p className="text-4xl mb-3">🔍</p>
-              <p className="text-gray-500 text-sm">No merchants found{q ? ` for "${q}"` : ''}.</p>
+              <p className="text-gray-500 text-sm">No stores found{q ? ` for "${q}"` : ''}.</p>
             </div>
           )}
         </>

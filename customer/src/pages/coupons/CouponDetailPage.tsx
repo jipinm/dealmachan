@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { useQuery, useMutation } from '@tanstack/react-query'
-import { Bookmark, BookmarkCheck, ChevronLeft, Clock, Copy, Share2, Store, Loader2 } from 'lucide-react'
+import { Bookmark, BookmarkCheck, ChevronLeft, Clock, Copy, Share2, Store, Loader2, MapPin, Phone } from 'lucide-react'
 import { publicApi } from '@/api/endpoints/public'
 import { couponsApi } from '@/api/endpoints/coupons'
 import { useAuthStore } from '@/store/authStore'
@@ -246,14 +246,28 @@ export default function CouponDetailPage() {
           {stores.length > 0 && (
             <div className="card p-4">
               <h3 className="font-semibold text-gray-900 text-sm mb-2 flex items-center gap-1.5">
-                <Store size={14} className="text-brand-400" /> Valid Stores
+                <Store size={14} className="text-brand-400" /> Where to Use
               </h3>
-              <div className="space-y-2">
+              <div className="space-y-3 divide-y divide-gray-100">
                 {stores.map((s: any) => (
-                  <div key={s.id} className="text-xs text-gray-500">
-                    <p className="font-medium text-gray-700">{s.name}</p>
-                    {s.address && <p>{s.address}{s.area_name ? `, ${s.area_name}` : ''}</p>}
-                  </div>
+                  <Link key={s.id} to={`/stores/${s.id}`} className="block pt-2 first:pt-0 hover:bg-gray-50 rounded-lg px-1 transition-colors">
+                    <p className="font-medium text-gray-700 text-xs">{s.store_name}</p>
+                    {(s.address || s.area_name) && (
+                      <p className="text-[11px] text-gray-400 flex items-center gap-1 mt-0.5">
+                        <MapPin size={9} />
+                        {[s.address, s.area_name, s.city_name].filter(Boolean).join(', ')}
+                      </p>
+                    )}
+                    {s.phone && (
+                      <a
+                        href={`tel:${s.phone}`}
+                        onClick={(e) => e.stopPropagation()}
+                        className="text-[11px] text-brand-600 flex items-center gap-1 mt-0.5 hover:underline"
+                      >
+                        <Phone size={9} /> {s.phone}
+                      </a>
+                    )}
+                  </Link>
                 ))}
               </div>
             </div>

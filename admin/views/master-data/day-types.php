@@ -29,7 +29,7 @@
                             <tr>
                                 <td class="text-muted small"><?= $i + 1 ?></td>
                                 <td class="fw-semibold"><?= escape($dt['day_type_name']) ?></td>
-                                <td class="text-muted small"><?= $dt['description'] ? escape($dt['description']) : '<span class="text-muted fst-italic">—</span>' ?></td>
+                                <td class="text-muted small"><?= $dt['description'] ? escape($dt['description']) : '<span class="text-muted fst-italic">&mdash;</span>' ?></td>
                                 <td class="text-center">
                                     <button class="btn btn-sm btn-outline-primary me-1" onclick="openEditModal(<?= htmlspecialchars(json_encode($dt), ENT_QUOTES) ?>)"><i class="fas fa-edit"></i></button>
                                     <button class="btn btn-sm btn-outline-danger" onclick="confirmDelete(<?= $dt['id'] ?>, '<?= escape($dt['day_type_name']) ?>')"><i class="fas fa-trash"></i></button>

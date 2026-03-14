@@ -1,9 +1,11 @@
+import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { Plus, MapPin, Ticket, Store, Image, CheckCircle, XCircle, ChevronLeft } from 'lucide-react'
 import { storeApi, type Store as StoreType } from '@/api/endpoints/stores'
 import { SkeletonCard } from '@/components/ui/PageLoader'
 import { getImageUrl } from '@/lib/imageUrl'
+import { useAuthStore } from '@/store/authStore'
 
 function StoreBadge({ status }: { status: string }) {
   return status === 'active'
@@ -46,6 +48,14 @@ function StoreCard({ store, onClick }: { store: StoreType; onClick: () => void }
 
 export default function StoreListPage() {
   const navigate = useNavigate()
+  const isStoreAdmin  = useAuthStore(s => s.isStoreAdmin())
+  const scopedStoreId = useAuthStore(s => s.scopedStoreId())
+
+  useEffect(() => {
+    if (isStoreAdmin && scopedStoreId) {
+      navigate(`/stores/${scopedStoreId}`, { replace: true })
+    }
+  }, [isStoreAdmin, scopedStoreId, navigate])
 
   const { data, isLoading } = useQuery({
     queryKey: ['stores'],
@@ -81,10 +91,12 @@ export default function StoreListPage() {
             </div>
             <p className="font-semibold text-gray-500">No stores yet</p>
             <p className="text-xs text-gray-400">Add your first store to start managing coupons</p>
-            <button
-              onClick={() => navigate('/stores/new')}
-              className="mt-2 px-5 py-2.5 gradient-brand text-white text-sm font-semibold rounded-xl"
-            >Add Store</button>
+            {!isStoreAdmin && (
+              <button
+                onClick={() => navigate('/stores/new')}
+                className="mt-2 px-5 py-2.5 gradient-brand text-white text-sm font-semibold rounded-xl"
+              >Add Store</button>
+            )}
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-3">
@@ -95,13 +107,15 @@ export default function StoreListPage() {
         )}
       </div>
 
-      {/* FAB */}
-      <button
-        onClick={() => navigate('/stores/new')}
-        className="fixed bottom-24 right-5 w-14 h-14 gradient-brand rounded-full shadow-lg flex items-center justify-center z-20 active:scale-95 transition-transform"
-      >
-        <Plus size={24} className="text-white" />
-      </button>
+      {/* FAB — only for full merchant accounts */}
+      {!isStoreAdmin && (
+        <button
+          onClick={() => navigate('/stores/new')}
+          className="fixed bottom-24 right-5 w-14 h-14 gradient-brand rounded-full shadow-lg flex items-center justify-center z-20 active:scale-95 transition-transform"
+        >
+          <Plus size={24} className="text-white" />
+        </button>
+      )}
     </div>
   )
 }

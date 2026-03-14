@@ -53,7 +53,7 @@ $statusColors = ['new'=>'danger','read'=>'warning','responded'=>'success'];
                         <td class="text-muted small"><?= $e['id'] ?></td>
                         <td><?= escape($e['name']) ?></td>
                         <td><?= escape(mb_substr($e['subject'] ?? $e['message'], 0, 60)) ?>…</td>
-                        <td><?= escape($e['mobile'] ?? '—') ?></td>
+                        <td><?= escape($e['mobile'] ?? '&mdash;') ?></td>
                         <td class="text-center">
                             <span class="badge bg-<?= $statusColors[$e['status']] ?>">
                                 <?= ucfirst($e['status']) ?>

@@ -97,7 +97,7 @@ export default function FlashDealDetailPage() {
         {/* Banner photo — behind everything */}
         {deal.banner_image && (
           <img
-            src={deal.banner_image}
+            src={getImageUrl(deal.banner_image)}
             alt=""
             aria-hidden
             className="absolute inset-0 w-full h-full object-cover"

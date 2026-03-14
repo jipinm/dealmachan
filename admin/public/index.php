@@ -1,4 +1,7 @@
 <?php
+// Force UTF-8 HTTP content-type header before ANY output
+header('Content-Type: text/html; charset=utf-8');
+
 // Define basic paths first (before loading config files)
 $rootPath = dirname(__DIR__);
 $configPath = $rootPath . '/config';

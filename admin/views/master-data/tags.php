@@ -46,7 +46,7 @@
                         <td class="text-muted small"><?= $i + 1 ?></td>
                         <td class="fw-semibold"><?= escape($tag['tag_name']) ?></td>
                         <td><span class="badge <?= $catBadge ?>"><?= ucfirst($tag['tag_category']) ?></span></td>
-                        <td><?= $tag['parent_name'] ? escape($tag['parent_name']) : '<span class="text-muted">—</span>' ?></td>
+                        <td><?= $tag['parent_name'] ? escape($tag['parent_name']) : '<span class="text-muted">&mdash;</span>' ?></td>
                         <td class="text-center"><span class="badge bg-secondary rounded-pill"><?= $tag['child_count'] ?? 0 ?></span></td>
                         <td class="text-center"><span class="badge bg-success rounded-pill"><?= $tag['merchant_count'] ?? 0 ?></span></td>
                         <td class="text-center"><span class="badge bg-warning rounded-pill"><?= $tag['coupon_count'] ?? 0 ?></span></td>

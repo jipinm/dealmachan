@@ -115,6 +115,13 @@ class AdvertisementsController extends Controller {
         ]);
     }
 
+    // ─── SAVE (form action for both add & edit) ───────────────────────────────
+
+    public function save() {
+        $id = !empty($_POST['id']) ? (int)$_POST['id'] : null;
+        $this->handleSave($id);
+    }
+
     // ─── SHARED SAVE ──────────────────────────────────────────────────────────
 
     private function handleSave($adId) {
@@ -157,7 +164,7 @@ class AdvertisementsController extends Controller {
                 return;
             }
 
-            $uploadDir = PUBLIC_PATH . '/uploads/ads/';
+            $uploadDir = API_ADS_UPLOAD_DIR;
             if (!is_dir($uploadDir)) mkdir($uploadDir, 0755, true);
 
             $newName = 'ad_' . time() . '_' . bin2hex(random_bytes(4)) . '.' . $ext;
@@ -184,14 +191,14 @@ class AdvertisementsController extends Controller {
 
         if ($adId) {
             $this->adModel->updateAdvertisement($adId, $data);
-            logAudit('advertisement_updated', $adId, 'advertisements', $cu['id']);
+            logAudit('advertisement_updated', 'advertisements', $adId);
             $_SESSION['success'] = 'Advertisement updated.';
             $this->redirect("advertisements/detail?id={$adId}");
         } else {
-            $data['created_by_admin_id'] = $cu['id'];
+            $data['created_by_admin_id'] = $cu['admin_id'];
             $newId = $this->adModel->createAdvertisement($data);
             if ($newId) {
-                logAudit('advertisement_created', $newId, 'advertisements', $cu['id']);
+                logAudit('advertisement_created', 'advertisements', $newId);
                 $_SESSION['success'] = 'Advertisement created.';
                 $this->redirect("advertisements/detail?id={$newId}");
             } else {
@@ -208,8 +215,7 @@ class AdvertisementsController extends Controller {
         if (!$id) { $this->redirectWithError('advertisements', 'Invalid ID.'); return; }
 
         $this->adModel->toggleStatus($id);
-        $cu = $this->auth->getCurrentUser();
-        logAudit('advertisement_toggled', $id, 'advertisements', $cu['id']);
+        logAudit('advertisement_toggled', 'advertisements', $id);
         $redirect = trim($_POST['redirect'] ?? 'advertisements');
         $this->redirect($redirect);
     }
@@ -225,8 +231,7 @@ class AdvertisementsController extends Controller {
         if (!$ad) { $this->redirectWithError('advertisements', 'Not found.'); return; }
 
         $this->adModel->deleteAdvertisement($id);
-        $cu = $this->auth->getCurrentUser();
-        logAudit('advertisement_deleted', $id, 'advertisements', $cu['id']);
+        logAudit('advertisement_deleted', 'advertisements', $id);
         $_SESSION['success'] = 'Advertisement deleted.';
         $this->redirect('advertisements');
     }

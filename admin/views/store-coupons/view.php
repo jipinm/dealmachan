@@ -101,11 +101,11 @@ $statusColors = ['active' => 'success', 'inactive' => 'secondary', 'expired' => 
                     </div>
                     <div class="col-sm-6">
                         <div class="text-muted small mb-1">Valid From</div>
-                        <div><?= $storeCoupon['valid_from'] ? formatDateTime($storeCoupon['valid_from']) : '<span class="text-muted">—</span>' ?></div>
+                        <div><?= $storeCoupon['valid_from'] ? formatDateTime($storeCoupon['valid_from']) : '<span class="text-muted">&mdash;</span>' ?></div>
                     </div>
                     <div class="col-sm-6">
                         <div class="text-muted small mb-1">Valid Until</div>
-                        <div><?= $storeCoupon['valid_until'] ? formatDateTime($storeCoupon['valid_until']) : '<span class="text-muted">—</span>' ?></div>
+                        <div><?= $storeCoupon['valid_until'] ? formatDateTime($storeCoupon['valid_until']) : '<span class="text-muted">&mdash;</span>' ?></div>
                     </div>
                 </div>
             </div>
@@ -134,7 +134,7 @@ $statusColors = ['active' => 'success', 'inactive' => 'secondary', 'expired' => 
                     </div>
                     <div class="col-sm-6">
                         <div class="text-muted small mb-1">Gifted At</div>
-                        <div><?= $storeCoupon['gifted_at'] ? formatDateTime($storeCoupon['gifted_at']) : '<span class="text-muted">—</span>' ?></div>
+                        <div><?= $storeCoupon['gifted_at'] ? formatDateTime($storeCoupon['gifted_at']) : '<span class="text-muted">&mdash;</span>' ?></div>
                     </div>
                     <?php endif; ?>
                     <?php if ($storeCoupon['is_redeemed']): ?>
@@ -144,7 +144,7 @@ $statusColors = ['active' => 'success', 'inactive' => 'secondary', 'expired' => 
                     </div>
                     <div class="col-sm-6">
                         <div class="text-muted small mb-1">Redeemed At</div>
-                        <div><?= $storeCoupon['redeemed_at'] ? formatDateTime($storeCoupon['redeemed_at']) : '<span class="text-muted">—</span>' ?></div>
+                        <div><?= $storeCoupon['redeemed_at'] ? formatDateTime($storeCoupon['redeemed_at']) : '<span class="text-muted">&mdash;</span>' ?></div>
                     </div>
                     <?php endif; ?>
                 </div>

@@ -63,7 +63,7 @@ $priorityColors = ['low' => 'info', 'medium' => 'primary', 'high' => 'warning', 
             <?php
             $from = min($totalCount, ($currentPage - 1) * $perPage + 1);
             $to   = min($totalCount, $currentPage * $perPage);
-            echo $totalCount ? "Showing {$from}–{$to} of {$totalCount}" : 'No grievances found';
+            echo $totalCount ? "Showing {$from}&ndash;{$to} of {$totalCount}" : 'No grievances found';
             ?>
         </small>
     </div>

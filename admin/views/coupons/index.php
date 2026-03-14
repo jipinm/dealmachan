@@ -58,7 +58,7 @@
             <?php
             $from = min($totalCount, ($currentPage - 1) * $perPage + 1);
             $to   = min($totalCount, $currentPage * $perPage);
-            echo $totalCount ? "Showing {$from}–{$to} of {$totalCount}" : 'No coupons found';
+            echo $totalCount ? "Showing {$from}&ndash;{$to} of {$totalCount}" : 'No coupons found';
             ?>
         </small>
     </div>
@@ -154,7 +154,7 @@
                         <?php endif; ?>
                     </td>
                     <td class="small">
-                        <?= escape($c['merchant_name'] ?? '—') ?>
+                        <?= escape($c['merchant_name'] ?? '&mdash;') ?>
                         <?php if (!empty($c['store_name'])): ?>
                             <div class="text-muted"><?= escape($c['store_name']) ?></div>
                         <?php else: ?>
@@ -170,8 +170,8 @@
                     </td>
                     <td class="small" style="min-width:130px">
                         <?php if ($c['valid_from'] || $c['valid_until']): ?>
-                            <?= $c['valid_from']  ? formatDate($c['valid_from'])  : '—' ?><br>
-                            <span class="text-muted">to</span> <?= $c['valid_until'] ? formatDate($c['valid_until']) : '—' ?>
+                            <?= $c['valid_from']  ? formatDate($c['valid_from'])  : '&mdash;' ?><br>
+                            <span class="text-muted">to</span> <?= $c['valid_until'] ? formatDate($c['valid_until']) : '&mdash;' ?>
                         <?php else: ?>
                             <span class="text-muted">No limit</span>
                         <?php endif; ?>

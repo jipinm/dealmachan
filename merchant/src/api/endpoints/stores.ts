@@ -10,6 +10,13 @@ export interface GalleryImage {
   display_order: number
 }
 
+export interface StoreCategory {
+  category_id: number
+  sub_category_id: number | null
+  category_name: string | null
+  sub_category_name: string | null
+}
+
 export interface Store {
   id: number
   merchant_id: number
@@ -22,7 +29,7 @@ export interface Store {
   email: string | null
   latitude: string | null
   longitude: string | null
-  opening_hours: Record<string, string> | null
+  opening_hours: Record<string, string | { open: string; close: string; closed: boolean }> | null
   description: string | null
   status: 'active' | 'inactive'
   created_at: string
@@ -35,6 +42,7 @@ export interface Store {
   gallery_count: number
   cover_image: string | null
   gallery?: GalleryImage[]
+  categories?: StoreCategory[]
 }
 
 export interface City {
@@ -49,6 +57,20 @@ export interface Area {
   city_id: number
 }
 
+export interface Category {
+  id: number
+  name: string
+  icon: string | null
+  color_code: string | null
+}
+
+export interface SubCategory {
+  id: number
+  category_id: number
+  name: string
+  icon: string | null
+}
+
 export interface CreateStorePayload {
   store_name: string
   address: string
@@ -57,9 +79,10 @@ export interface CreateStorePayload {
   phone?: string
   email?: string
   description?: string
-  opening_hours?: Record<string, string>
+  opening_hours?: Record<string, string | { open: string; close: string; closed: boolean }>
   latitude?: number
   longitude?: number
+  category_ids?: number[]
 }
 
 export type UpdateStorePayload = Partial<CreateStorePayload & { status: 'active' | 'inactive' }>
@@ -113,4 +136,10 @@ export const storeApi = {
     apiClient.get<{ success: boolean; data: Area[] }>('/public/areas', {
       params: cityId ? { city_id: cityId } : undefined,
     }),
+
+  getCategories: () =>
+    apiClient.get<{ success: boolean; data: Category[] }>('/public/categories'),
+
+  getSubCategories: (categoryId: number) =>
+    apiClient.get<{ success: boolean; data: SubCategory[] }>(`/public/categories/${categoryId}/sub-categories`),
 }

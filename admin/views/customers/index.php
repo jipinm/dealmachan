@@ -193,8 +193,8 @@ $regTypeLabels = [
                                 </button>
                             </form>
                         </td>
-                        <td><code class="small"><?= escape($c['referral_code'] ?? '—') ?></code></td>
-                        <td class="text-muted small"><?= isset($c['registered_at']) ? formatDate($c['registered_at']) : '—' ?></td>
+                        <td><code class="small"><?= escape($c['referral_code'] ?? '&mdash;') ?></code></td>
+                        <td class="text-muted small"><?= isset($c['registered_at']) ? formatDate($c['registered_at']) : '&mdash;' ?></td>
                         <td class="text-center text-nowrap">
                             <a href="<?= BASE_URL ?>customers/profile?id=<?= $c['id'] ?>" class="btn btn-sm btn-outline-info me-1" title="View Profile"><i class="fas fa-eye"></i></a>
                             <a href="<?= BASE_URL ?>customers/edit?id=<?= $c['id'] ?>" class="btn btn-sm btn-outline-primary me-1" title="Edit"><i class="fas fa-edit"></i></a>
@@ -216,7 +216,7 @@ $regTypeLabels = [
         <?php
             $from = $totalCount === 0 ? 0 : ($currentPage - 1) * $perPage + 1;
             $to   = min($currentPage * $perPage, $totalCount);
-            echo "Showing <strong>{$from}–{$to}</strong> of <strong>{$totalCount}</strong> customers";
+            echo "Showing <strong>{$from}&ndash;{$to}</strong> of <strong>{$totalCount}</strong> customers";
         ?>
     </div>
     <?php if ($totalPages > 1): ?>
@@ -287,5 +287,5 @@ function confirmDelete(id, name) {
         }
     });
 }
-// Server-side pagination active — DataTable not used on this listing.
+// Server-side pagination active &mdash; DataTable not used on this listing.
 </script>

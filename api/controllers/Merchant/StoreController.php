@@ -35,6 +35,11 @@ class StoreController {
             $where .= " AND s.status = ?";
             $binds[] = $status;
         }
+        // Store-scoped users can only see their own store
+        if (($merchant['access_scope'] ?? 'merchant') === 'store' && !empty($merchant['store_id'])) {
+            $where  .= ' AND s.id = ?';
+            $binds[] = (int)$merchant['store_id'];
+        }
 
         $stores = $this->db->query(
             "SELECT s.*,
@@ -68,7 +73,9 @@ class StoreController {
     public function store(array $body): never {
         $merchant   = AuthMiddleware::user();
         $merchantId = (int)$merchant['merchant_id'];
-
+        if (($merchant['access_scope'] ?? 'merchant') === 'store') {
+            Response::error('Store admins cannot create new stores.', 403, 'FORBIDDEN');
+        }
         $v = new Validator($body);
         $v->required('store_name', 'Store Name')
           ->required('address',    'Address')
@@ -101,6 +108,32 @@ class StoreController {
         );
 
         $storeId = $this->db->lastInsertId();
+
+        // Sync store_categories
+        if (!empty($body['category_ids']) && is_array($body['category_ids'])) {
+            $categoryIds = array_filter(array_map('intval', $body['category_ids']));
+            // Validate that submitted categories are assigned to this merchant
+            if (!empty($categoryIds)) {
+                $allowedCatIds = array_column(
+                    $this->db->query(
+                        "SELECT category_id FROM merchant_categories WHERE merchant_id = ?",
+                        [$merchantId]
+                    ) ?? [],
+                    'category_id'
+                );
+                $invalidCats = array_diff($categoryIds, $allowedCatIds);
+                if (!empty($invalidCats)) {
+                    Response::error('One or more categories are not assigned to this merchant.', 422);
+                }
+            }
+            foreach ($categoryIds as $catId) {
+                $this->db->execute(
+                    "INSERT IGNORE INTO store_categories (store_id, category_id) VALUES (?, ?)",
+                    [(int)$storeId, $catId]
+                );
+            }
+        }
+
         $newStore = $this->fetchStoreDetail($merchantId, $storeId);
 
         Response::success($newStore, 'Store created successfully', 201);
@@ -123,7 +156,9 @@ class StoreController {
     public function update(int $id, array $body): never {
         $merchant   = AuthMiddleware::user();
         $merchantId = (int)$merchant['merchant_id'];
-
+        if (($merchant['access_scope'] ?? 'merchant') === 'store' && (int)($merchant['store_id'] ?? 0) !== $id) {
+            Response::error('You can only edit your assigned store.', 403, 'FORBIDDEN');
+        }
         $existing = $this->db->queryOne(
             "SELECT id FROM stores WHERE id = ? AND merchant_id = ? AND deleted_at IS NULL",
             [$id, $merchantId]
@@ -157,6 +192,32 @@ class StoreController {
         $values[] = $id;
         $this->db->execute("UPDATE stores SET " . implode(', ', $sets) . " WHERE id = ?", $values);
 
+        // Sync store_categories
+        if (isset($body['category_ids']) && is_array($body['category_ids'])) {
+            $categoryIds = array_filter(array_map('intval', $body['category_ids']));
+            // Validate that submitted categories are assigned to this merchant
+            if (!empty($categoryIds)) {
+                $allowedCatIds = array_column(
+                    $this->db->query(
+                        "SELECT category_id FROM merchant_categories WHERE merchant_id = ?",
+                        [$merchantId]
+                    ) ?? [],
+                    'category_id'
+                );
+                $invalidCats = array_diff($categoryIds, $allowedCatIds);
+                if (!empty($invalidCats)) {
+                    Response::error('One or more categories are not assigned to this merchant.', 422);
+                }
+            }
+            $this->db->execute("DELETE FROM store_categories WHERE store_id = ?", [$id]);
+            foreach ($categoryIds as $catId) {
+                $this->db->execute(
+                    "INSERT IGNORE INTO store_categories (store_id, category_id) VALUES (?, ?)",
+                    [$id, $catId]
+                );
+            }
+        }
+
         Response::success($this->fetchStoreDetail($merchantId, $id), 'Store updated');
     }
 
@@ -164,7 +225,9 @@ class StoreController {
     public function destroy(int $id): never {
         $merchant   = AuthMiddleware::user();
         $merchantId = (int)$merchant['merchant_id'];
-
+        if (($merchant['access_scope'] ?? 'merchant') === 'store') {
+            Response::error('Store admins cannot delete stores.', 403, 'FORBIDDEN');
+        }
         $existing = $this->db->queryOne(
             "SELECT id FROM stores WHERE id = ? AND merchant_id = ? AND deleted_at IS NULL",
             [$id, $merchantId]
@@ -374,6 +437,16 @@ class StoreController {
 
         $store['active_coupons'] = (int)$store['active_coupons'];
         $store['opening_hours']  = $store['opening_hours'] ? json_decode($store['opening_hours'], true) : null;
+
+        // Categories
+        $store['categories'] = $this->db->query(
+            "SELECT sc.category_id, sc.sub_category_id, c.name AS category_name, s.name AS sub_category_name
+             FROM store_categories sc
+             LEFT JOIN categories c ON c.id = sc.category_id
+             LEFT JOIN sub_categories s ON s.id = sc.sub_category_id
+             WHERE sc.store_id = ?",
+            [$storeId]
+        );
 
         // Gallery
         $store['gallery'] = $this->db->query(

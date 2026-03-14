@@ -102,7 +102,7 @@
             <div class="card-body">
                 <dl class="row mb-0">
                     <dt class="col-6 text-muted small">Payment</dt>
-                    <dd class="col-6 fw-semibold"><?= ucfirst($sale['payment_method'] ?? '—') ?></dd>
+                    <dd class="col-6 fw-semibold"><?= ucfirst($sale['payment_method'] ?? '&mdash;') ?></dd>
 
                     <dt class="col-6 text-muted small">Amount</dt>
                     <dd class="col-6 fw-semibold text-success">₹<?= number_format($sale['transaction_amount'], 2) ?></dd>

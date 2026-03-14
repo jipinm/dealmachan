@@ -40,7 +40,7 @@
                         <div class="col-md-6">
                             <label class="form-label fw-semibold">Gender</label>
                             <select name="gender" class="form-select">
-                                <option value="">— Select —</option>
+                                <option value="">&mdash; Select &mdash;</option>
                                 <?php foreach (['male', 'female', 'other'] as $g): ?>
                                 <option value="<?= $g ?>" <?= (($_POST['gender'] ?? $customer['gender']) === $g) ? 'selected' : '' ?>><?= ucfirst($g) ?></option>
                                 <?php endforeach; ?>
@@ -49,7 +49,7 @@
                         <div class="col-12">
                             <label class="form-label fw-semibold">Profession</label>
                             <select name="profession_id" class="form-select select2">
-                                <option value="">— None —</option>
+                                <option value="">&mdash; None &mdash;</option>
                                 <?php foreach ($professions as $prof): ?>
                                 <option value="<?= $prof['id'] ?>"
                                     <?= (($_POST['profession_id'] ?? $customer['profession_id']) == $prof['id']) ? 'selected' : '' ?>>
@@ -165,7 +165,7 @@
             <div class="card border-0 shadow-sm mb-3">
                 <div class="card-header bg-white fw-semibold border-bottom"><i class="fas fa-id-card me-2 text-secondary"></i> Account Info</div>
                 <div class="card-body small">
-                    <div class="mb-2"><span class="text-muted">Referral Code:</span> <code><?= escape($customer['referral_code'] ?? '—') ?></code></div>
+                    <div class="mb-2"><span class="text-muted">Referral Code:</span> <code><?= escape($customer['referral_code'] ?? '&mdash;') ?></code></div>
                     <div class="mb-2"><span class="text-muted">Registered:</span> <?= formatDate($customer['registered_at'] ?? $customer['created_at']) ?></div>
                     <div class="mb-2"><span class="text-muted">Last Login:</span> <?= $customer['last_login'] ? formatDateTime($customer['last_login']) : '<em>Never</em>' ?></div>
                     <?php if ($customer['referrer_name']): ?>

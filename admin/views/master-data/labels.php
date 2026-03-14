@@ -34,8 +34,8 @@
                                 <span class="fw-semibold"><?= escape($label['label_name']) ?></span>
                             </div>
                         </td>
-                        <td><code class="small"><?= escape($label['label_icon'] ?? '—') ?></code></td>
-                        <td class="text-muted small" style="max-width:200px;"><?= escape($label['description'] ?? '—') ?></td>
+                        <td><code class="small"><?= escape($label['label_icon'] ?? '&mdash;') ?></code></td>
+                        <td class="text-muted small" style="max-width:200px;"><?= escape($label['description'] ?? '&mdash;') ?></td>
                         <td class="text-center"><span class="badge bg-primary"><?= $label['priority_weight'] ?></span></td>
                         <td class="text-center"><span class="badge bg-success rounded-pill"><?= $label['merchant_count'] ?? 0 ?></span></td>
                         <td class="text-center">
@@ -93,7 +93,7 @@
                     <div class="mb-3">
                         <label class="form-label fw-semibold">Priority Weight</label>
                         <input type="number" name="priority_weight" id="lblPriority" class="form-control" value="0" min="0" max="100">
-                        <small class="text-muted">Higher value = listed first. Range: 0–100</small>
+                        <small class="text-muted">Higher value = listed first. Range: 0&ndash;100</small>
                     </div>
                     <div class="mb-3">
                         <label class="form-label fw-semibold">Status</label>

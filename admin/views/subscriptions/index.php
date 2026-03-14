@@ -34,7 +34,7 @@
             <?php
             $from = min($totalCount, ($currentPage - 1) * $perPage + 1);
             $to   = min($totalCount, $currentPage * $perPage);
-            echo $totalCount ? "Showing {$from}–{$to} of {$totalCount}" : 'No subscriptions found';
+            echo $totalCount ? "Showing {$from}&ndash;{$to} of {$totalCount}" : 'No subscriptions found';
             ?>
         </small>
     </div>
@@ -143,8 +143,8 @@
                             <?php endif; ?>
                         </td>
                         <td><span class="badge bg-<?= $statusColors[$s['status']] ?? 'secondary' ?>"><?= ucfirst($s['status']) ?></span></td>
-                        <td class="text-end">₹<?= $s['payment_amount'] !== null ? number_format($s['payment_amount'], 0) : '—' ?></td>
-                        <td class="text-muted small"><?= ucfirst($s['payment_method'] ?? '—') ?></td>
+                        <td class="text-end">₹<?= $s['payment_amount'] !== null ? number_format($s['payment_amount'], 0) : '&mdash;' ?></td>
+                        <td class="text-muted small"><?= ucfirst($s['payment_method'] ?? '&mdash;') ?></td>
                         <td>
                             <a href="<?= BASE_URL ?>subscriptions/detail?id=<?= $s['id'] ?>" class="btn btn-xs btn-outline-primary py-0 px-1">
                                 <i class="fas fa-eye"></i>

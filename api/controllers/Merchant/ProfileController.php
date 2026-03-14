@@ -70,6 +70,16 @@ class ProfileController {
             [$merchantId]
         );
 
+        // Categories
+        $categories = $this->db->query(
+            "SELECT mc.category_id, c.name, mc.sub_category_id, s.name AS sub_category_name
+             FROM merchant_categories mc
+             JOIN categories c ON c.id = mc.category_id
+             LEFT JOIN sub_categories s ON s.id = mc.sub_category_id
+             WHERE mc.merchant_id = ?",
+            [$merchantId]
+        );
+
         // Active subscription detail
         $subscription = $this->db->queryOne(
             "SELECT id, plan_type, start_date, expiry_date, auto_renew, status, payment_amount
@@ -93,6 +103,7 @@ class ProfileController {
             'profile'      => array_merge($profile, ['business_logo' => imageUrl($profile['business_logo'])]),
             'stores'       => $storeSummary,
             'labels'       => $labels,
+            'categories'   => $categories,
             'subscription' => $subscription,
             'coupons'      => $couponStats,
         ]);
@@ -149,6 +160,18 @@ class ProfileController {
             $vals  = array_values($userFields);
             $vals[] = $userId;
             $this->db->execute("UPDATE users SET $sets WHERE id = ?", $vals);
+        }
+
+        // Sync merchant categories
+        if (isset($body['category_ids'])) {
+            $catIds = array_filter(array_map('intval', $body['category_ids']));
+            $this->db->execute("DELETE FROM merchant_categories WHERE merchant_id = ?", [$merchantId]);
+            foreach ($catIds as $cId) {
+                $this->db->execute(
+                    "INSERT IGNORE INTO merchant_categories (merchant_id, category_id) VALUES (?, ?)",
+                    [$merchantId, $cId]
+                );
+            }
         }
 
         // Return updated profile
@@ -251,5 +274,40 @@ class ProfileController {
         );
 
         Response::success(null, 'Upgrade request submitted. Our team will contact you shortly.');
+    }
+
+    // ── PUT /merchants/profile/password ──────────────────────────────────────
+    // Available to both merchant admins and store admins (self-service).
+    public function changePassword(array $body): never {
+        $user = AuthMiddleware::user();
+
+        $current = $body['current_password'] ?? '';
+        $new     = $body['new_password']     ?? '';
+        $confirm = $body['confirm_password'] ?? '';
+
+        if (!$current || !$new) {
+            Response::error('current_password and new_password are required.', 400, 'MISSING_FIELDS');
+        }
+        if (strlen($new) < 8) {
+            Response::error('New password must be at least 8 characters.', 400, 'PASSWORD_TOO_SHORT');
+        }
+        if ($new !== $confirm) {
+            Response::error('Passwords do not match.', 400, 'PASSWORD_MISMATCH');
+        }
+
+        $row = $this->db->queryOne(
+            "SELECT password_hash FROM users WHERE id = ?",
+            [$user['id']]
+        );
+        if (!$row || !password_verify($current, $row['password_hash'])) {
+            Response::error('Current password is incorrect.', 401, 'WRONG_PASSWORD');
+        }
+
+        $this->db->execute(
+            "UPDATE users SET password_hash = ?, updated_at = NOW() WHERE id = ?",
+            [password_hash($new, PASSWORD_DEFAULT), $user['id']]
+        );
+
+        Response::success(null, 'Password changed successfully.');
     }
 }

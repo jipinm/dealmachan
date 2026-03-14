@@ -75,7 +75,7 @@ class GrievancesController extends Controller {
         if (!$grievance) { $this->redirectWithError('grievances', 'Grievance not found.'); return; }
 
         $this->loadView('grievances/view', [
-            'title'       => 'Grievance #' . $grievance['id'] . ' — ' . escape($grievance['subject']),
+            'title'       => 'Grievance #' . $grievance['id'] . ' &mdash; ' . escape($grievance['subject']),
             'grievance'   => $grievance,
             'statuses'    => Grievance::$statuses,
             'priorities'  => Grievance::$priorities,
@@ -106,7 +106,7 @@ class GrievancesController extends Controller {
         $this->grievanceModel->updateStatus($id, $status, $resolutionNotes ?: null);
 
         $cu = $this->auth->getCurrentUser();
-        logAudit('grievance_status_updated', $id, 'grievances', $cu['id']);
+        logAudit('grievance_status_updated', 'grievances', $id);
 
         $_SESSION['success'] = "Grievance status updated to " . ucfirst(str_replace('_', ' ', $status)) . ".";
         $this->redirect($redirect);
@@ -134,7 +134,7 @@ class GrievancesController extends Controller {
         $this->grievanceModel->updatePriority($id, $priority);
 
         $cu = $this->auth->getCurrentUser();
-        logAudit('grievance_priority_updated', $id, 'grievances', $cu['id']);
+        logAudit('grievance_priority_updated', 'grievances', $id);
 
         $_SESSION['success'] = "Grievance priority updated to " . ucfirst($priority) . ".";
         $this->redirect($redirect);
@@ -158,7 +158,7 @@ class GrievancesController extends Controller {
         $this->grievanceModel->addNote($id, $notes);
 
         $cu = $this->auth->getCurrentUser();
-        logAudit('grievance_note_added', $id, 'grievances', $cu['id']);
+        logAudit('grievance_note_added', 'grievances', $id);
 
         $_SESSION['success'] = 'Resolution notes saved.';
         $this->redirect($redirect);
@@ -180,7 +180,7 @@ class GrievancesController extends Controller {
         $this->grievanceModel->updateStatus($id, 'closed', 'Closed by admin.');
 
         $cu = $this->auth->getCurrentUser();
-        logAudit('grievance_force_closed', $id, 'grievances', $cu['id']);
+        logAudit('grievance_force_closed', 'grievances', $id);
 
         $_SESSION['success'] = 'Grievance has been closed.';
         $this->redirect($redirect);

@@ -9,20 +9,24 @@ import toast from 'react-hot-toast'
 import { couponApi, type CreateCouponPayload } from '@/api/endpoints/coupons'
 import { storeApi } from '@/api/endpoints/stores'
 import { getImageUrl } from '@/lib/imageUrl'
+import { useAuthStore } from '@/store/authStore'
 
 const schema = z.object({
-  title:               z.string().min(2, 'Min 2 characters'),
-  description:         z.string().optional(),
-  coupon_code:         z.string().optional(),
-  discount_type:       z.enum(['percentage', 'fixed']),
-  discount_value:      z.coerce.number().positive('Must be > 0'),
-  min_purchase_amount: z.coerce.number().min(0).nullable().optional(),
-  max_discount_amount: z.coerce.number().min(0).nullable().optional(),
-  store_id:            z.coerce.number().nullable().optional(),
-  valid_from:          z.string().optional(),
-  valid_until:         z.string().optional(),
-  usage_limit:         z.coerce.number().int().positive().nullable().optional(),
-  terms_conditions:    z.string().optional(),
+  title:                    z.string().min(2, 'Min 2 characters'),
+  description:              z.string().optional(),
+  coupon_code:              z.string().optional(),
+  discount_type:            z.enum(['percentage', 'fixed', 'bogo', 'addon']),
+  discount_value:           z.coerce.number().min(0),
+  min_purchase_amount:      z.coerce.number().min(0).nullable().optional(),
+  max_discount_amount:      z.coerce.number().min(0).nullable().optional(),
+  store_id:                 z.coerce.number().nullable().optional(),
+  valid_from:               z.string().optional(),
+  valid_until:              z.string().optional(),
+  usage_limit:              z.coerce.number().int().positive().nullable().optional(),
+  terms_conditions:         z.string().optional(),
+  bogo_buy_quantity:        z.coerce.number().int().min(1).nullable().optional(),
+  bogo_get_quantity:        z.coerce.number().int().min(1).nullable().optional(),
+  addon_item_description:   z.string().nullable().optional(),
 })
 
 type FormValues = z.infer<typeof schema>
@@ -45,18 +49,31 @@ export default function CouponFormPage() {
   const isEdit       = Boolean(id)
   const qc           = useQueryClient()
 
+  const isStoreAdmin  = useAuthStore(s => s.isStoreAdmin())
+  const scopedStoreId = useAuthStore(s => s.scopedStoreId())
+
   const [bannerImage, setBannerImage]       = useState<string | null>(null)
   const [uploadingImg, setUploadingImg]     = useState(false)
   const [removingImg, setRemovingImg]       = useState(false)
   const fileInputRef                        = useRef<HTMLInputElement>(null)
 
+  // Create-mode: hold the selected image locally until the coupon is saved
+  const [pendingImageFile, setPendingImageFile]       = useState<File | null>(null)
+  const [pendingImagePreview, setPendingImagePreview] = useState<string | null>(null)
+  const createFileInputRef                            = useRef<HTMLInputElement>(null)
+  const pendingPreviewUrlRef                          = useRef<string | null>(null)
+
   const { register, handleSubmit, control, watch, reset, formState: { errors } } =
     useForm<FormValues>({
       resolver: zodResolver(schema),
-      defaultValues: { discount_type: 'percentage' },
+      defaultValues: {
+        discount_type: 'percentage',
+        store_id: isStoreAdmin && scopedStoreId ? scopedStoreId : undefined,
+      },
     })
 
-  const discountType = watch('discount_type')
+  const discountType  = watch('discount_type')
+  const isValueBased  = discountType === 'percentage' || discountType === 'fixed'
 
   // Fetch existing coupon for edit
   const { data: existingData } = useQuery({
@@ -71,15 +88,18 @@ export default function CouponFormPage() {
         title:               existingData.title,
         description:         existingData.description ?? '',
         coupon_code:         existingData.coupon_code,
-        discount_type:       existingData.discount_type,
-        discount_value:      parseFloat(existingData.discount_value),
-        min_purchase_amount: existingData.min_purchase_amount ? parseFloat(existingData.min_purchase_amount) : null,
-        max_discount_amount: existingData.max_discount_amount ? parseFloat(existingData.max_discount_amount) : null,
-        store_id:            existingData.store_id,
-        valid_from:          existingData.valid_from ? existingData.valid_from.slice(0, 16) : '',
-        valid_until:         existingData.valid_until ? existingData.valid_until.slice(0, 16) : '',
-        usage_limit:         existingData.usage_limit,
-        terms_conditions:    existingData.terms_conditions ?? '',
+        discount_type:            existingData.discount_type,
+        discount_value:           parseFloat(existingData.discount_value),
+        min_purchase_amount:      existingData.min_purchase_amount ? parseFloat(existingData.min_purchase_amount) : null,
+        max_discount_amount:      existingData.max_discount_amount ? parseFloat(existingData.max_discount_amount) : null,
+        store_id:                 isStoreAdmin && scopedStoreId ? scopedStoreId : existingData.store_id,
+        valid_from:               existingData.valid_from ? existingData.valid_from.slice(0, 16) : '',
+        valid_until:              existingData.valid_until ? existingData.valid_until.slice(0, 16) : '',
+        usage_limit:              existingData.usage_limit,
+        terms_conditions:         existingData.terms_conditions ?? '',
+        bogo_buy_quantity:        (existingData as any).bogo_buy_quantity ?? null,
+        bogo_get_quantity:        (existingData as any).bogo_get_quantity ?? null,
+        addon_item_description:   (existingData as any).addon_item_description ?? null,
       })
       setBannerImage(existingData.banner_image ?? null)
     }
@@ -95,23 +115,40 @@ export default function CouponFormPage() {
     mutationFn: async (values: FormValues) => {
       const payload: CreateCouponPayload = {
         ...values,
-        discount_value:      values.discount_value,
-        min_purchase_amount: values.min_purchase_amount ?? null,
-        max_discount_amount: values.max_discount_amount ?? null,
-        store_id:            values.store_id ?? null,
-        valid_from:          values.valid_from || null,
-        valid_until:         values.valid_until || null,
-        usage_limit:         values.usage_limit ?? null,
+        discount_value:          values.discount_type === 'bogo' || values.discount_type === 'addon' ? 0 : values.discount_value,
+        min_purchase_amount:     values.min_purchase_amount ?? null,
+        max_discount_amount:     values.max_discount_amount ?? null,
+        store_id:                values.store_id ?? null,
+        valid_from:              values.valid_from || null,
+        valid_until:             values.valid_until || null,
+        usage_limit:             values.usage_limit ?? null,
+        bogo_buy_quantity:       values.bogo_buy_quantity ?? null,
+        bogo_get_quantity:       values.bogo_get_quantity ?? null,
+        addon_item_description:  values.addon_item_description ?? null,
       }
       if (isEdit) {
         const res = await couponApi.update(Number(id), payload)
         return res.data
       }
       const res = await couponApi.create(payload)
-      return res.data
+      // Upload pending image immediately after creation (non-blocking on failure)
+      let _imageUploadFailed = false
+      if (pendingImageFile) {
+        try {
+          await couponApi.uploadImage(res.data.data.id, pendingImageFile)
+        } catch {
+          _imageUploadFailed = true
+        }
+      }
+      return { ...res.data, _imageUploadFailed }
     },
-    onSuccess: (data) => {
-      toast.success(data.message ?? (isEdit ? 'Coupon updated!' : 'Coupon created!'))
+    onSuccess: (data: any) => {
+      if (data._imageUploadFailed) {
+        toast.success('Coupon created!')
+        toast.error('Image upload failed — re-upload from the edit page.', { duration: 5000 })
+      } else {
+        toast.success(data.message ?? (isEdit ? 'Coupon updated!' : 'Coupon created!'))
+      }
       qc.invalidateQueries({ queryKey: ['coupons'] })
       if (isEdit) {
         navigate(`/coupons/${id}`, { replace: true })
@@ -153,6 +190,26 @@ export default function CouponFormPage() {
       setRemovingImg(false)
     }
   }
+
+  function handlePendingImageSelect(file: File) {
+    if (pendingPreviewUrlRef.current) URL.revokeObjectURL(pendingPreviewUrlRef.current)
+    const url = URL.createObjectURL(file)
+    pendingPreviewUrlRef.current = url
+    setPendingImageFile(file)
+    setPendingImagePreview(url)
+  }
+
+  function handlePendingImageClear() {
+    if (pendingPreviewUrlRef.current) URL.revokeObjectURL(pendingPreviewUrlRef.current)
+    pendingPreviewUrlRef.current = null
+    setPendingImageFile(null)
+    setPendingImagePreview(null)
+  }
+
+  // Revoke object URL on unmount to avoid memory leaks
+  useEffect(() => {
+    return () => { if (pendingPreviewUrlRef.current) URL.revokeObjectURL(pendingPreviewUrlRef.current) }
+  }, [])
 
   return (
     <div className="min-h-full bg-gray-50">
@@ -202,19 +259,24 @@ export default function CouponFormPage() {
               control={control}
               name="discount_type"
               render={({ field }) => (
-                <div className="flex gap-2">
-                  {(['percentage', 'fixed'] as const).map((t) => (
+                <div className="grid grid-cols-2 gap-2">
+                  {([
+                    { value: 'percentage', label: '% Percentage' },
+                    { value: 'fixed',       label: '₹ Fixed Amount' },
+                    { value: 'bogo',        label: '🔄 Buy X Get Y' },
+                    { value: 'addon',       label: '🎁 Free Add-on' },
+                  ] as const).map((t) => (
                     <button
-                      key={t}
+                      key={t.value}
                       type="button"
-                      onClick={() => field.onChange(t)}
-                      className={`flex-1 py-2 rounded-xl text-sm font-semibold border-2 transition-colors ${
-                        field.value === t
+                      onClick={() => field.onChange(t.value)}
+                      className={`py-2 rounded-xl text-sm font-semibold border-2 transition-colors ${
+                        field.value === t.value
                           ? 'border-brand-600 bg-brand-50 text-brand-700'
                           : 'border-gray-200 text-gray-500'
                       }`}
                     >
-                      {t === 'percentage' ? '% Percentage' : '₹ Fixed Amount'}
+                      {t.label}
                     </button>
                   ))}
                 </div>
@@ -222,27 +284,48 @@ export default function CouponFormPage() {
             />
           </Field>
 
-          <Field
-            label={discountType === 'percentage' ? 'Discount % *' : 'Discount Amount (₹) *'}
-            error={errors.discount_value?.message}
-          >
-            <input {...register('discount_value')} type="number" step="0.01" min="0"
-              placeholder={discountType === 'percentage' ? '0–100' : 'e.g. 50'}
-              className={inputCls} />
-          </Field>
-
-          <div className="grid grid-cols-2 gap-3">
-            <Field label="Min Purchase (₹)" error={errors.min_purchase_amount?.message}>
-              <input {...register('min_purchase_amount')} type="number" step="0.01" min="0"
-                placeholder="Optional" className={inputCls} />
+          {isValueBased && (
+            <Field
+              label={discountType === 'percentage' ? 'Discount % *' : 'Discount Amount (₹) *'}
+              error={errors.discount_value?.message}
+            >
+              <input {...register('discount_value')} type="number" step="0.01" min="0"
+                placeholder={discountType === 'percentage' ? '0–100' : 'e.g. 50'}
+                className={inputCls} />
             </Field>
-            {discountType === 'percentage' && (
-              <Field label="Max Discount (₹)" error={errors.max_discount_amount?.message}>
-                <input {...register('max_discount_amount')} type="number" step="0.01" min="0"
-                  placeholder="Optional cap" className={inputCls} />
+          )}
+
+          {discountType === 'bogo' && (
+            <div className="grid grid-cols-2 gap-3">
+              <Field label="Buy Qty *" error={errors.bogo_buy_quantity?.message}>
+                <input {...register('bogo_buy_quantity')} type="number" min="1" placeholder="e.g. 1" className={inputCls} />
               </Field>
-            )}
-          </div>
+              <Field label="Get Qty *" error={errors.bogo_get_quantity?.message}>
+                <input {...register('bogo_get_quantity')} type="number" min="1" placeholder="e.g. 1" className={inputCls} />
+              </Field>
+            </div>
+          )}
+
+          {discountType === 'addon' && (
+            <Field label="Free Item Description *" error={errors.addon_item_description?.message}>
+              <input {...register('addon_item_description')} placeholder="e.g. Free garlic bread" className={inputCls} />
+            </Field>
+          )}
+
+          {isValueBased && (
+            <div className="grid grid-cols-2 gap-3">
+              <Field label="Min Purchase (₹)" error={errors.min_purchase_amount?.message}>
+                <input {...register('min_purchase_amount')} type="number" step="0.01" min="0"
+                  placeholder="Optional" className={inputCls} />
+              </Field>
+              {discountType === 'percentage' && (
+                <Field label="Max Discount (₹)" error={errors.max_discount_amount?.message}>
+                  <input {...register('max_discount_amount')} type="number" step="0.01" min="0"
+                    placeholder="Optional cap" className={inputCls} />
+                </Field>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Validity */}
@@ -266,24 +349,32 @@ export default function CouponFormPage() {
         {/* Store */}
         <div className="bg-white rounded-2xl p-4 space-y-4 shadow-sm">
           <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Store Link</p>
-          <Field label="Apply to Store (optional — blank = all stores)" error={errors.store_id?.message}>
-            <Controller
-              control={control}
-              name="store_id"
-              render={({ field }) => (
-                <select
-                  value={field.value ?? ''}
-                  onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : null)}
-                  className={inputCls}
-                >
-                  <option value="">All Stores</option>
-                  {(storesData ?? []).map((s) => (
-                    <option key={s.id} value={s.id}>{s.store_name}</option>
-                  ))}
-                </select>
-              )}
-            />
-          </Field>
+          {isStoreAdmin && scopedStoreId ? (
+            <Field label="Assigned Store">
+              <div className={`${inputCls} text-gray-500 bg-gray-50 border-gray-100 cursor-not-allowed`}>
+                {storesData?.find(s => s.id === scopedStoreId)?.store_name ?? `Store #${scopedStoreId}`}
+              </div>
+            </Field>
+          ) : (
+            <Field label="Apply to Store (optional — blank = all stores)" error={errors.store_id?.message}>
+              <Controller
+                control={control}
+                name="store_id"
+                render={({ field }) => (
+                  <select
+                    value={field.value ?? ''}
+                    onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : null)}
+                    className={inputCls}
+                  >
+                    <option value="">All Stores</option>
+                    {(storesData ?? []).map((s) => (
+                      <option key={s.id} value={s.id}>{s.store_name}</option>
+                    ))}
+                  </select>
+                )}
+              />
+            </Field>
+          )}
         </div>
 
         {/* Terms */}
@@ -358,8 +449,57 @@ export default function CouponFormPage() {
             )}
           </div>
         ) : (
-          <div className="bg-blue-50 rounded-2xl p-4 shadow-sm">
-            <p className="text-xs text-blue-600 font-medium">💡 You can add a deal image after creating the coupon.</p>
+          <div className="bg-white rounded-2xl p-4 space-y-3 shadow-sm">
+            <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Deal Image</p>
+            <p className="text-xs text-gray-500">Upload a promotional image. It will be saved together with the coupon.</p>
+
+            {pendingImagePreview ? (
+              <div className="relative">
+                <img
+                  src={pendingImagePreview}
+                  alt="Deal image preview"
+                  className="w-full h-40 object-cover rounded-xl bg-slate-100"
+                />
+                <button
+                  type="button"
+                  onClick={handlePendingImageClear}
+                  className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white rounded-full p-1.5"
+                >
+                  <Trash2 size={14} />
+                </button>
+              </div>
+            ) : (
+              <div
+                onClick={() => createFileInputRef.current?.click()}
+                className="border-2 border-dashed border-gray-200 rounded-xl h-32 flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-brand-400 hover:bg-brand-50 transition-colors"
+              >
+                <ImagePlus size={24} className="text-gray-400" />
+                <span className="text-sm text-gray-500">Tap to add a deal image</span>
+                <span className="text-xs text-gray-400">JPEG, PNG or WebP · max 5MB</span>
+              </div>
+            )}
+
+            <input
+              ref={createFileInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0]
+                if (file) handlePendingImageSelect(file)
+                e.target.value = ''
+              }}
+            />
+
+            {pendingImagePreview && (
+              <button
+                type="button"
+                onClick={() => createFileInputRef.current?.click()}
+                className="w-full border border-brand-300 text-brand-600 text-sm font-semibold py-2 rounded-xl hover:bg-brand-50 transition-colors"
+              >
+                Replace Image
+              </button>
+            )}
           </div>
         )}
 

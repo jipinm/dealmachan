@@ -98,7 +98,7 @@
                             <?php endif; ?>
                         </div>
                         <div class="text-muted small text-truncate">
-                            <?= $tab === 'sent' ? 'To: ' . htmlspecialchars($m['receiver_name'] ?? '—') : 'From: ' . htmlspecialchars($m['sender_name'] ?? '—') ?>
+                            <?= $tab === 'sent' ? 'To: ' . htmlspecialchars($m['receiver_name'] ?? '&mdash;') : 'From: ' . htmlspecialchars($m['sender_name'] ?? '&mdash;') ?>
                             &nbsp;·&nbsp;
                             <?= htmlspecialchars(mb_strimwidth($m['message_text'], 0, 80, '…')) ?>
                         </div>

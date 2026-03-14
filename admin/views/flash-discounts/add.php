@@ -38,7 +38,7 @@ unset($_SESSION['flash_discount_form']);
                     <div class="mb-3">
                         <label class="form-label">Title <span class="text-danger">*</span></label>
                         <input type="text" name="title" class="form-control" required maxlength="255"
-                               placeholder="e.g. Midnight Hunger Special — 50% Off"
+                               placeholder="e.g. Midnight Hunger Special &mdash; 50% Off"
                                value="<?= escape($fd['title'] ?? '') ?>">
                     </div>
                     <div class="mb-3">
@@ -100,6 +100,20 @@ unset($_SESSION['flash_discount_form']);
                 </div>
             </div>
 
+            <!-- Location Targeting -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header fw-semibold">
+                    <i class="fas fa-map-marker-alt me-2 text-danger"></i> Location Targeting
+                </div>
+                <div class="card-body">
+                    <p class="form-text mb-2">Leave empty to auto-populate from the selected store&rsquo;s location.</p>
+                    <div id="locationRows"></div>
+                    <button type="button" class="btn btn-outline-secondary btn-sm mt-2" onclick="addLocationRow()">
+                        <i class="fas fa-plus me-1"></i> Add Location Row
+                    </button>
+                </div>
+            </div>
+
         </div>
 
         <!-- RIGHT: Merchant, Store, Status -->
@@ -115,7 +129,7 @@ unset($_SESSION['flash_discount_form']);
                         <label class="form-label">Merchant <span class="text-danger">*</span></label>
                         <select name="merchant_id" id="merchant_id" class="form-select select2-single"
                                 data-placeholder="Select merchant…" required onchange="loadStores(this.value)">
-                            <option value="">— Select Merchant —</option>
+                            <option value="">&mdash; Select Merchant &mdash;</option>
                             <?php foreach ($merchants as $m): ?>
                                 <option value="<?= $m['id'] ?>"><?= escape($m['business_name']) ?></option>
                             <?php endforeach; ?>
@@ -123,8 +137,8 @@ unset($_SESSION['flash_discount_form']);
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Store</label>
-                        <select name="store_id" id="store_id" class="form-select select2-single" data-placeholder="All Stores">
-                            <option value="">All Stores</option>
+                        <select name="store_ids[]" id="store_id" class="form-select select2-multiple" multiple
+                                data-placeholder="All Stores (leave blank)">
                         </select>
                         <div class="form-text">Leave blank to apply to all merchant stores.</div>
                     </div>
@@ -142,6 +156,30 @@ unset($_SESSION['flash_discount_form']);
                         <option value="active">Active</option>
                         <option value="inactive">Inactive</option>
                     </select>
+                </div>
+            </div>
+
+            <!-- Business Categories -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header fw-semibold">
+                    <i class="fas fa-tags me-2 text-primary"></i> Categories
+                </div>
+                <div class="card-body">
+                    <p class="form-text mb-2">Leave empty to auto-populate from the selected store&rsquo;s categories.</p>
+                    <select name="category_ids[]" id="fdCategories" class="form-select select2" multiple
+                            data-placeholder="Select categories…">
+                        <?php foreach ($categories as $cat): ?>
+                            <option value="<?= $cat['id'] ?>"><?= escape($cat['name']) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                    <div class="mt-3">
+                        <label class="form-label">Sub-categories</label>
+                        <select name="sub_category_ids[]" id="fdSubCategories" class="form-select select2" multiple
+                                data-placeholder="Select categories first…">
+                            <option value="">Select categories first…</option>
+                        </select>
+                        <p class="form-text">Optional. Automatically loaded when categories are selected.</p>
+                    </div>
                 </div>
             </div>
 
@@ -169,22 +207,125 @@ function previewBanner(input) {
     }
 }
 
+function loadFDSubCategories(preselectIds) {
+    const catSel = document.getElementById('fdCategories');
+    const subSel = document.getElementById('fdSubCategories');
+    const catIds = Array.from(catSel.selectedOptions).map(o => o.value).filter(Boolean);
+    subSel.innerHTML = '<option value="">Loading…</option>';
+    if (!catIds.length) { subSel.innerHTML = '<option value="">Select categories first…</option>'; if (window.$) $(subSel).trigger('change'); return; }
+    const qs = catIds.map(id => `category_id[]=${encodeURIComponent(id)}`).join('&');
+    fetch(`<?= BASE_URL ?>master-data/sub-categories-json?${qs}`)
+        .then(r => r.json())
+        .then(data => {
+            subSel.innerHTML = '';
+            const pre = Array.isArray(preselectIds) ? preselectIds.map(Number) : [];
+            const seen = new Set();
+            data.forEach(s => {
+                if (seen.has(s.name)) return;
+                seen.add(s.name);
+                const opt = document.createElement('option');
+                opt.value = s.id;
+                opt.textContent = s.name;
+                if (pre.includes(parseInt(s.id))) opt.selected = true;
+                subSel.appendChild(opt);
+            });
+            if (window.$) $(subSel).trigger('change');
+        })
+        .catch(() => { subSel.innerHTML = '<option value="">Error loading sub-categories</option>'; });
+}
+
 function loadStores(merchantId) {
     const sel = document.getElementById('store_id');
-    sel.innerHTML = '<option value="">All Stores</option>';
-    if (!merchantId) return;
+    sel.innerHTML = '';
+    if (!merchantId) { if (window.$) $(sel).trigger('change'); return; }
     fetch(`<?= BASE_URL ?>coupons/stores-json?merchant_id=${merchantId}`)
         .then(r => r.json())
         .then(stores => {
             stores.forEach(s => {
                 const opt = document.createElement('option');
                 opt.value = s.id;
-                opt.textContent = s.name;
+                opt.textContent = s.store_name;
                 sel.appendChild(opt);
             });
             if (window.$) $(sel).trigger('change');
         })
         .catch(() => {});
+}
+
+function addLocationRow() {
+    const container = document.getElementById('locationRows');
+    const idx = container.querySelectorAll('.location-row').length;
+    const row = document.createElement('div');
+    row.className = 'location-row row g-2 mb-2 align-items-end';
+    row.innerHTML = `
+        <div class="col-sm-4">
+            <label class="form-label form-label-sm">City</label>
+            <select name="location_city_ids[]" class="form-select form-select-sm row-city"
+                    onchange="rowLoadAreas(this, ${idx})">
+                <option value="">&mdash; City &mdash;</option>
+                <?php foreach ($cities as $c): ?>
+                <option value="<?= $c['id'] ?>"><?= escape($c['city_name']) ?></option>
+                <?php endforeach; ?>
+            </select>
+        </div>
+        <div class="col-sm-4">
+            <label class="form-label form-label-sm">Area</label>
+            <select name="location_area_ids[]" class="form-select form-select-sm row-area"
+                    onchange="rowLoadLocations(this, ${idx})" disabled>
+                <option value="">&mdash; Area &mdash;</option>
+            </select>
+        </div>
+        <div class="col-sm-3">
+            <label class="form-label form-label-sm">Location</label>
+            <select name="location_location_ids[]" class="form-select form-select-sm row-location" disabled>
+                <option value="">&mdash; Location &mdash;</option>
+            </select>
+        </div>
+        <div class="col-sm-1">
+            <button type="button" class="btn btn-outline-danger btn-sm" onclick="this.closest('.location-row').remove()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>`;
+    container.appendChild(row);
+}
+
+function rowLoadAreas(citySelect, idx) {
+    const row       = citySelect.closest('.location-row');
+    const areaSel   = row.querySelector('.row-area');
+    const locSel    = row.querySelector('.row-location');
+    areaSel.innerHTML = '<option value="">&mdash; Area &mdash;</option>';
+    locSel.innerHTML  = '<option value="">&mdash; Location &mdash;</option>';
+    areaSel.disabled  = true;
+    locSel.disabled   = true;
+    if (!citySelect.value) return;
+    fetch(`<?= BASE_URL ?>master-data/areas-json?city_id=${citySelect.value}`)
+        .then(r => r.json())
+        .then(areas => {
+            areas.forEach(a => {
+                const o = document.createElement('option');
+                o.value = a.id; o.textContent = a.area_name;
+                areaSel.appendChild(o);
+            });
+            areaSel.disabled = false;
+        }).catch(() => {});
+}
+
+function rowLoadLocations(areaSelect, idx) {
+    const row    = areaSelect.closest('.location-row');
+    const locSel = row.querySelector('.row-location');
+    locSel.innerHTML = '<option value="">&mdash; Location &mdash;</option>';
+    locSel.disabled  = true;
+    if (!areaSelect.value) return;
+    fetch(`<?= BASE_URL ?>master-data/locations-json?area_id=${areaSelect.value}`)
+        .then(r => r.json())
+        .then(locs => {
+            locs.forEach(l => {
+                const o = document.createElement('option');
+                o.value = l.id; o.textContent = l.location_name;
+                locSel.appendChild(o);
+            });
+            locSel.disabled = false;
+        }).catch(() => {});
 }
 
 document.addEventListener('DOMContentLoaded', function () {
@@ -193,5 +334,11 @@ document.addEventListener('DOMContentLoaded', function () {
             $(el).select2({ theme: 'bootstrap-5', placeholder: el.dataset.placeholder, allowClear: true });
         }
     });
+    if (window.$) {
+        $('#fdCategories').select2({ theme: 'bootstrap-5', placeholder: 'Select categories…' });
+        $('#fdSubCategories').select2({ theme: 'bootstrap-5', placeholder: 'Select categories first…' });
+        $('#store_id').select2({ theme: 'bootstrap-5', placeholder: 'All Stores (leave blank)', allowClear: true });
+        $('#fdCategories').on('change', function() { loadFDSubCategories([]); });
+    }
 });
 </script>

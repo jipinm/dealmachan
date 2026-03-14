@@ -37,7 +37,7 @@
                         <div class="col-md-6">
                             <label class="form-label fw-semibold">Gender</label>
                             <select name="gender" class="form-select">
-                                <option value="">— Select —</option>
+                                <option value="">&mdash; Select &mdash;</option>
                                 <option value="male"   <?= ($_POST['gender'] ?? '') === 'male'   ? 'selected' : '' ?>>Male</option>
                                 <option value="female" <?= ($_POST['gender'] ?? '') === 'female' ? 'selected' : '' ?>>Female</option>
                                 <option value="other"  <?= ($_POST['gender'] ?? '') === 'other'  ? 'selected' : '' ?>>Other</option>
@@ -46,7 +46,7 @@
                         <div class="col-md-12">
                             <label class="form-label fw-semibold">Profession</label>
                             <select name="profession_id" class="form-select select2">
-                                <option value="">— Select Profession —</option>
+                                <option value="">&mdash; Select Profession &mdash;</option>
                                 <?php foreach ($professions as $prof): ?>
                                 <option value="<?= $prof['id'] ?>" <?= ($_POST['profession_id'] ?? '') == $prof['id'] ? 'selected' : '' ?>>
                                     <?= escape($prof['profession_name']) ?>

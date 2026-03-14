@@ -25,7 +25,7 @@
                 <div class="col-md-6">
                     <label class="form-label fw-semibold">Coupon <span class="text-danger">*</span></label>
                     <select name="coupon_id" class="form-select select2" required>
-                        <option value="">— Select Coupon —</option>
+                        <option value="">&mdash; Select Coupon &mdash;</option>
                         <?php foreach ($coupons as $c): ?>
                         <option value="<?= $c['id'] ?>" <?= ($old['coupon_id'] ?? '') == $c['id'] ? 'selected' : '' ?>>
                             <?= escape($c['title']) ?> (<?= escape($c['coupon_code']) ?>)
@@ -38,10 +38,10 @@
                 <div class="col-md-6">
                     <label class="form-label fw-semibold">Recipient Customer <span class="text-danger">*</span></label>
                     <select name="customer_id" class="form-select select2" required>
-                        <option value="">— Select Customer —</option>
+                        <option value="">&mdash; Select Customer &mdash;</option>
                         <?php foreach ($customers as $c): ?>
                         <option value="<?= $c['id'] ?>" <?= ($old['customer_id'] ?? '') == $c['id'] ? 'selected' : '' ?>>
-                            <?= escape($c['name']) ?> — <?= escape($c['phone']) ?>
+                            <?= escape($c['name']) ?> &mdash; <?= escape($c['phone']) ?>
                         </option>
                         <?php endforeach; ?>
                     </select>

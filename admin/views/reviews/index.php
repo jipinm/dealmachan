@@ -1,5 +1,5 @@
 <?php /* views/reviews/index.php */
-$statusColors = ['pending' => 'warning', 'approved' => 'success', 'rejected' => 'danger'];
+$statusColors = ['approved' => 'success', 'flagged' => 'warning', 'rejected' => 'warning', 'pending' => 'secondary'];
 ?>
 
 <!-- Stats Row -->
@@ -13,34 +13,26 @@ $statusColors = ['pending' => 'warning', 'approved' => 'success', 'rejected' => 
         </div>
     </div>
     <div class="col-6 col-md-4 col-xl-2">
-        <div class="card text-bg-warning h-100 shadow-sm">
-            <div class="card-body py-3 px-3">
-                <div class="small fw-semibold text-white-50">Pending</div>
-                <div class="fs-4 fw-bold"><?= number_format($stats['pending'] ?? 0) ?></div>
-            </div>
-        </div>
-    </div>
-    <div class="col-6 col-md-4 col-xl-2">
         <div class="card text-bg-success h-100 shadow-sm">
             <div class="card-body py-3 px-3">
-                <div class="small fw-semibold text-white-50">Approved</div>
+                <div class="small fw-semibold text-white-50">Live</div>
                 <div class="fs-4 fw-bold"><?= number_format($stats['approved'] ?? 0) ?></div>
             </div>
         </div>
     </div>
     <div class="col-6 col-md-4 col-xl-2">
-        <div class="card text-bg-danger h-100 shadow-sm">
+        <div class="card text-bg-warning h-100 shadow-sm">
             <div class="card-body py-3 px-3">
-                <div class="small fw-semibold text-white-50">Rejected</div>
-                <div class="fs-4 fw-bold"><?= number_format($stats['rejected'] ?? 0) ?></div>
+                <div class="small fw-semibold text-white-50">Flagged</div>
+                <div class="fs-4 fw-bold"><?= number_format($stats['flagged'] ?? 0) ?></div>
             </div>
         </div>
     </div>
     <div class="col-6 col-md-4 col-xl-2">
         <div class="card text-bg-info h-100 shadow-sm">
             <div class="card-body py-3 px-3">
-                <div class="small fw-semibold text-white-50">Avg Approved Rating</div>
-                <div class="fs-4 fw-bold"><?= $stats['avg_approved_rating'] ? number_format($stats['avg_approved_rating'], 1) . ' ★' : '—' ?></div>
+                <div class="small fw-semibold text-white-50">Avg Rating</div>
+                <div class="fs-4 fw-bold"><?= $stats['avg_rating'] ? number_format($stats['avg_rating'], 1) . ' ★' : '&mdash;' ?></div>
             </div>
         </div>
     </div>
@@ -62,15 +54,15 @@ $statusColors = ['pending' => 'warning', 'approved' => 'success', 'rejected' => 
             <?php
             $from = min($totalCount, ($currentPage - 1) * $perPage + 1);
             $to   = min($totalCount, $currentPage * $perPage);
-            echo $totalCount ? "Showing {$from}–{$to} of {$totalCount}" : 'No reviews found';
+            echo $totalCount ? "Showing {$from}&ndash;{$to} of {$totalCount}" : 'No reviews found';
             ?>
         </small>
     </div>
-    <?php if (($stats['pending'] ?? 0) > 0): ?>
+    <?php if (($stats['flagged'] ?? 0) > 0): ?>
     <div>
         <span class="badge bg-warning text-dark fs-6">
-            <i class="fas fa-clock me-1"></i>
-            <?= number_format($stats['pending']) ?> pending review<?= $stats['pending'] > 1 ? 's' : '' ?> awaiting moderation
+            <i class="fas fa-flag me-1"></i>
+            <?= number_format($stats['flagged']) ?> flagged review<?= $stats['flagged'] > 1 ? 's' : '' ?> hidden from public
         </span>
     </div>
     <?php endif; ?>
@@ -103,7 +95,7 @@ $statusColors = ['pending' => 'warning', 'approved' => 'success', 'rejected' => 
                 <label class="form-label form-label-sm mb-1">Status</label>
                 <select name="status" class="form-select form-select-sm">
                     <option value="">All Statuses</option>
-                    <?php foreach (['pending', 'approved', 'rejected'] as $s): ?>
+                    <?php foreach (['approved', 'flagged'] as $s): ?>
                         <option value="<?= $s ?>" <?= $filters['status'] === $s ? 'selected' : '' ?>>
                             <?= ucfirst($s) ?>
                         </option>
@@ -151,11 +143,11 @@ $statusColors = ['pending' => 'warning', 'approved' => 'success', 'rejected' => 
                 <label class="form-check-label small text-muted" for="selectAll">Select all on page</label>
             </div>
             <div class="ms-auto d-flex gap-2">
-                <button type="button" class="btn btn-sm btn-success" onclick="bulkAction('<?= BASE_URL ?>reviews/bulk-approve')">
-                    <i class="fas fa-check me-1"></i> Approve Selected
+                <button type="button" class="btn btn-sm btn-success" onclick="bulkAction('<?= BASE_URL ?>reviews/bulk-restore')">
+                    <i class="fas fa-check me-1"></i> Restore Selected
                 </button>
-                <button type="button" class="btn btn-sm btn-outline-danger" onclick="bulkAction('<?= BASE_URL ?>reviews/bulk-reject')">
-                    <i class="fas fa-times me-1"></i> Reject Selected
+                <button type="button" class="btn btn-sm btn-outline-warning" onclick="bulkAction('<?= BASE_URL ?>reviews/bulk-flag')">
+                    <i class="fas fa-flag me-1"></i> Flag Selected
                 </button>
             </div>
         </div>
@@ -184,7 +176,7 @@ $statusColors = ['pending' => 'warning', 'approved' => 'success', 'rejected' => 
                     </thead>
                     <tbody>
                         <?php foreach ($reviews as $rv): ?>
-                        <tr class="<?= $rv['status'] === 'pending' ? 'table-warning bg-opacity-25' : '' ?>">
+                        <tr class="<?= $rv['status'] === 'flagged' ? 'table-warning bg-opacity-25' : '' ?>">
                             <td>
                                 <input class="form-check-input row-check" type="checkbox" name="ids[]" value="<?= $rv['id'] ?>">
                             </td>
@@ -231,23 +223,23 @@ $statusColors = ['pending' => 'warning', 'approved' => 'success', 'rejected' => 
                                    class="btn btn-sm btn-outline-primary me-1" title="View">
                                     <i class="fas fa-eye"></i>
                                 </a>
-                                <?php if ($rv['status'] !== 'approved'): ?>
-                                <form method="POST" action="<?= BASE_URL ?>reviews/approve" class="d-inline">
+                                <?php if (in_array($rv['status'], ['flagged','rejected','pending'])): ?>
+                                <form method="POST" action="<?= BASE_URL ?>reviews/restore" class="d-inline">
                                     <input type="hidden" name="csrf_token" value="<?= generateCSRFToken() ?>">
                                     <input type="hidden" name="id" value="<?= $rv['id'] ?>">
                                     <input type="hidden" name="redirect" value="reviews?<?= http_build_query($filters) ?>">
-                                    <button type="submit" class="btn btn-sm btn-success me-1" title="Approve">
+                                    <button type="submit" class="btn btn-sm btn-success me-1" title="Restore to public">
                                         <i class="fas fa-check"></i>
                                     </button>
                                 </form>
                                 <?php endif; ?>
-                                <?php if ($rv['status'] !== 'rejected'): ?>
-                                <form method="POST" action="<?= BASE_URL ?>reviews/reject" class="d-inline me-1">
+                                <?php if ($rv['status'] === 'approved'): ?>
+                                <form method="POST" action="<?= BASE_URL ?>reviews/flag" class="d-inline me-1">
                                     <input type="hidden" name="csrf_token" value="<?= generateCSRFToken() ?>">
                                     <input type="hidden" name="id" value="<?= $rv['id'] ?>">
                                     <input type="hidden" name="redirect" value="reviews?<?= http_build_query($filters) ?>">
-                                    <button type="submit" class="btn btn-sm btn-outline-warning" title="Reject">
-                                        <i class="fas fa-times"></i>
+                                    <button type="submit" class="btn btn-sm btn-outline-warning" title="Flag &amp; hide">
+                                        <i class="fas fa-flag"></i>
                                     </button>
                                 </form>
                                 <?php endif; ?>

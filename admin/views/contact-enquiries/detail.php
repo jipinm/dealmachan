@@ -27,11 +27,11 @@ $statusColors = ['new'=>'danger','read'=>'warning','responded'=>'success'];
                     </div>
                     <div class="col-sm-4">
                         <p class="text-muted small mb-1">Mobile</p>
-                        <p class="fw-semibold mb-0"><?= escape($enquiry['mobile'] ?? '—') ?></p>
+                        <p class="fw-semibold mb-0"><?= escape($enquiry['mobile'] ?? '&mdash;') ?></p>
                     </div>
                     <div class="col-sm-4">
                         <p class="text-muted small mb-1">Email</p>
-                        <p class="fw-semibold mb-0"><?= $enquiry['email'] ? '<a href="mailto:' . escape($enquiry['email']) . '">' . escape($enquiry['email']) . '</a>' : '—' ?></p>
+                        <p class="fw-semibold mb-0"><?= $enquiry['email'] ? '<a href="mailto:' . escape($enquiry['email']) . '">' . escape($enquiry['email']) . '</a>' : '&mdash;' ?></p>
                     </div>
                     <div class="col-sm-4">
                         <p class="text-muted small mb-1">Received</p>

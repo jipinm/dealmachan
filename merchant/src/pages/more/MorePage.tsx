@@ -13,7 +13,9 @@ import {
   Zap,
   Tag,
   UserPlus,
+  UserCog,
   Ticket,
+  Lock,
 } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
 import { getImageUrl } from '@/lib/imageUrl'
@@ -25,6 +27,7 @@ interface MenuItem {
   to: string
   accent: string
   minAccountType?: number  // minimum account_type_id required (default: 1 = all)
+  merchantOnly?: boolean   // hidden for store-admin users
 }
 
 function MenuRow({ item }: { item: MenuItem }) {
@@ -71,6 +74,14 @@ const SECTIONS: Array<{ title: string; items: MenuItem[] }> = [
         to: '/store-coupons',
         accent: 'bg-purple-600',
         minAccountType: 3,
+      },
+      {
+        icon: UserCog,
+        label: 'Store Admins',
+        description: 'Manage staff logins for your stores',
+        to: '/store-admins',
+        accent: 'bg-cyan-600',
+        merchantOnly: true,
       },
     ],
   },
@@ -135,6 +146,7 @@ const SECTIONS: Array<{ title: string; items: MenuItem[] }> = [
         description: 'View and request trust badges for your profile',
         to: '/profile/labels',
         accent: 'bg-violet-500',
+        merchantOnly: true,
       },
       {
         icon: UserPlus,
@@ -143,6 +155,14 @@ const SECTIONS: Array<{ title: string; items: MenuItem[] }> = [
         to: '/customers',
         accent: 'bg-teal-500',
         minAccountType: 3,
+        merchantOnly: true,
+      },
+      {
+        icon: Lock,
+        label: 'Change Password',
+        description: 'Update your account password',
+        to: '/profile/security',
+        accent: 'bg-slate-500',
       },
     ],
   },
@@ -151,6 +171,7 @@ const SECTIONS: Array<{ title: string; items: MenuItem[] }> = [
 export default function MorePage() {
   const navigate = useNavigate()
   const { merchant, logout } = useAuthStore()
+  const isStoreAdmin = useAuthStore(s => s.isStoreAdmin())
   const accountType = merchant?.account_type_id ?? 1
 
   const handleLogout = () => {
@@ -171,33 +192,56 @@ export default function MorePage() {
 
       <div className="px-4 -mt-2 space-y-3">
         {/* Profile card */}
-        <button
-          onClick={() => navigate('/profile')}
-          className="w-full bg-white rounded-2xl shadow-sm p-4 flex items-center gap-3 hover:shadow-md transition-shadow active:bg-gray-50"
-        >
-          <div className="w-14 h-14 rounded-2xl bg-brand-100 flex items-center justify-center shrink-0 overflow-hidden">
-            {merchant?.logo_url ? (
-              <img src={getImageUrl(merchant.logo_url)} alt="logo" className="w-full h-full object-cover" />
-            ) : (
-              <User size={26} className="text-brand-400" />
-            )}
+        {isStoreAdmin ? (
+          <div className="w-full bg-white rounded-2xl shadow-sm p-4 flex items-center gap-3">
+            <div className="w-14 h-14 rounded-2xl bg-brand-100 flex items-center justify-center shrink-0 overflow-hidden">
+              {merchant?.logo_url ? (
+                <img src={getImageUrl(merchant.logo_url)} alt="logo" className="w-full h-full object-cover" />
+              ) : (
+                <User size={26} className="text-brand-400" />
+              )}
+            </div>
+            <div className="flex-1 text-left min-w-0">
+              <p className="text-base font-bold text-gray-900 truncate">
+                {merchant?.business_name ?? 'My Business'}
+              </p>
+              <p className="text-xs text-gray-500 truncate">{merchant?.email ?? ''}</p>
+              <span className="mt-1 inline-block text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-50 text-amber-600">
+                Store Admin
+              </span>
+            </div>
           </div>
-          <div className="flex-1 text-left min-w-0">
-            <p className="text-base font-bold text-gray-900 truncate">
-              {merchant?.business_name ?? 'My Business'}
-            </p>
-            <p className="text-xs text-gray-500 truncate">{merchant?.email ?? ''}</p>
-            <span className="mt-1 inline-block text-[10px] font-semibold px-2 py-0.5 rounded-full bg-brand-50 text-brand-600">
-              {planLabel} Plan
-            </span>
-          </div>
-          <ChevronRight size={18} className="text-gray-300 shrink-0" />
-        </button>
+        ) : (
+          <button
+            onClick={() => navigate('/profile')}
+            className="w-full bg-white rounded-2xl shadow-sm p-4 flex items-center gap-3 hover:shadow-md transition-shadow active:bg-gray-50"
+          >
+            <div className="w-14 h-14 rounded-2xl bg-brand-100 flex items-center justify-center shrink-0 overflow-hidden">
+              {merchant?.logo_url ? (
+                <img src={getImageUrl(merchant.logo_url)} alt="logo" className="w-full h-full object-cover" />
+              ) : (
+                <User size={26} className="text-brand-400" />
+              )}
+            </div>
+            <div className="flex-1 text-left min-w-0">
+              <p className="text-base font-bold text-gray-900 truncate">
+                {merchant?.business_name ?? 'My Business'}
+              </p>
+              <p className="text-xs text-gray-500 truncate">{merchant?.email ?? ''}</p>
+              <span className="mt-1 inline-block text-[10px] font-semibold px-2 py-0.5 rounded-full bg-brand-50 text-brand-600">
+                {planLabel} Plan
+              </span>
+            </div>
+            <ChevronRight size={18} className="text-gray-300 shrink-0" />
+          </button>
+        )}
 
         {/* Menu sections */}
         {SECTIONS.map((section) => {
           const visibleItems = section.items.filter(
-            (item) => !item.minAccountType || accountType >= item.minAccountType
+            (item) =>
+              (!item.minAccountType || accountType >= item.minAccountType) &&
+              (!item.merchantOnly || !isStoreAdmin)
           )
           if (visibleItems.length === 0) return null
           return (

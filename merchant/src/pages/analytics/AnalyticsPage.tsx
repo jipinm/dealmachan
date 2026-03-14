@@ -1,12 +1,12 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { ChevronLeft, TrendingUp, Users, Award, RefreshCw } from 'lucide-react'
+import { ChevronLeft, TrendingUp, Users, Award, RefreshCw, Banknote } from 'lucide-react'
 import {
   AreaChart, Area, BarChart, Bar,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from 'recharts'
-import { analyticsApi } from '@/api/endpoints/analytics'
+import { analyticsApi, type RevenueAnalytics } from '@/api/endpoints/analytics'
 
 type Period = 7 | 30 | 90
 
@@ -47,7 +47,13 @@ export default function AnalyticsPage() {
       queryFn:  () => analyticsApi.topCoupons().then(r => r.data.data ?? null),
     })
 
-  const isLoading = rLoading || cLoading || tLoading
+  const { data: revenueData, isLoading: revLoading } =
+    useQuery<RevenueAnalytics | null>({
+      queryKey: ['analytics-revenue'],
+      queryFn:  () => analyticsApi.revenue().then(r => r.data.data ?? null),
+    })
+
+  const isLoading = rLoading || cLoading || tLoading || revLoading
 
   // Customer new vs returning bar data
   const customerBarData = customerData
@@ -219,6 +225,65 @@ export default function AnalyticsPage() {
             </div>
           ) : (
             <p className="text-center text-gray-400 text-sm py-8">No coupon data yet</p>
+          )}
+        </div>
+
+        {/* Revenue by Store */}
+        <div className="bg-white rounded-2xl shadow-sm p-4">
+          <SectionHeader icon={<Banknote size={16} />} title="Revenue by Store" />
+          {revLoading ? (
+            <div className="h-32 flex items-center justify-center text-gray-400 text-sm">Loading…</div>
+          ) : revenueData && revenueData.total_sales > 0 ? (
+            <div className="space-y-4">
+              {/* Summary row */}
+              <div className="flex gap-4">
+                <div>
+                  <p className="text-2xl font-bold text-gray-900">{revenueData.total_sales}</p>
+                  <p className="text-xs text-gray-500">Total sales</p>
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-emerald-600">
+                    ₹{parseFloat(revenueData.total_revenue).toLocaleString('en-IN')}
+                  </p>
+                  <p className="text-xs text-gray-500">Total revenue</p>
+                </div>
+              </div>
+
+              {/* Per-store breakdown (only when >1 store) */}
+              {revenueData.by_store.length > 1 && (
+                <div>
+                  <p className="text-xs font-medium text-gray-600 mb-2">By Store</p>
+                  <div className="space-y-2.5">
+                    {revenueData.by_store.map((s) => {
+                      const maxRevenue = Math.max(
+                        ...revenueData.by_store.map((x) => parseFloat(x.revenue))
+                      ) || 1
+                      const pct = Math.round((parseFloat(s.revenue) / maxRevenue) * 100)
+                      return (
+                        <div key={s.store_id}>
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="text-xs text-gray-700 font-medium truncate max-w-[55%]">
+                              {s.store_name}
+                            </span>
+                            <span className="text-xs text-gray-500">
+                              {s.count} sale{s.count !== 1 ? 's' : ''} · ₹{parseFloat(s.revenue).toLocaleString('en-IN')}
+                            </span>
+                          </div>
+                          <div className="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
+                            <div
+                              className="bg-emerald-500 h-1.5 rounded-full"
+                              style={{ width: `${pct}%` }}
+                            />
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : (
+            <p className="text-center text-gray-400 text-sm py-8">No revenue data yet</p>
           )}
         </div>
 

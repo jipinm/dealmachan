@@ -92,7 +92,7 @@ class CustomersController extends Controller {
         $importantDays     = $this->customerModel->getImportantDays($id);
 
         $this->loadView('customers/view', [
-            'title'              => 'Customer Profile — ' . escape($customer['name']),
+            'title'              => 'Customer Profile &mdash; ' . escape($customer['name']),
             'customer'           => $customer,
             'redemptions'        => $redemptions,
             'analytics'          => $analytics,
@@ -143,7 +143,7 @@ class CustomersController extends Controller {
 
         $professionModel = new Profession();
         $this->loadView('customers/edit', [
-            'title'        => 'Edit Customer — ' . escape($customer['name']),
+            'title'        => 'Edit Customer &mdash; ' . escape($customer['name']),
             'customer'     => $customer,
             'professions'  => $professionModel->getActive(),
             'current_user' => $this->auth->getCurrentUser(),

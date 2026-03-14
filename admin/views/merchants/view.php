@@ -26,8 +26,15 @@ $statusColors  = ['active'=>'success','inactive'=>'secondary','blocked'=>'danger
             <div class="card-body">
                 <div class="d-flex align-items-center gap-3 flex-wrap">
                     <div class="rounded bg-primary d-flex align-items-center justify-content-center text-white fw-bold flex-shrink-0"
-                         style="width:64px;height:64px;font-size:1.4rem;">
-                        <?= strtoupper(mb_substr($merchant['business_name'], 0, 2)) ?>
+                         style="width:64px;height:64px;font-size:1.4rem; overflow:hidden;">
+                        <?php if (!empty($merchant['business_logo'])): ?>
+                            <img src="<?= imageUrl($merchant['business_logo']) ?>" 
+                                 alt="<?= escape($merchant['business_name']) ?>" 
+                                 class="w-100 h-100 object-fit-cover"
+                                 onerror="this.parentElement.innerHTML='<?= strtoupper(mb_substr($merchant['business_name'] ?? 'M', 0, 2)) ?>'">
+                        <?php else: ?>
+                            <?= strtoupper(mb_substr($merchant['business_name'] ?? 'M', 0, 2)) ?>
+                        <?php endif; ?>
                     </div>
                     <div class="flex-grow-1">
                         <h2 class="h4 mb-1">
@@ -88,23 +95,23 @@ $statusColors  = ['active'=>'success','inactive'=>'secondary','blocked'=>'danger
                 <div class="row g-3">
                     <div class="col-sm-6">
                         <div class="text-muted small mb-1">Email</div>
-                        <div><?= $merchant['email'] ? escape($merchant['email']) : '<span class="text-muted">—</span>' ?></div>
+                        <div><?= $merchant['email'] ? escape($merchant['email']) : '<span class="text-muted">&mdash;</span>' ?></div>
                     </div>
                     <div class="col-sm-6">
                         <div class="text-muted small mb-1">Phone</div>
-                        <div><?= $merchant['phone'] ? escape($merchant['phone']) : '<span class="text-muted">—</span>' ?></div>
+                        <div><?= $merchant['phone'] ? escape($merchant['phone']) : '<span class="text-muted">&mdash;</span>' ?></div>
                     </div>
                     <div class="col-sm-6">
                         <div class="text-muted small mb-1">Registration Number</div>
-                        <div><?= $merchant['registration_number'] ? escape($merchant['registration_number']) : '<span class="text-muted">—</span>' ?></div>
+                        <div><?= $merchant['registration_number'] ? escape($merchant['registration_number']) : '<span class="text-muted">&mdash;</span>' ?></div>
                     </div>
                     <div class="col-sm-6">
                         <div class="text-muted small mb-1">GST Number</div>
-                        <div><?= $merchant['gst_number'] ? escape($merchant['gst_number']) : '<span class="text-muted">—</span>' ?></div>
+                        <div><?= $merchant['gst_number'] ? escape($merchant['gst_number']) : '<span class="text-muted">&mdash;</span>' ?></div>
                     </div>
                     <div class="col-sm-6">
                         <div class="text-muted small mb-1">Subscription Expiry</div>
-                        <div><?= $merchant['subscription_expiry'] ? formatDate($merchant['subscription_expiry']) : '<span class="text-muted">—</span>' ?></div>
+                        <div><?= $merchant['subscription_expiry'] ? formatDate($merchant['subscription_expiry']) : '<span class="text-muted">&mdash;</span>' ?></div>
                     </div>
                     <div class="col-sm-6">
                         <div class="text-muted small mb-1">Priority Weight</div>
@@ -112,7 +119,7 @@ $statusColors  = ['active'=>'success','inactive'=>'secondary','blocked'=>'danger
                     </div>
                     <div class="col-sm-6">
                         <div class="text-muted small mb-1">Registered</div>
-                        <div><?= isset($merchant['registered_at']) ? formatDate($merchant['registered_at']) : '—' ?></div>
+                        <div><?= isset($merchant['registered_at']) ? formatDate($merchant['registered_at']) : '&mdash;' ?></div>
                     </div>
                     <div class="col-sm-6">
                         <div class="text-muted small mb-1">Last Login</div>
@@ -195,7 +202,7 @@ $statusColors  = ['active'=>'success','inactive'=>'secondary','blocked'=>'danger
                                                 <?php if (!empty($dayData['closed'])): ?>
                                                     <span class="text-danger">Closed</span>
                                                 <?php else: ?>
-                                                    <?= escape($dayData['open'] ?? '—') ?>–<?= escape($dayData['close'] ?? '—') ?>
+                                                    <?= escape($dayData['open'] ?? '&mdash;') ?>&ndash;<?= escape($dayData['close'] ?? '&mdash;') ?>
                                                 <?php endif; ?>
                                             </span>
                                             <?php endforeach; ?>
@@ -240,7 +247,7 @@ $statusColors  = ['active'=>'success','inactive'=>'secondary','blocked'=>'danger
                                     <?php endfor; ?>
                                     <span class="ms-1 small"><?= $rev['rating'] ?>/5</span>
                                 </td>
-                                <td class="text-muted small"><?= escape(mb_substr($rev['review_text'] ?? '', 0, 100)) ?><?= mb_strlen($rev['review_text'] ?? '') > 100 ? '…' : '' ?></td>
+                                <td class="text-muted small"><?= escape(mb_substr($rev['review_text'] ?? '', 0, 100)) ?><?= mb_strlen($rev['review_text'] ?? '') > 100 ? '&hellip;' : '' ?></td>
                                 <td><span class="badge bg-<?= $rev['status'] === 'approved' ? 'success' : ($rev['status'] === 'rejected' ? 'danger' : 'warning') ?>"><?= ucfirst($rev['status']) ?></span></td>
                                 <td class="text-muted small"><?= formatDate($rev['created_at']) ?></td>
                             </tr>
@@ -268,9 +275,9 @@ $statusColors  = ['active'=>'success','inactive'=>'secondary','blocked'=>'danger
                             <?php if ($img['is_cover']): ?>
                             <span class="badge bg-success position-absolute top-0 start-0 m-1" style="font-size:0.65rem;z-index:1;">Cover</span>
                             <?php endif; ?>
-                            <img src="<?= escape($img['image_url']) ?>" alt="<?= escape($img['caption'] ?? '') ?>"
+                            <img src="<?= imageUrl($img['image_url']) ?>" alt="<?= escape($img['caption'] ?? '') ?>"
                                  class="card-img-top object-fit-cover" style="height:100px;"
-                                 onerror="this.src='<?= BASE_URL ?>public/img/placeholder.png'">
+                                 onerror="this.src='<?= imageUrl('') ?>'">
                             <?php if ($img['caption']): ?>
                             <div class="card-body p-1"><small class="text-muted"><?= escape($img['caption']) ?></small></div>
                             <?php endif; ?>
@@ -356,7 +363,7 @@ $statusColors  = ['active'=>'success','inactive'=>'secondary','blocked'=>'danger
                         <div class="text-muted small">Coupons</div>
                     </div>
                     <div class="col-6">
-                        <div class="fs-3 fw-bold text-warning"><?= $merchant['avg_rating'] ?: '—' ?></div>
+                        <div class="fs-3 fw-bold text-warning"><?= $merchant['avg_rating'] ?: '&mdash;' ?></div>
                         <div class="text-muted small">Avg Rating</div>
                     </div>
                     <div class="col-6">

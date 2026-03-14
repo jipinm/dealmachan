@@ -18,6 +18,8 @@ interface AuthActions {
   refresh(): Promise<string>
   setTokens(access: string, refresh: string): void
   setMerchant(m: MerchantProfile): void
+  isStoreAdmin(): boolean
+  scopedStoreId(): number | null
 }
 
 export const useAuthStore = create<AuthState & AuthActions>()(
@@ -77,6 +79,10 @@ export const useAuthStore = create<AuthState & AuthActions>()(
       setMerchant: (m) => {
         set({ merchant: m })
       },
+
+      isStoreAdmin: () => get().merchant?.access_scope === 'store',
+
+      scopedStoreId: () => get().merchant?.store_id ?? null,
     }),
     {
       name: REFRESH_KEY,

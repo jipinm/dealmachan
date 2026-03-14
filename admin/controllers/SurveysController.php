@@ -146,7 +146,7 @@ class SurveysController extends Controller {
         if ($this->model->deleteSurvey($id)) {
             $_SESSION['success'] = 'Survey deleted successfully.';
         } else {
-            $_SESSION['error'] = 'Cannot delete — survey may not be in draft status or has responses.';
+            $_SESSION['error'] = 'Cannot delete &mdash; survey may not be in draft status or has responses.';
         }
         $this->redirect('surveys');
     }

@@ -134,7 +134,7 @@
                                 &rarr;
                                 <?= $sv['active_until'] ? date('d M Y', strtotime($sv['active_until'])) : '∞' ?>
                             <?php else: ?>
-                                <span class="text-muted">—</span>
+                                <span class="text-muted">&mdash;</span>
                             <?php endif; ?>
                         </td>
                         <td>
@@ -142,7 +142,7 @@
                                 <?= ucfirst($sv['status']) ?>
                             </span>
                         </td>
-                        <td class="text-muted small"><?= htmlspecialchars($sv['created_by_name'] ?? '—') ?></td>
+                        <td class="text-muted small"><?= htmlspecialchars($sv['created_by_name'] ?? '&mdash;') ?></td>
                         <td class="text-center">
                             <!-- Status toggle -->
                             <div class="btn-group btn-group-sm">

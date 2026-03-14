@@ -137,11 +137,11 @@
                         </td>
                         <td class="small">
                             <?php if ($c['start_date'] || $c['end_date']): ?>
-                                <?= $c['start_date'] ? date('d M Y', strtotime($c['start_date'])) : '—' ?>
+                                <?= $c['start_date'] ? date('d M Y', strtotime($c['start_date'])) : '&mdash;' ?>
                                 →
-                                <?= $c['end_date'] ? date('d M Y', strtotime($c['end_date'])) : '—' ?>
+                                <?= $c['end_date'] ? date('d M Y', strtotime($c['end_date'])) : '&mdash;' ?>
                             <?php else: ?>
-                                <span class="text-muted">—</span>
+                                <span class="text-muted">&mdash;</span>
                             <?php endif; ?>
                         </td>
                         <td class="text-center">
@@ -150,7 +150,7 @@
                         <td class="text-center">
                             <span class="badge bg-info text-dark"><?= (int)$c['winner_count'] ?></span>
                         </td>
-                        <td class="small text-muted"><?= htmlspecialchars($c['created_by_name'] ?? '—') ?></td>
+                        <td class="small text-muted"><?= htmlspecialchars($c['created_by_name'] ?? '&mdash;') ?></td>
                         <td class="small text-muted"><?= date('d M Y', strtotime($c['created_at'])) ?></td>
                         <td class="text-end">
                             <div class="d-flex gap-1 justify-content-end flex-wrap">

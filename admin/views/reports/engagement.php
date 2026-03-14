@@ -48,7 +48,7 @@
                         <td>
                             <div class="fw-semibold small"><?= escape($ct['title']) ?></div>
                             <?php if (!empty($ct['start_date'])): ?>
-                            <div class="text-muted" style="font-size:.72rem"><?= date('d M Y', strtotime($ct['start_date'])) ?> – <?= !empty($ct['end_date']) ? date('d M Y', strtotime($ct['end_date'])) : '∞' ?></div>
+                            <div class="text-muted" style="font-size:.72rem"><?= date('d M Y', strtotime($ct['start_date'])) ?> &ndash; <?= !empty($ct['end_date']) ? date('d M Y', strtotime($ct['end_date'])) : '∞' ?></div>
                             <?php endif; ?>
                         </td>
                         <td class="text-end fw-semibold"><?= number_format($ct['entries']) ?></td>

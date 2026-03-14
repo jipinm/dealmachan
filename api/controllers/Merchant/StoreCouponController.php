@@ -33,6 +33,10 @@ class StoreCouponController {
             $where  .= ' AND sc.status = ?';
             $binds[] = $params['status'];
         }
+        // Store-scoped users can only see store coupons for their own store
+        if (($user['access_scope'] ?? 'merchant') === 'store' && !empty($user['store_id'])) {
+            $params['store_id'] = (int)$user['store_id'];
+        }
         if (!empty($params['store_id'])) {
             $where  .= ' AND sc.store_id = ?';
             $binds[] = (int)$params['store_id'];
@@ -95,7 +99,10 @@ class StoreCouponController {
     // ── POST /merchants/store-coupons ─────────────────────────────────────────
     public function store(array $user, array $body): never {
         $merchantId = (int)$user['merchant_id'];
-
+        // For store-scoped users, force store_id to their assigned store
+        if (($user['access_scope'] ?? 'merchant') === 'store' && !empty($user['store_id'])) {
+            $body['store_id'] = (int)$user['store_id'];
+        }
         $v = new Validator($body);
         $v->required('store_id')
           ->required('coupon_code')

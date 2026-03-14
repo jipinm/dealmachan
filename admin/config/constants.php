@@ -2,6 +2,11 @@
 // Load environment variables
 require_once __DIR__ . '/env.php';
 
+// Ensure UTF-8 throughout: HTTP headers, htmlspecialchars, mb_* functions
+ini_set('default_charset', 'UTF-8');
+if (function_exists('mb_internal_encoding')) mb_internal_encoding('UTF-8');
+if (function_exists('mb_http_output'))       mb_http_output('UTF-8');
+
 // Environment
 define('ENVIRONMENT', getenv('APP_ENV') ?: 'development');
 
@@ -18,6 +23,22 @@ define('PROFILE_UPLOAD_DIR', UPLOAD_PATH . '/profiles/');
 define('MERCHANT_UPLOAD_DIR', UPLOAD_PATH . '/merchants/');
 define('CARD_UPLOAD_DIR', UPLOAD_PATH . '/cards/');
 define('GALLERY_UPLOAD_DIR', UPLOAD_PATH . '/gallery/');
+
+// API application upload directory (shared uploads served by the API)
+// api/index.php is the doc root for dealmachan-api.local, so api/uploads/ maps to /uploads/ URL.
+define('API_UPLOAD_DIR', dirname(ROOT_PATH) . '/api/uploads');
+
+// Named sub-directory constants (no leading slash — path is appended by the constant itself)
+define('API_ADS_UPLOAD_DIR',              API_UPLOAD_DIR . '/ads/');
+define('API_BLOG_UPLOAD_DIR',             API_UPLOAD_DIR . '/blog/');
+define('API_FLASH_UPLOAD_DIR',            API_UPLOAD_DIR . '/flash-banners/');
+define('API_CARDS_UPLOAD_DIR',            API_UPLOAD_DIR . '/cards/');
+define('API_COUPON_UPLOAD_DIR',           API_UPLOAD_DIR . '/coupon-banners/');
+define('API_PROFILES_UPLOAD_DIR',         API_UPLOAD_DIR . '/profiles/');
+define('API_LOGOS_UPLOAD_DIR',            API_UPLOAD_DIR . '/logos/');
+define('API_MERCHANT_BANNERS_UPLOAD_DIR', API_UPLOAD_DIR . '/merchant-banners/');
+define('API_STORE_IMAGES_UPLOAD_DIR',     API_UPLOAD_DIR . '/store-images/');
+define('API_GALLERY_UPLOAD_DIR',          API_UPLOAD_DIR . '/gallery/');
 
 // File upload settings
 define('MAX_UPLOAD_SIZE', 5 * 1024 * 1024); // 5MB
@@ -97,7 +118,7 @@ define('MAX_LOGIN_ATTEMPTS', 5);
 define('LOGIN_LOCKOUT_TIME', 900); // 15 minutes
 
 // API settings (for future API integration)
-define('API_URL', getenv('API_URL') ?: 'http://localhost:8000/api');
+define('API_URL', getenv('API_URL') ?: 'http://dealmachan-api.local/');
 define('MERCHANT_APP_URL', getenv('MERCHANT_URL') ?: 'http://localhost:5173');
 define('CUSTOMER_APP_URL', getenv('CUSTOMER_URL') ?: 'http://localhost:5174');
 

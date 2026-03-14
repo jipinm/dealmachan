@@ -57,7 +57,7 @@
                     <tr>
                         <td class="text-muted small"><?= $lead['id'] ?></td>
                         <td class="fw-semibold"><?= escape($lead['contact_name']) ?></td>
-                        <td><?= escape($lead['org_name'] ?? '—') ?></td>
+                        <td><?= escape($lead['org_name'] ?? '&mdash;') ?></td>
                         <td><?= escape($lead['phone']) ?></td>
                         <td class="text-center">
                             <span class="badge bg-<?= $colors[$lead['status']] ?>">

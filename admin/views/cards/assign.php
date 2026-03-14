@@ -24,7 +24,7 @@
                     <div class="mb-4">
                         <label class="form-label fw-semibold">Select Card <span class="text-danger">*</span></label>
                         <select name="card_id" class="form-select select2-single" data-placeholder="Search card number…" required>
-                            <option value="">— Select Card —</option>
+                            <option value="">&mdash; Select Card &mdash;</option>
                             <?php foreach ($available as $avail): ?>
                                 <option value="<?= $avail['id'] ?>">
                                     <?= escape($avail['card_number']) ?> (<?= ucfirst($avail['card_variant']) ?>)
@@ -67,7 +67,7 @@
                     <div id="merchantSection" class="mb-4" style="display:none">
                         <label class="form-label">Merchant <span class="text-danger">*</span></label>
                         <select name="merchant_id" id="merchant_id" class="form-select select2-single" data-placeholder="Select merchant…">
-                            <option value="">— Select Merchant —</option>
+                            <option value="">&mdash; Select Merchant &mdash;</option>
                             <?php foreach ($merchants as $m): ?>
                                 <option value="<?= $m['id'] ?>"><?= escape($m['business_name']) ?></option>
                             <?php endforeach; ?>

@@ -27,7 +27,7 @@
                         <div class="col-sm-6">
                             <label class="form-label">User Type <span class="text-danger">*</span></label>
                             <select name="user_type" class="form-select" required>
-                                <option value="">— Select —</option>
+                                <option value="">&mdash; Select &mdash;</option>
                                 <option value="merchant">Merchant</option>
                                 <option value="customer">Customer</option>
                             </select>
@@ -49,7 +49,7 @@
                         <div class="col-sm-4">
                             <label class="form-label">Plan Type <span class="text-danger">*</span></label>
                             <select name="plan_type" class="form-select" required>
-                                <option value="">— Select —</option>
+                                <option value="">&mdash; Select &mdash;</option>
                                 <option value="basic">Basic</option>
                                 <option value="standard">Standard</option>
                                 <option value="premium">Premium</option>
@@ -70,7 +70,7 @@
                         <div class="col-sm-6">
                             <label class="form-label">Payment Method</label>
                             <select name="payment_method" class="form-select">
-                                <option value="">— None / Unknown —</option>
+                                <option value="">&mdash; None / Unknown &mdash;</option>
                                 <?php foreach (['cash', 'card', 'upi', 'wallet', 'other'] as $m): ?>
                                 <option value="<?= $m ?>"><?= ucfirst($m) ?></option>
                                 <?php endforeach; ?>

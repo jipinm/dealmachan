@@ -108,7 +108,7 @@ class AuditLogsController extends Controller {
                 date('d/m/Y H:i:s', strtotime($r['created_at'])),
                 $r['user_type'] ?? '',
                 $r['user_id']   ?? '',
-                $r['actor_name'] ?? '—',
+                $r['actor_name'] ?? '&mdash;',
                 $r['action'],
                 $r['table_name'] ?? '',
                 $r['record_id']  ?? '',

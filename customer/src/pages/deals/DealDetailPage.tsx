@@ -302,7 +302,7 @@ export default function DealDetailPage() {
 
           {/* ── Merchant row ────────────────────────────────────────── */}
           <Link
-            to={`/stores/${merchant.id}/${slugify(merchant.business_name)}`}
+            to={`/merchants/${merchant.id}`}
             className="flex items-center gap-3 p-4 bg-white rounded-2xl mb-5 shadow-sm border border-slate-100 hover:shadow-md transition-shadow"
           >
             {merchant.business_logo ? (

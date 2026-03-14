@@ -161,7 +161,7 @@ $statusLabels = ['assigned'=>'Assigned','in_progress'=>'In Progress','completed'
                                     <?= ucfirst($task['payment_status']) ?>
                                 </span>
                             <?php else: ?>
-                                <span class="text-muted small">—</span>
+                                <span class="text-muted small">&mdash;</span>
                             <?php endif; ?>
                         </td>
                         <td class="text-muted small"><?= date('d M Y', strtotime($task['assigned_at'])) ?></td>

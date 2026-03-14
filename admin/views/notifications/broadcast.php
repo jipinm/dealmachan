@@ -87,7 +87,7 @@
                             'specific_admins'=> ['bi-shield-check', "Specific Admins"],
                             'all_customers'  => ['bi-people', "All Active Customers ({$totalCustomers})"],
                             'all_merchants'  => ['bi-shop', "All Approved Merchants ({$totalMerchants})"],
-                            'all_users'      => ['bi-globe', "Everyone — Admins + Customers + Merchants"],
+                            'all_users'      => ['bi-globe', "Everyone &mdash; Admins + Customers + Merchants"],
                         ];
                         $currentTarget = $_POST['target'] ?? 'all_admins';
                         foreach ($targetOpts as $val => [$icon, $label]):
@@ -166,7 +166,7 @@
                 <ul class="ps-3 mb-0">
                     <li class="mb-2">Notifications appear in the bell icon for each recipient.</li>
                     <li class="mb-2">Recipients can mark notifications as read from their panel.</li>
-                    <li class="mb-2">Broadcast to <strong>Everyone</strong> may send thousands of notifications — use carefully.</li>
+                    <li class="mb-2">Broadcast to <strong>Everyone</strong> may send thousands of notifications &mdash; use carefully.</li>
                     <li>Only super admins and city admins can broadcast.</li>
                 </ul>
             </div>

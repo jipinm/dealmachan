@@ -2,7 +2,7 @@ import { useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   ChevronLeft, ChevronRight, Edit, Store, Ticket, Star, Crown,
-  Phone, Mail, Building2, Shield, Camera, LogOut,
+  Phone, Mail, Building2, Shield, Camera, LogOut, Lock,
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import type React from 'react'
@@ -70,6 +70,8 @@ export default function ProfilePage() {
     staleTime: 5 * 60 * 1000,
   })
 
+  const isStoreAdmin = useAuthStore((s) => s.isStoreAdmin())
+
   const logoMutation = useMutation({
     mutationFn: (file: File) => merchantApi.uploadLogo(file),
     onSuccess: () => {
@@ -82,6 +84,20 @@ export default function ProfilePage() {
   const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) logoMutation.mutate(file)
+  }
+
+  const bannerMutation = useMutation({
+    mutationFn: (file: File) => merchantApi.uploadBanner(file),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['merchant-profile'] })
+      toast.success('Banner updated')
+    },
+    onError: () => toast.error('Failed to upload banner'),
+  })
+
+  const handleBannerChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) bannerMutation.mutate(file)
   }
 
   const handleLogout = () => {
@@ -100,7 +116,8 @@ export default function ProfilePage() {
   }
 
   const { profile, stores, labels, subscription, coupons } = data!
-  const logoUrl = getImageUrl(profile.business_logo)
+  const logoUrl   = getImageUrl(profile.business_logo)
+  const bannerUrl = getImageUrl(profile.banner_image)
 
   return (
     <div className="min-h-full bg-gray-50 pb-6">
@@ -117,33 +134,49 @@ export default function ProfilePage() {
       </div>
 
       <div className="px-4 -mt-14 space-y-4">
-        {/* Avatar + Name */}
-        <div className="bg-white rounded-2xl p-4 shadow-sm flex items-start gap-4">
-          <div className="relative shrink-0">
-            <div className="w-16 h-16 rounded-xl bg-gray-100 overflow-hidden flex items-center justify-center">
-              {logoUrl
-                ? <img src={logoUrl} alt="Logo" className="w-full h-full object-cover" />
-                : <Building2 size={28} className="text-gray-300" />}
-            </div>
-            <label className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-brand-600 flex items-center justify-center cursor-pointer shadow">
-              <Camera size={12} className="text-white" />
-              <input type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={handleLogoChange} disabled={logoMutation.isPending} />
-            </label>
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 flex-wrap">
-              <h2 className="text-base font-bold text-gray-900 leading-tight">{profile.business_name}</h2>
-              <StatusBadge status={profile.profile_status} />
-            </div>
-            {profile.email && <p className="text-xs text-gray-500 mt-1 flex items-center gap-1"><Mail size={11} />{profile.email}</p>}
-            {profile.phone && <p className="text-xs text-gray-500 mt-0.5 flex items-center gap-1"><Phone size={11} />{profile.phone}</p>}
-            {labels.length > 0 && (
-              <div className="flex flex-wrap gap-1.5 mt-2">
-                {labels.map((l) => (
-                  <span key={l.id} className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200">{l.label_name}</span>
-                ))}
-              </div>
+        {/* Avatar + Name — with optional banner strip */}
+        <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+          {/* Banner */}
+          <div className="relative h-28">
+            {bannerUrl
+              ? <img src={bannerUrl} alt="Banner" className="w-full h-full object-cover" />
+              : <div className="w-full h-full gradient-brand" />}
+            {!isStoreAdmin && (
+              <label className="absolute bottom-2 right-2 w-8 h-8 bg-black/50 rounded-full flex items-center justify-center cursor-pointer shadow" title="Change banner">
+                <Camera size={14} className="text-white" />
+                <input type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={handleBannerChange} disabled={bannerMutation.isPending} />
+              </label>
             )}
+          </div>
+
+          {/* Logo + info */}
+          <div className="p-4 flex items-start gap-4">
+            <div className="relative shrink-0 -mt-10">
+              <div className="w-16 h-16 rounded-xl bg-gray-100 overflow-hidden flex items-center justify-center border-2 border-white shadow-sm">
+                {logoUrl
+                  ? <img src={logoUrl} alt="Logo" className="w-full h-full object-cover" />
+                  : <Building2 size={28} className="text-gray-300" />}
+              </div>
+              <label className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-brand-600 flex items-center justify-center cursor-pointer shadow">
+                <Camera size={12} className="text-white" />
+                <input type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={handleLogoChange} disabled={logoMutation.isPending} />
+              </label>
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h2 className="text-base font-bold text-gray-900 leading-tight">{profile.business_name}</h2>
+                <StatusBadge status={profile.profile_status} />
+              </div>
+              {profile.email && <p className="text-xs text-gray-500 mt-1 flex items-center gap-1"><Mail size={11} />{profile.email}</p>}
+              {profile.phone && <p className="text-xs text-gray-500 mt-0.5 flex items-center gap-1"><Phone size={11} />{profile.phone}</p>}
+              {labels.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 mt-2">
+                  {labels.map((l) => (
+                    <span key={l.id} className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200">{l.label_name}</span>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
@@ -180,6 +213,7 @@ export default function ProfilePage() {
           <MenuRow icon={Ticket}  label="Coupons"         sublabel={`${coupons?.total_coupons ?? 0} total`} onClick={() => navigate('/coupons')} />
           <MenuRow icon={Star}    label="Labels"          sublabel={labels.length > 0 ? labels.map((l) => l.label_name).join(', ') : 'None assigned'} onClick={() => navigate('/profile/subscription')} />
           <MenuRow icon={Shield}  label="Subscription"   sublabel={`${profile.subscription_status} plan`} onClick={() => navigate('/profile/subscription')} />
+          <MenuRow icon={Lock}    label="Change Password" sublabel="Update your login password" onClick={() => navigate('/profile/security')} />
         </div>
 
         <div className="bg-white rounded-2xl shadow-sm overflow-hidden">

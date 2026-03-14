@@ -21,6 +21,8 @@ export interface MerchantProfile {
   profile_status: 'pending' | 'approved' | 'rejected'
   subscription_status: 'active' | 'expired' | 'trial'
   account_type_id?: number | null  // 1=Basic, 2=Standard, 3=Premium, 4=Enterprise
+  access_scope?: 'merchant' | 'store'
+  store_id?: number | null
 }
 
 export interface LoginResponse {

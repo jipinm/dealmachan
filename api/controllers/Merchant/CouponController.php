@@ -31,6 +31,11 @@ class CouponController {
         $where  = 'c.merchant_id = ?';
         $binds  = [$merchantId];
 
+        // Store-scoped users can only see their own store's coupons
+        if (($user['access_scope'] ?? 'merchant') === 'store' && !empty($user['store_id'])) {
+            $params['store_id'] = (int)$user['store_id'];
+        }
+
         switch ($tab) {
             case 'active':
                 $where .= " AND c.status = 'active' AND c.approval_status = 'approved'"
@@ -96,13 +101,29 @@ class CouponController {
           ->required('discount_value');
         if ($v->fails()) Response::validationError($v->errors());
 
-        if (!in_array($body['discount_type'] ?? '', ['percentage', 'fixed'])) {
-            Response::error('discount_type must be percentage or fixed', 422, 'VALIDATION_ERROR');
+        $allowedTypes = ['percentage', 'fixed', 'bogo', 'addon'];
+        if (!in_array($body['discount_type'] ?? '', $allowedTypes)) {
+            Response::error('discount_type must be percentage, fixed, bogo, or addon', 422, 'VALIDATION_ERROR');
         }
-        if (($body['discount_type'] ?? '') === 'percentage') {
+        $discountType = $body['discount_type'];
+
+        if ($discountType === 'percentage') {
             $val = (float)($body['discount_value'] ?? 0);
             if ($val <= 0 || $val > 100) {
-                Response::error('Percentage discount must be between 1 and 100', 422, 'VALIDATION_ERROR');
+                Response::error('Percentage discount must be between 1 and 100.', 422, 'VALIDATION_ERROR');
+            }
+        }
+        if ($discountType === 'bogo') {
+            if (empty($body['bogo_buy_quantity']) || (int)$body['bogo_buy_quantity'] < 1) {
+                Response::error('bogo_buy_quantity is required and must be >= 1 for BOGO coupons.', 422, 'VALIDATION_ERROR');
+            }
+            if (empty($body['bogo_get_quantity']) || (int)$body['bogo_get_quantity'] < 1) {
+                Response::error('bogo_get_quantity is required and must be >= 1 for BOGO coupons.', 422, 'VALIDATION_ERROR');
+            }
+        }
+        if ($discountType === 'addon') {
+            if (empty($body['addon_item_description'])) {
+                Response::error('addon_item_description is required for add-on coupons.', 422, 'VALIDATION_ERROR');
             }
         }
 
@@ -117,6 +138,11 @@ class CouponController {
             $code .= rand(10, 99);
         }
 
+        // For store-scoped users, force store_id to their assigned store
+        if (($user['access_scope'] ?? 'merchant') === 'store' && !empty($user['store_id'])) {
+            $body['store_id'] = (int)$user['store_id'];
+        }
+
         // Validate store ownership
         $storeId = !empty($body['store_id']) ? (int)$body['store_id'] : null;
         if ($storeId) {
@@ -127,19 +153,28 @@ class CouponController {
             if (!$store) Response::notFound('Store not found');
         }
 
+        $discountValue         = in_array($discountType, ['bogo', 'addon']) ? 0 : (float)$body['discount_value'];
+        $bogoBuffQty           = ($discountType === 'bogo')  ? (int)$body['bogo_buy_quantity']  : null;
+        $bogoGetQty            = ($discountType === 'bogo')  ? (int)$body['bogo_get_quantity']   : null;
+        $addonItemDesc         = ($discountType === 'addon') ? trim((string)$body['addon_item_description']) : null;
+
         $this->db->execute(
             "INSERT INTO coupons (
                 title, description, coupon_code, discount_type, discount_value,
+                bogo_buy_quantity, bogo_get_quantity, addon_item_description,
                 min_purchase_amount, max_discount_amount, merchant_id, store_id,
                 valid_from, valid_until, usage_limit, terms_conditions,
                 created_by, approval_status, status, created_at
-             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', 'active', NOW())",
+             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', 'active', NOW())",
             [
                 trim((string)$body['title']),
                 $body['description'] ?? null,
                 $code,
-                $body['discount_type'],
-                (float)$body['discount_value'],
+                $discountType,
+                $discountValue,
+                $bogoBuffQty,
+                $bogoGetQty,
+                $addonItemDesc,
                 !empty($body['min_purchase_amount']) ? (float)$body['min_purchase_amount'] : null,
                 !empty($body['max_discount_amount'])  ? (float)$body['max_discount_amount']  : null,
                 $merchantId,
@@ -153,6 +188,21 @@ class CouponController {
         );
 
         $newId   = $this->db->lastInsertId();
+
+        // Auto-populate location from store (merchants cannot override this themselves)
+        if ($storeId) {
+            $store = $this->db->queryOne(
+                "SELECT city_id, area_id, location_id FROM stores WHERE id = ?",
+                [$storeId]
+            );
+            if ($store && $store['city_id']) {
+                $this->db->execute(
+                    "INSERT IGNORE INTO coupon_locations (coupon_id, city_id, area_id, location_id) VALUES (?, ?, ?, ?)",
+                    [$newId, $store['city_id'], $store['area_id'], $store['location_id']]
+                );
+            }
+        }
+
         $coupon  = $this->db->queryOne('SELECT * FROM coupons WHERE id = ?', [$newId]);
         Response::created($coupon, 'Coupon created — pending admin approval.');
     }
@@ -275,9 +325,13 @@ class CouponController {
             [$id, $merchantId]
         );
         if (!$coupon) Response::notFound('Coupon not found');
-
+        if (($user['access_scope'] ?? 'merchant') === 'store' &&
+            (int)($user['store_id'] ?? 0) !== (int)($coupon['store_id'] ?? 0)) {
+            Response::error('You can only edit coupons for your assigned store.', 403, 'FORBIDDEN');
+        }
         $allowed = [
             'title', 'description', 'discount_type', 'discount_value',
+            'bogo_buy_quantity', 'bogo_get_quantity', 'addon_item_description',
             'min_purchase_amount', 'max_discount_amount',
             'valid_from', 'valid_until', 'usage_limit',
             'terms_conditions', 'status',
@@ -315,10 +369,15 @@ class CouponController {
         $merchantId = (int)$user['merchant_id'];
 
         $coupon = $this->db->queryOne(
-            'SELECT id FROM coupons WHERE id = ? AND merchant_id = ?',
+            'SELECT id, store_id FROM coupons WHERE id = ? AND merchant_id = ?',
             [$id, $merchantId]
         );
         if (!$coupon) Response::notFound('Coupon not found');
+
+        if (($user['access_scope'] ?? 'merchant') === 'store' &&
+            (int)($user['store_id'] ?? 0) !== (int)($coupon['store_id'] ?? 0)) {
+            Response::error('You can only deactivate coupons for your assigned store.', 403, 'FORBIDDEN');
+        }
 
         $this->db->execute(
             "UPDATE coupons SET status = 'inactive' WHERE id = ?",

@@ -104,6 +104,34 @@ function isLoggedIn() {
 }
 
 /**
+ * Get full image URL from database path
+ */
+function imageUrl($path, $placeholder = 'assets/img/placeholder.png') {
+    if (empty($path)) {
+        return BASE_URL . ltrim($placeholder, '/');
+    }
+    
+    // If it's already a full URL
+    if (filter_var($path, FILTER_VALIDATE_URL)) {
+        return $path;
+    }
+    
+    // Some legacy paths might start with /assets/ (static images)
+    if (strpos($path, 'assets/') === 0 || strpos($path, '/assets/') === 0) {
+        return BASE_URL . ltrim($path, '/');
+    }
+
+    // Direct match for placeholder in case it's passed as path
+    if (strpos($path, 'placeholder.png') !== false) {
+        return BASE_URL . ltrim($placeholder, '/');
+    }
+    
+    // Fallback: If the path is not a full URL and doesn't exist as a local asset,
+    // we assume it's a dynamic upload served by the API.
+    return rtrim(API_URL, '/') . '/' . ltrim($path, '/');
+}
+
+/**
  * Check if user is admin
  */
 function isAdmin() {

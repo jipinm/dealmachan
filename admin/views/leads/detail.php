@@ -27,11 +27,11 @@ $statusColors = ['new'=>'danger','contacted'=>'warning','qualified'=>'info','con
                 <div class="row g-3">
                     <div class="col-sm-6">
                         <p class="text-muted small mb-1">Organisation</p>
-                        <p class="fw-semibold mb-0"><?= escape($lead['org_name'] ?? '—') ?></p>
+                        <p class="fw-semibold mb-0"><?= escape($lead['org_name'] ?? '&mdash;') ?></p>
                     </div>
                     <div class="col-sm-6">
                         <p class="text-muted small mb-1">Category</p>
-                        <p class="fw-semibold mb-0"><?= escape($lead['category'] ?? '—') ?></p>
+                        <p class="fw-semibold mb-0"><?= escape($lead['category'] ?? '&mdash;') ?></p>
                     </div>
                     <div class="col-sm-6">
                         <p class="text-muted small mb-1">Phone</p>
@@ -39,7 +39,7 @@ $statusColors = ['new'=>'danger','contacted'=>'warning','qualified'=>'info','con
                     </div>
                     <div class="col-sm-6">
                         <p class="text-muted small mb-1">Email</p>
-                        <p class="fw-semibold mb-0"><?= $lead['email'] ? '<a href="mailto:' . escape($lead['email']) . '">' . escape($lead['email']) . '</a>' : '—' ?></p>
+                        <p class="fw-semibold mb-0"><?= $lead['email'] ? '<a href="mailto:' . escape($lead['email']) . '">' . escape($lead['email']) . '</a>' : '&mdash;' ?></p>
                     </div>
                     <div class="col-sm-6">
                         <p class="text-muted small mb-1">Source</p>
@@ -98,7 +98,7 @@ $statusColors = ['new'=>'danger','contacted'=>'warning','qualified'=>'info','con
                     <input type="hidden" name="id" value="<?= $lead['id'] ?>">
                     <div class="mb-3">
                         <select name="admin_id" class="form-select">
-                            <option value="">— Unassigned —</option>
+                            <option value="">&mdash; Unassigned &mdash;</option>
                             <?php foreach ($admins as $a): ?>
                             <option value="<?= $a['id'] ?>" <?= $lead['assigned_to_admin_id'] == $a['id'] ? 'selected' : '' ?>>
                                 <?= escape($a['name']) ?> (<?= escape($a['admin_type']) ?>)

@@ -74,15 +74,15 @@ class ReviewsController extends Controller {
         if (!$review) { $this->redirectWithError('reviews', 'Review not found.'); return; }
 
         $this->loadView('reviews/view', [
-            'title'       => 'Review #' . $review['id'] . ' — ' . escape($review['customer_name']),
+            'title'       => 'Review #' . $review['id'] . ' &mdash; ' . escape($review['customer_name']),
             'review'      => $review,
             'current_user'=> $this->auth->getCurrentUser(),
         ]);
     }
 
-    // ─── APPROVE ──────────────────────────────────────────────────────────────
+    // ─── RESTORE (un-flag → back to approved) ───────────────────────────────
 
-    public function approve() {
+    public function restore() {
         $this->requireCSRF();
         $id       = (int)($_POST['id'] ?? 0);
         $redirect = sanitize($_POST['redirect'] ?? 'reviews');
@@ -92,16 +92,16 @@ class ReviewsController extends Controller {
         $review = $this->reviewModel->find($id);
         if (!$review) { $this->redirectWithError($redirect, 'Review not found.'); return; }
 
-        $this->reviewModel->approve($id);
+        $this->reviewModel->restore($id);
         $cu = $this->auth->getCurrentUser();
-        logAudit('review_approved', $id, 'reviews', $cu['id']);
-        $_SESSION['success'] = 'Review approved and is now publicly visible.';
+        logAudit('review_restored', 'reviews', $id);
+        $_SESSION['success'] = 'Review restored and is now publicly visible.';
         $this->redirect($redirect);
     }
 
-    // ─── REJECT ───────────────────────────────────────────────────────────────
+    // ─── FLAG (hide from public without deleting) ─────────────────────────────
 
-    public function reject() {
+    public function flag() {
         $this->requireCSRF();
         $id       = (int)($_POST['id'] ?? 0);
         $redirect = sanitize($_POST['redirect'] ?? 'reviews');
@@ -111,16 +111,16 @@ class ReviewsController extends Controller {
         $review = $this->reviewModel->find($id);
         if (!$review) { $this->redirectWithError($redirect, 'Review not found.'); return; }
 
-        $this->reviewModel->reject($id);
+        $this->reviewModel->flag($id);
         $cu = $this->auth->getCurrentUser();
-        logAudit('review_rejected', $id, 'reviews', $cu['id']);
-        $_SESSION['success'] = 'Review rejected and hidden from public view.';
+        logAudit('review_flagged', 'reviews', $id);
+        $_SESSION['success'] = 'Review flagged and hidden from public view.';
         $this->redirect($redirect);
     }
 
-    // ─── BULK APPROVE ─────────────────────────────────────────────────────────
+    // ─── BULK RESTORE ─────────────────────────────────────────────────────────
 
-    public function bulkApprove() {
+    public function bulkRestore() {
         $this->requireCSRF();
         $ids = array_filter(array_map('intval', (array)($_POST['ids'] ?? [])));
 
@@ -132,14 +132,14 @@ class ReviewsController extends Controller {
 
         $this->reviewModel->bulkUpdateStatus($ids, 'approved');
         $cu = $this->auth->getCurrentUser();
-        logAudit('reviews_bulk_approved', implode(',', $ids), 'reviews', $cu['id']);
-        $_SESSION['success'] = count($ids) . ' review(s) approved.';
+        logAudit('reviews_bulk_restored', 'reviews', implode(',', $ids));
+        $_SESSION['success'] = count($ids) . ' review(s) restored to public.';
         $this->redirect('reviews');
     }
 
-    // ─── BULK REJECT ──────────────────────────────────────────────────────────
+    // ─── BULK FLAG ────────────────────────────────────────────────────────────
 
-    public function bulkReject() {
+    public function bulkFlag() {
         $this->requireCSRF();
         $ids = array_filter(array_map('intval', (array)($_POST['ids'] ?? [])));
 
@@ -149,10 +149,10 @@ class ReviewsController extends Controller {
             return;
         }
 
-        $this->reviewModel->bulkUpdateStatus($ids, 'rejected');
+        $this->reviewModel->bulkUpdateStatus($ids, 'flagged');
         $cu = $this->auth->getCurrentUser();
-        logAudit('reviews_bulk_rejected', implode(',', $ids), 'reviews', $cu['id']);
-        $_SESSION['success'] = count($ids) . ' review(s) rejected.';
+        logAudit('reviews_bulk_flagged', 'reviews', implode(',', $ids));
+        $_SESSION['success'] = count($ids) . ' review(s) flagged and hidden.';
         $this->redirect('reviews');
     }
 
@@ -170,7 +170,7 @@ class ReviewsController extends Controller {
 
         $this->reviewModel->deleteReview($id);
         $cu = $this->auth->getCurrentUser();
-        logAudit('review_deleted', $id, 'reviews', $cu['id']);
+        logAudit('review_deleted', 'reviews', $id);
         $_SESSION['success'] = 'Review permanently deleted.';
         $this->redirect('reviews');
     }

@@ -32,7 +32,7 @@
             <div class="card border-0 shadow-sm flex-grow-1" style="max-width:85%;">
                 <div class="card-body px-4 py-3">
                     <div class="d-flex justify-content-between align-items-center mb-2">
-                        <span class="fw-semibold small"><?= htmlspecialchars($msg['sender_name'] ?? '—') ?>
+                        <span class="fw-semibold small"><?= htmlspecialchars($msg['sender_name'] ?? '&mdash;') ?>
                             <span class="badge bg-<?= $isMine ? 'primary' : 'secondary' ?> ms-1"><?= ucfirst($msg['sender_type']) ?></span>
                         </span>
                         <span class="text-muted" style="font-size:.75rem"><?= date('d M Y, H:i', strtotime($msg['sent_at'])) ?></span>
@@ -83,12 +83,12 @@
                 </div>
                 <div class="mb-2">
                     <span class="text-muted d-block">From</span>
-                    <strong><?= htmlspecialchars($root['sender_name'] ?? '—') ?></strong>
+                    <strong><?= htmlspecialchars($root['sender_name'] ?? '&mdash;') ?></strong>
                     <span class="badge bg-secondary ms-1"><?= ucfirst($root['sender_type']) ?></span>
                 </div>
                 <div class="mb-2">
                     <span class="text-muted d-block">To</span>
-                    <strong><?= htmlspecialchars($root['receiver_name'] ?? '—') ?></strong>
+                    <strong><?= htmlspecialchars($root['receiver_name'] ?? '&mdash;') ?></strong>
                     <span class="badge bg-secondary ms-1"><?= ucfirst($root['receiver_type']) ?></span>
                 </div>
                 <div class="mb-2">

@@ -129,7 +129,7 @@ class SalesRegistry extends Model {
         return $stmt->fetch();
     }
 
-    /** For CSV export — no limit/offset applied. */
+    /** For CSV export &mdash; no limit/offset applied. */
     public function getForExport($filters = []) {
         [$where, $params] = $this->_buildWhere($filters);
         $sql = "SELECT sr.id, sr.transaction_date, sr.transaction_amount, sr.discount_amount,

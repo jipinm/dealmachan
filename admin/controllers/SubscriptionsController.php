@@ -82,7 +82,7 @@ class SubscriptionsController extends Controller {
         $history = $this->subscriptionModel->getByUser($sub['user_id'], $sub['user_type']);
 
         $this->loadView('subscriptions/view', [
-            'title'        => 'Subscription #' . $sub['id'] . ' — ' . escape($sub['display_name']),
+            'title'        => 'Subscription #' . $sub['id'] . ' &mdash; ' . escape($sub['display_name']),
             'sub'          => $sub,
             'history'      => $history,
             'current_user' => $this->auth->getCurrentUser(),
@@ -172,13 +172,13 @@ class SubscriptionsController extends Controller {
 
         if ($subId) {
             $this->subscriptionModel->updateSubscription($subId, $data);
-            logAudit('subscription_updated', $subId, 'subscriptions', $cu['id']);
+            logAudit('subscription_updated', 'subscriptions', $subId);
             $_SESSION['success'] = 'Subscription updated successfully.';
             $this->redirect("subscriptions/detail?id={$subId}");
         } else {
             $newId = $this->subscriptionModel->createSubscription($data);
             if ($newId) {
-                logAudit('subscription_created', $newId, 'subscriptions', $cu['id']);
+                logAudit('subscription_created', 'subscriptions', $newId);
                 $_SESSION['success'] = 'Subscription created successfully.';
                 $this->redirect("subscriptions/detail?id={$newId}");
             } else {
@@ -196,7 +196,7 @@ class SubscriptionsController extends Controller {
 
         $this->subscriptionModel->updateSubscription($id, ['status' => 'cancelled']);
         $cu = $this->auth->getCurrentUser();
-        logAudit('subscription_cancelled', $id, 'subscriptions', $cu['id']);
+        logAudit('subscription_cancelled', 'subscriptions', $id);
         $_SESSION['success'] = 'Subscription cancelled.';
         $this->redirect("subscriptions/detail?id={$id}");
     }
@@ -225,7 +225,7 @@ class SubscriptionsController extends Controller {
         ]);
 
         $cu = $this->auth->getCurrentUser();
-        logAudit('subscription_extended', $id, 'subscriptions', $cu['id']);
+        logAudit('subscription_extended', 'subscriptions', $id);
         $_SESSION['success'] = 'Subscription extended to ' . date('d M Y', strtotime($newExpiry)) . '.';
         $this->redirect("subscriptions/detail?id={$id}");
     }

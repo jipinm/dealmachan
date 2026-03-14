@@ -43,7 +43,7 @@
                         </div>
                         <div class="col-sm-6">
                             <dt class="text-muted small">Email / Phone</dt>
-                            <dd><?= escape($sub['user_email'] ?? $sub['user_phone'] ?? '—') ?></dd>
+                            <dd><?= escape($sub['user_email'] ?? $sub['user_phone'] ?? '&mdash;') ?></dd>
                         </div>
                     </div>
                 </div>
@@ -78,7 +78,7 @@
                         <div class="col-sm-6">
                             <label class="form-label">Payment Method</label>
                             <select name="payment_method" class="form-select">
-                                <option value="">— None / Unknown —</option>
+                                <option value="">&mdash; None / Unknown &mdash;</option>
                                 <?php foreach (['cash', 'card', 'upi', 'wallet', 'other'] as $m): ?>
                                 <option value="<?= $m ?>" <?= ($sub['payment_method'] ?? '') === $m ? 'selected' : '' ?>><?= ucfirst($m) ?></option>
                                 <?php endforeach; ?>

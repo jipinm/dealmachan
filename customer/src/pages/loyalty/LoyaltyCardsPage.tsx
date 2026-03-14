@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import {
   Gift, Star, Zap, CreditCard, CheckCircle, Lock,
-  Tag, BarChart2, Loader2, Clock, Crown, ArrowUpRight,
+  Tag, BarChart2, Loader2, Clock, Crown, ArrowUpRight, AlertCircle,
 } from 'lucide-react'
 import { profileApi } from '@/api/endpoints/profile'
 import { useAuthStore } from '@/store/authStore'
@@ -87,6 +87,12 @@ export default function LoyaltyCardsPage() {
     staleTime: 60_000,
   })
 
+  const { data: card } = useQuery({
+    queryKey: ['my-card'],
+    queryFn: () => profileApi.getCard().then((r) => r.data.data),
+    staleTime: 300_000,
+  })
+
   const isLoading = subLoading || statsLoading
 
   if (isLoading) {
@@ -99,13 +105,20 @@ export default function LoyaltyCardsPage() {
 
   const subData = sub as any
   const statsData = stats as any
+  const cardData = card as any
 
   const isPremiumSub = subData?.status === 'active'
     || customer?.subscription_status === 'active'
-  // Derive tier from profile flags
+  // Derive tier from profile flags or card classification
+  const cardClassification = cardData?.classification
   const tier: Tier = customer?.is_dealmaker ? 'dealmaker'
-                   : isPremiumSub ? 'premium'
+                   : isPremiumSub || ['gold', 'platinum', 'diamond'].includes(cardClassification ?? '') ? 'premium'
                    : 'standard'
+
+  // Card expiry
+  const cardExpiryStatus: string | null = cardData?.expiry_status ?? null
+  const cardDaysRemaining: number | null = cardData?.days_remaining ?? null
+  const cardExpiryDate: string | null = cardData?.expiry_date ?? null
 
   const cfg = TIER[tier]
   const TierIcon = cfg.Icon
@@ -142,7 +155,27 @@ export default function LoyaltyCardsPage() {
               </div>
 
               <p className="text-white font-semibold text-base">{customer?.name}</p>
-              {isPremiumSub && remaining > 0 ? (
+              {cardData?.config_name && (
+                <p className="text-white/80 text-xs mt-0.5">{cardData.config_name}</p>
+              )}
+              {cardExpiryStatus === 'expired' ? (
+                <div className="flex items-center gap-1.5 mt-1">
+                  <AlertCircle size={13} className="text-red-300" />
+                  <p className="text-red-200 text-xs font-semibold">Card Expired</p>
+                </div>
+              ) : cardExpiryStatus === 'expiring_soon' ? (
+                <div className="flex items-center gap-1.5 mt-1">
+                  <Clock size={13} className="text-amber-300" />
+                  <p className="text-amber-200 text-xs">Expires in {cardDaysRemaining} day{cardDaysRemaining !== 1 ? 's' : ''}</p>
+                </div>
+              ) : cardExpiryDate ? (
+                <div className="flex items-center gap-1.5 mt-1">
+                  <Clock size={13} className="text-white/70" />
+                  <p className="text-white/70 text-xs">
+                    Expires {new Date(cardExpiryDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                  </p>
+                </div>
+              ) : isPremiumSub && remaining > 0 ? (
                 <div className="flex items-center gap-1.5 mt-1">
                   <Clock size={13} className="text-white/70" />
                   <p className="text-white/70 text-xs">{remaining} days remaining</p>
@@ -229,20 +262,60 @@ export default function LoyaltyCardsPage() {
             </Link>
           )}
 
-          {/* ── Physical card quick-link ──────────────────────────────────── */}
-          <Link
-            to="/profile/card"
-            className="flex items-center gap-3 bg-white rounded-2xl border border-slate-100 p-4 hover:shadow-md transition-shadow"
-          >
-            <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center">
-              <CreditCard size={18} className="text-slate-500" />
+          {/* ── Expiry warning / Select new card ─────────────────────── */}
+          {cardExpiryStatus === 'expired' && (
+            <Link
+              to="/loyalty/select-card"
+              className="flex items-center justify-between bg-red-50 border border-red-200 rounded-2xl p-5 hover:shadow-md transition-shadow"
+            >
+              <div>
+                <p className="font-bold text-sm text-red-700">Card Expired</p>
+                <p className="text-xs text-red-500 mt-0.5">Select a new card to continue enjoying benefits</p>
+              </div>
+              <ArrowUpRight size={20} className="text-red-400 flex-shrink-0" />
+            </Link>
+          )}
+          {cardExpiryStatus === 'expiring_soon' && (
+            <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-start gap-3">
+              <AlertCircle size={16} className="text-amber-500 mt-0.5 flex-shrink-0" />
+              <div>
+                <p className="font-semibold text-sm text-amber-700">Card expiring soon</p>
+                <p className="text-xs text-amber-600 mt-0.5">
+                  Your card expires in {cardDaysRemaining} day{cardDaysRemaining !== 1 ? 's' : ''}.{' '}
+                  <Link to="/loyalty/select-card" className="underline font-medium">Select a new card</Link>
+                </p>
+              </div>
             </div>
-            <div className="flex-1">
-              <p className="font-semibold text-sm text-slate-800">Physical Card</p>
-              <p className="text-xs text-slate-500">View or activate your DealMachan card</p>
-            </div>
-            <Gift size={16} className="text-slate-400" />
-          </Link>
+          )}
+          {!card && (
+            <Link
+              to="/loyalty/select-card"
+              className="flex items-center justify-between bg-brand-50 border border-brand-200 rounded-2xl p-5 hover:shadow-md transition-shadow"
+            >
+              <div>
+                <p className="font-bold text-sm text-brand-700">Get Your DealMachan Card</p>
+                <p className="text-xs text-brand-500 mt-0.5">Select a card plan and unlock exclusive benefits</p>
+              </div>
+              <ArrowUpRight size={20} className="text-brand-400 flex-shrink-0" />
+            </Link>
+          )}
+
+          {/* ── Physical card quick-link ──────────────────────────────── */}
+          {card && (
+            <Link
+              to="/profile/card"
+              className="flex items-center gap-3 bg-white rounded-2xl border border-slate-100 p-4 hover:shadow-md transition-shadow"
+            >
+              <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center">
+                <CreditCard size={18} className="text-slate-500" />
+              </div>
+              <div className="flex-1">
+                <p className="font-semibold text-sm text-slate-800">Physical Card</p>
+                <p className="text-xs text-slate-500">View or activate your DealMachan card</p>
+              </div>
+              <Gift size={16} className="text-slate-400" />
+            </Link>
+          )}
         </div>{/* /right column */}
 
       </div>{/* /lg:grid */}

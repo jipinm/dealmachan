@@ -1,5 +1,5 @@
 <?php
-$pageTitle = 'Survey Responses — ' . htmlspecialchars($survey['title']);
+$pageTitle = 'Survey Responses &mdash; ' . htmlspecialchars($survey['title']);
 $qTypeLabels = ['text'=>'Short Text','textarea'=>'Long Text','radio'=>'Multiple Choice',
                 'checkbox'=>'Checkboxes','select'=>'Dropdown','rating'=>'Rating'];
 $statusColors = ['draft'=>'secondary','active'=>'success','closed'=>'danger'];
@@ -48,7 +48,7 @@ $statusColors = ['draft'=>'secondary','active'=>'success','closed'=>'danger'];
                     <?php
                     $from  = $survey['active_from']  ? date('d M Y', strtotime($survey['active_from']))  : '∞';
                     $until = $survey['active_until'] ? date('d M Y', strtotime($survey['active_until'])) : '∞';
-                    echo ($survey['active_from'] || $survey['active_until']) ? $from . ' – ' . $until : 'Always Open';
+                    echo ($survey['active_from'] || $survey['active_until']) ? $from . ' &ndash; ' . $until : 'Always Open';
                     ?>
                 </div>
                 <div class="text-muted small">Active Period</div>
@@ -104,7 +104,7 @@ $statusColors = ['draft'=>'secondary','active'=>'success','closed'=>'danger'];
                 <!-- Text/textarea: show a few sample answers -->
                 <div class="border rounded p-2 bg-light">
                     <?php foreach (array_slice($a['answers'], 0, 5) as $ans): ?>
-                        <div class="mb-1 small">— <?= htmlspecialchars($ans) ?></div>
+                        <div class="mb-1 small">&mdash; <?= htmlspecialchars($ans) ?></div>
                     <?php endforeach; ?>
                     <?php if (count($a['answers']) > 5): ?>
                         <div class="text-muted small">…and <?= count($a['answers']) - 5 ?> more</div>
@@ -179,7 +179,7 @@ $statusColors = ['draft'=>'secondary','active'=>'success','closed'=>'danger'];
                                             <?php if (is_array($ans)): ?>
                                                 <?= htmlspecialchars(implode(', ', $ans)) ?>
                                             <?php else: ?>
-                                                <?= $ans !== null ? htmlspecialchars($ans) : '<span class="text-muted">—</span>' ?>
+                                                <?= $ans !== null ? htmlspecialchars($ans) : '<span class="text-muted">&mdash;</span>' ?>
                                             <?php endif; ?>
                                         </div>
                                     <?php endforeach; ?>

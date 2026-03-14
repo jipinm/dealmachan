@@ -76,7 +76,7 @@
                         <div class="col-md-6">
                             <label class="form-label fw-semibold">Admin Type <span class="text-danger">*</span></label>
                             <select name="admin_type" id="adminType" class="form-select select2" required onchange="toggleCityField()">
-                                <option value="">— Select Type —</option>
+                                <option value="">&mdash; Select Type &mdash;</option>
                                 <?php foreach ($adminTypes as $v => $l): ?>
                                 <option value="<?= $v ?>" <?= ($_POST['admin_type'] ?? '') === $v ? 'selected' : '' ?>><?= $l ?></option>
                                 <?php endforeach; ?>
@@ -92,7 +92,7 @@
                         <div class="col-md-6" id="cityWrap">
                             <label class="form-label fw-semibold">Assigned City</label>
                             <select name="city_id" class="form-select select2">
-                                <option value="">— All Cities / None —</option>
+                                <option value="">&mdash; All Cities / None &mdash;</option>
                                 <?php foreach ($cities as $c): ?>
                                 <option value="<?= $c['id'] ?>" <?= ($_POST['city_id'] ?? '') == $c['id'] ? 'selected' : '' ?>><?= escape($c['name']) ?></option>
                                 <?php endforeach; ?>
@@ -131,7 +131,7 @@
         </div>
         <div class="alert alert-warning border-0 small">
             <i class="fas fa-exclamation-triangle me-1"></i>
-            Password must be at least <strong>8 characters</strong>. Share credentials securely — they cannot be recovered.
+            Password must be at least <strong>8 characters</strong>. Share credentials securely &mdash; they cannot be recovered.
         </div>
     </div>
 </div>

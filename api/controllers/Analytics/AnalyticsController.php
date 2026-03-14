@@ -24,80 +24,92 @@ class AnalyticsController {
         $user       = AuthMiddleware::user();
         $merchantId = (int)$user['merchant_id'];
 
+        // Store-scoped users see stats filtered to their store only
+        $storeScope   = ($user['access_scope'] ?? 'merchant') === 'store' && !empty($user['store_id']);
+        $storeId      = $storeScope ? (int)$user['store_id'] : null;
+        $storeFilter  = $storeScope ? ' AND c.store_id = ?' : '';
+        $storeBinds   = $storeScope ? [$merchantId, $storeId] : [$merchantId];
+        $revBinds     = $storeScope ? [$merchantId, $storeId] : [$merchantId];
+        $revFilter    = $storeScope ? ' AND sr.store_id = ?' : '';
+        $reviewFilter = $storeScope ? ' AND store_id = ?' : '';
+        $reviewBinds  = $storeScope ? [$merchantId, $storeId] : [$merchantId];
+        $grievBinds   = $storeScope ? [$merchantId, $storeId] : [$merchantId];
+        $grievFilter  = $storeScope ? ' AND store_id = ?' : '';
+
         // ── KPI counters ─────────────────────────────────────────────────────
 
         $totalCoupons = (int)($this->db->queryOne(
-            'SELECT COUNT(*) AS cnt FROM coupons WHERE merchant_id = ?',
-            [$merchantId]
+            "SELECT COUNT(*) AS cnt FROM coupons WHERE merchant_id = ?{$storeFilter}",
+            $storeBinds
         )['cnt'] ?? 0);
 
         $activeCoupons = (int)($this->db->queryOne(
-            "SELECT COUNT(*) AS cnt FROM coupons WHERE merchant_id = ? AND status = 'active'",
-            [$merchantId]
+            "SELECT COUNT(*) AS cnt FROM coupons WHERE merchant_id = ? AND status = 'active'{$storeFilter}",
+            $storeBinds
         )['cnt'] ?? 0);
 
         $totalRedemptions = (int)($this->db->queryOne(
-            'SELECT COUNT(*) AS cnt
+            "SELECT COUNT(*) AS cnt
              FROM coupon_redemptions cr
              JOIN coupons c ON c.id = cr.coupon_id
-             WHERE c.merchant_id = ?',
-            [$merchantId]
+             WHERE c.merchant_id = ?{$storeFilter}",
+            $storeBinds
         )['cnt'] ?? 0);
 
         $thisMonthRedemptions = (int)($this->db->queryOne(
-            'SELECT COUNT(*) AS cnt
+            "SELECT COUNT(*) AS cnt
              FROM coupon_redemptions cr
              JOIN coupons c ON c.id = cr.coupon_id
-             WHERE c.merchant_id = ?
+             WHERE c.merchant_id = ?{$storeFilter}
                AND MONTH(cr.redeemed_at) = MONTH(NOW())
-               AND YEAR(cr.redeemed_at)  = YEAR(NOW())',
-            [$merchantId]
+               AND YEAR(cr.redeemed_at)  = YEAR(NOW())",
+            $storeBinds
         )['cnt'] ?? 0);
 
         $todayRedemptions = (int)($this->db->queryOne(
-            'SELECT COUNT(*) AS cnt
+            "SELECT COUNT(*) AS cnt
              FROM coupon_redemptions cr
              JOIN coupons c ON c.id = cr.coupon_id
-             WHERE c.merchant_id = ?
-               AND DATE(cr.redeemed_at) = CURDATE()',
-            [$merchantId]
+             WHERE c.merchant_id = ?{$storeFilter}
+               AND DATE(cr.redeemed_at) = CURDATE()",
+            $storeBinds
         )['cnt'] ?? 0);
 
         $totalCustomers = (int)($this->db->queryOne(
-            'SELECT COUNT(DISTINCT cr.customer_id) AS cnt
+            "SELECT COUNT(DISTINCT cr.customer_id) AS cnt
              FROM coupon_redemptions cr
              JOIN coupons c ON c.id = cr.coupon_id
-             WHERE c.merchant_id = ?',
-            [$merchantId]
+             WHERE c.merchant_id = ?{$storeFilter}",
+            $storeBinds
         )['cnt'] ?? 0);
 
         $avgRatingRow = $this->db->queryOne(
             "SELECT ROUND(AVG(rating), 1) AS avg_rating
              FROM reviews
-             WHERE merchant_id = ? AND status = 'published'",
-            [$merchantId]
+             WHERE merchant_id = ? AND status = 'published'{$reviewFilter}",
+            $reviewBinds
         );
         $avgRating = $avgRatingRow['avg_rating'] !== null
             ? (float)$avgRatingRow['avg_rating']
             : null;
 
         $pendingGrievances = (int)($this->db->queryOne(
-            "SELECT COUNT(*) AS cnt FROM grievances WHERE merchant_id = ? AND status = 'open'",
-            [$merchantId]
+            "SELECT COUNT(*) AS cnt FROM grievances WHERE merchant_id = ? AND status = 'open'{$grievFilter}",
+            $grievBinds
         )['cnt'] ?? 0);
 
         // ── Charts ───────────────────────────────────────────────────────────
 
         // 7-day chart for HomePage
         $weeklyRaw = $this->db->query(
-            'SELECT DATE(cr.redeemed_at) AS `date`, COUNT(*) AS `count`
+            "SELECT DATE(cr.redeemed_at) AS `date`, COUNT(*) AS `count`
              FROM coupon_redemptions cr
              JOIN coupons c ON c.id = cr.coupon_id
-             WHERE c.merchant_id = ?
+             WHERE c.merchant_id = ?{$storeFilter}
                AND cr.redeemed_at >= DATE_SUB(CURDATE(), INTERVAL 6 DAY)
              GROUP BY DATE(cr.redeemed_at)
-             ORDER BY `date` ASC',
-            [$merchantId]
+             ORDER BY `date` ASC",
+            $storeBinds
         );
 
         // Fill missing days with zero
@@ -116,14 +128,14 @@ class AnalyticsController {
 
         // 30-day chart for AnalyticsPage / DashboardAnalytics
         $chartRaw = $this->db->query(
-            'SELECT DATE(cr.redeemed_at) AS `date`, COUNT(*) AS `count`
+            "SELECT DATE(cr.redeemed_at) AS `date`, COUNT(*) AS `count`
              FROM coupon_redemptions cr
              JOIN coupons c ON c.id = cr.coupon_id
-             WHERE c.merchant_id = ?
+             WHERE c.merchant_id = ?{$storeFilter}
                AND cr.redeemed_at >= DATE_SUB(CURDATE(), INTERVAL 29 DAY)
              GROUP BY DATE(cr.redeemed_at)
-             ORDER BY `date` ASC',
-            [$merchantId]
+             ORDER BY `date` ASC",
+            $storeBinds
         );
 
         $chart = array_map(static function (array $row): array {

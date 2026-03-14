@@ -58,7 +58,7 @@
             <?php
             $from = min($totalCount, ($currentPage - 1) * $perPage + 1);
             $to   = min($totalCount, $currentPage * $perPage);
-            echo $totalCount ? "Showing {$from}–{$to} of {$totalCount}" : 'No flash discounts found';
+            echo $totalCount ? "Showing {$from}&ndash;{$to} of {$totalCount}" : 'No flash discounts found';
             ?>
         </small>
     </div>
@@ -155,7 +155,7 @@
                                 <?= escape($fd['merchant_name']) ?>
                             </a>
                         </td>
-                        <td class="small"><?= $fd['store_name'] ? escape($fd['store_name']) : '<span class="text-muted">—</span>' ?></td>
+                        <td class="small"><?= $fd['store_name'] ? escape($fd['store_name']) : '<span class="text-muted">&mdash;</span>' ?></td>
                         <td class="text-center fw-semibold text-success"><?= number_format($fd['discount_percentage'], 0) ?>%</td>
                         <td class="text-center">
                             <?= (int)$fd['current_redemptions'] ?>
@@ -165,8 +165,8 @@
                         </td>
                         <td class="small">
                             <?php if ($fd['valid_from'] || $fd['valid_until']): ?>
-                                <?= $fd['valid_from'] ? formatDate($fd['valid_from']) : '—' ?>
-                                → <?= $fd['valid_until'] ? formatDate($fd['valid_until']) : '—' ?>
+                                <?= $fd['valid_from'] ? formatDate($fd['valid_from']) : '&mdash;' ?>
+                                → <?= $fd['valid_until'] ? formatDate($fd['valid_until']) : '&mdash;' ?>
                             <?php else: ?>
                                 <span class="text-muted">No expiry</span>
                             <?php endif; ?>

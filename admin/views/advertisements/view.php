@@ -1,4 +1,4 @@
-<?php /* views/advertisements/view.php */ ?>
+﻿<?php /* views/advertisements/view.php */ ?>
 
 <div class="d-flex align-items-center mb-4">
     <a href="<?= BASE_URL ?>advertisements" class="btn btn-sm btn-outline-secondary me-3">
@@ -33,13 +33,14 @@
             </div>
             <div class="card-body bg-dark p-0 rounded-bottom" style="min-height:200px;">
                 <?php if ($ad['media_type'] === 'image'): ?>
-                    <img src="<?= BASE_URL ?>public/<?= escape($ad['media_url']) ?>"
+                    <img src="<?= imageUrl($ad['media_url']) ?>"
                          class="img-fluid w-100 rounded-bottom"
                          style="max-height:400px;object-fit:contain;"
-                         alt="<?= escape($ad['title']) ?>">
+                         alt="<?= escape($ad['title']) ?>"
+                         onerror="this.src='<?= imageUrl('') ?>'">
                 <?php else: ?>
                     <video controls class="w-100 rounded-bottom" style="max-height:400px;">
-                        <source src="<?= BASE_URL ?>public/<?= escape($ad['media_url']) ?>">
+                        <source src="<?= imageUrl($ad['media_url']) ?>">
                         Your browser does not support video playback.
                     </video>
                 <?php endif; ?>

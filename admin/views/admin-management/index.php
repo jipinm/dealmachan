@@ -107,7 +107,7 @@ $typeIcons = [
                             </div>
                         </td>
                         <td><span class="badge bg-<?= $typeColors[$a['admin_type']] ?> rounded-pill"><?= $adminTypes[$a['admin_type']] ?></span></td>
-                        <td><?= $a['city_name'] ? escape($a['city_name']) : '<span class="text-muted">—</span>' ?></td>
+                        <td><?= $a['city_name'] ? escape($a['city_name']) : '<span class="text-muted">&mdash;</span>' ?></td>
                         <td class="text-center">
                             <form method="POST" action="<?= BASE_URL ?>admin-management/toggle" class="d-inline">
                                 <input type="hidden" name="csrf_token" value="<?= generateCSRFToken() ?>">

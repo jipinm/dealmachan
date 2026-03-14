@@ -120,7 +120,7 @@ export const salesApi = {
   }) =>
     apiClient.get<Paged<SaleRecord[]>>('/merchants/sales-registry', { params }),
 
-  summary: (params?: { from?: string; to?: string }) =>
+  summary: (params?: { from?: string; to?: string; store_id?: number }) =>
     apiClient.get<R<SalesSummary>>('/merchants/sales-registry/summary', { params }),
 
   record: (data: CreateSalePayload) =>

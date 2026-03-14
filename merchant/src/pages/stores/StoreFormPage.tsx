@@ -5,8 +5,9 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { ChevronLeft, Save } from 'lucide-react'
 import toast from 'react-hot-toast'
-import { useEffect } from 'react'
-import { storeApi, type CreateStorePayload } from '@/api/endpoints/stores'
+import { useEffect, useState, useMemo } from 'react'
+import { storeApi, type CreateStorePayload, type SubCategory } from '@/api/endpoints/stores'
+import { merchantApi } from '@/api/endpoints/merchant'
 
 // ── Working hours helpers ─────────────────────────────────────────────────────
 
@@ -47,25 +48,31 @@ function serializeHours(rows: z.infer<typeof dayHoursSchema>[]): Record<string, 
   return result
 }
 
-/** Deserialize JSON from API → form day rows */
-function deserializeHours(json: Record<string, string> | null | undefined) {
+/** Deserialize JSON from API → form day rows (handles both string and legacy object format) */
+function deserializeHours(json: Record<string, string | { open: string; close: string; closed: boolean }> | null | undefined) {
   return DAYS.map((d) => {
     const val = json?.[d.key]
-    if (!val || val === 'Closed') return { day: d.key, label: d.label, open: false, from: '09:00', to: '18:00' }
+    if (!val) return { day: d.key, label: d.label, open: false, from: '09:00', to: '18:00' }
+    if (typeof val === 'object') {
+      if (val.closed) return { day: d.key, label: d.label, open: false, from: '09:00', to: '18:00' }
+      return { day: d.key, label: d.label, open: true, from: val.open ?? '09:00', to: val.close ?? '18:00' }
+    }
+    if (val === 'Closed') return { day: d.key, label: d.label, open: false, from: '09:00', to: '18:00' }
     const [from, to] = val.split('-')
     return { day: d.key, label: d.label, open: true, from: from ?? '09:00', to: to ?? '18:00' }
   })
 }
 
 const schema = z.object({
-  store_name:  z.string().min(2, 'Min 2 characters'),
-  address:     z.string().min(5, 'Enter a valid address'),
-  city_id:     z.coerce.number().min(1, 'Select a city'),
-  area_id:     z.coerce.number().optional().nullable(),
-  phone:       z.string().regex(/^[0-9]{10}$/, '10-digit number').optional().or(z.literal('')),
-  email:       z.string().email('Invalid email').optional().or(z.literal('')),
-  description: z.string().optional().or(z.literal('')),
-  hours:       z.array(dayHoursSchema),
+  store_name:   z.string().min(2, 'Min 2 characters'),
+  address:      z.string().min(5, 'Enter a valid address'),
+  city_id:      z.coerce.number().min(1, 'Select a city'),
+  area_id:      z.coerce.number().optional().nullable(),
+  phone:        z.string().regex(/^[0-9]{10}$/, '10-digit number').optional().or(z.literal('')),
+  email:        z.string().email('Invalid email').optional().or(z.literal('')),
+  description:  z.string().optional().or(z.literal('')),
+  hours:        z.array(dayHoursSchema),
+  category_ids: z.array(z.number()).min(1, 'Select at least one category'),
 })
 
 type FormValues = z.infer<typeof schema>
@@ -91,23 +98,44 @@ export default function StoreFormPage() {
   const navigate    = useNavigate()
   const queryClient = useQueryClient()
 
+  const [subCategories, setSubCategories] = useState<SubCategory[]>([])
+
   const { data: cities = [] } = useQuery({
     queryKey: ['cities'],
     queryFn:  () => storeApi.getCities().then((r) => r.data.data),
     staleTime: Infinity,
   })
 
+  const { data: merchantProfileData } = useQuery({
+    queryKey: ['merchant-profile'],
+    queryFn:  () => merchantApi.getProfile().then((r) => r.data.data),
+    staleTime: 5 * 60 * 1000,
+  })
+
+  const categories = useMemo(() => {
+    const cats = merchantProfileData?.profile?.categories ?? []
+    const seen = new Set<number>()
+    return cats
+      .filter((c) => {
+        if (seen.has(c.category_id)) return false
+        seen.add(c.category_id)
+        return true
+      })
+      .map((c) => ({ id: c.category_id, name: c.category_name ?? '' }))
+  }, [merchantProfileData])
+
   const {
     register, handleSubmit, watch, reset, control,
     formState: { errors, isDirty },
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: { hours: defaultDayHours() },
+    defaultValues: { hours: defaultDayHours(), category_ids: [] },
   })
 
   const { fields: hourFields } = useFieldArray({ control, name: 'hours' })
 
   const selectedCity = watch('city_id')
+  const selectedCategoryIds = watch('category_ids')
 
   const { data: areas = [] } = useQuery({
     queryKey: ['areas', selectedCity],
@@ -125,16 +153,24 @@ export default function StoreFormPage() {
 
   useEffect(() => {
     if (existingStore) {
+      const catIds = (existingStore.categories ?? []).map((c) => c.category_id)
       reset({
-        store_name:  existingStore.store_name,
-        address:     existingStore.address,
-        city_id:     existingStore.city_id,
-        area_id:     existingStore.area_id ?? null,
-        phone:       existingStore.phone ?? '',
-        email:       existingStore.email ?? '',
-        description: existingStore.description ?? '',
-        hours:       deserializeHours(existingStore.opening_hours),
+        store_name:   existingStore.store_name,
+        address:      existingStore.address,
+        city_id:      existingStore.city_id,
+        area_id:      existingStore.area_id ?? null,
+        phone:        existingStore.phone ?? '',
+        email:        existingStore.email ?? '',
+        description:  existingStore.description ?? '',
+        hours:        deserializeHours(existingStore.opening_hours),
+        category_ids: catIds,
       })
+      // Load sub-categories for pre-selected categories
+      if (catIds.length > 0) {
+        Promise.all(catIds.map((cId) => storeApi.getSubCategories(cId).then((r) => r.data.data)))
+          .then((results) => setSubCategories(results.flat()))
+          .catch(() => {})
+      }
     }
   }, [existingStore, reset])
 
@@ -171,6 +207,7 @@ export default function StoreFormPage() {
       email:         values.email || undefined,
       description:   values.description || undefined,
       opening_hours: serializeHours(values.hours),
+      category_ids:  values.category_ids,
     }
     if (isEdit) updateMutation.mutate(payload)
     else        createMutation.mutate(payload)
@@ -238,10 +275,85 @@ export default function StoreFormPage() {
             </Field>
           </div>
 
+          {/* Categories */}
+          <div className="bg-white rounded-2xl p-4 shadow-sm space-y-4">
+            <p className="text-xs font-bold text-gray-400 uppercase tracking-wide">Categories</p>
+            <Field label="Category" error={errors.category_ids?.message} required>
+              {categories.length === 0 ? (
+                <p className="text-sm text-amber-600 bg-amber-50 rounded-xl p-3">
+                  No categories are assigned to your merchant profile yet. Please add them in{' '}
+                  <button type="button" onClick={() => navigate('/profile/edit')} className="font-semibold underline">
+                    Edit Profile
+                  </button>{' '}
+                  before adding a store.
+                </p>
+              ) : (
+                <Controller
+                  name="category_ids"
+                  control={control}
+                  render={({ field }) => (
+                    <div className="space-y-2">
+                      {categories.map((cat) => {
+                        const checked = field.value?.includes(cat.id) ?? false
+                        return (
+                          <label key={cat.id} className="flex items-center gap-2 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={checked}
+                              onChange={async (e) => {
+                                const next = e.target.checked
+                                  ? [...(field.value ?? []), cat.id]
+                                  : (field.value ?? []).filter((id) => id !== cat.id)
+                                field.onChange(next)
+                                // Load/remove sub-categories for this category
+                                if (e.target.checked) {
+                                  try {
+                                    const res = await storeApi.getSubCategories(cat.id)
+                                    setSubCategories((prev) => [
+                                      ...prev.filter((s) => s.category_id !== cat.id),
+                                      ...res.data.data,
+                                    ])
+                                  } catch {}
+                                } else {
+                                  setSubCategories((prev) => prev.filter((s) => s.category_id !== cat.id))
+                                }
+                              }}
+                              className="w-4 h-4 rounded border-gray-300 text-brand-600 focus:ring-brand-500"
+                            />
+                            <span className="text-sm text-gray-700">{cat.name}</span>
+                          </label>
+                        )
+                      })}
+                    </div>
+                  )}
+                />
+              )}
+            </Field>
+            {subCategories.length > 0 && (
+              <Field label="Sub-category (optional)">
+                <div className="space-y-2">
+                  {subCategories
+                    .filter((s) => selectedCategoryIds?.includes(s.category_id))
+                    .map((sub) => (
+                      <label key={sub.id} className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          defaultChecked={
+                            existingStore?.categories?.some((c) => c.sub_category_id === sub.id) ?? false
+                          }
+                          className="w-4 h-4 rounded border-gray-300 text-brand-600 focus:ring-brand-500"
+                        />
+                        <span className="text-sm text-gray-700">{sub.name}</span>
+                      </label>
+                    ))}
+                </div>
+              </Field>
+            )}
+          </div>
+
           {/* Contact */}
           <div className="bg-white rounded-2xl p-4 shadow-sm space-y-4">
-            <p className="text-xs font-bold text-gray-400 uppercase tracking-wide">Contact</p>
-            <Field label="Phone" error={errors.phone?.message}>
+            <p className="text-xs font-bold text-gray-400 uppercase tracking-wide">Contact</p>            <Field label="Phone" error={errors.phone?.message}>
               <input {...register('phone')} type="tel" placeholder="10-digit mobile" maxLength={10} className={inputCls} />
             </Field>
             <Field label="Email" error={errors.email?.message}>

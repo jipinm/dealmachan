@@ -8,6 +8,7 @@ import { z } from 'zod'
 import toast from 'react-hot-toast'
 import { salesApi, type SaleRecord, type CreateSalePayload } from '@/api/endpoints/analytics'
 import { storeApi } from '@/api/endpoints/stores'
+import { useAuthStore } from '@/store/authStore'
 
 // ── Form schema ──────────────────────────────────────────────────────────────
 
@@ -74,14 +75,24 @@ function SaleRow({ sale }: { sale: SaleRecord }) {
 
 function RecordSaleModal({ onClose }: { onClose: () => void }) {
   const queryClient = useQueryClient()
+  const isStoreAdmin  = useAuthStore(s => s.isStoreAdmin())
+  const scopedStoreId = useAuthStore(s => s.scopedStoreId())
 
   const { data: stores = [] } = useQuery({
     queryKey: ['stores'],
     queryFn:  () => storeApi.list().then(r => r.data.data),
+    enabled:  !isStoreAdmin,
   })
+
+  const displayStores = isStoreAdmin && scopedStoreId
+    ? [{ id: scopedStoreId, store_name: '(Your store)' }]
+    : stores
 
   const { register, handleSubmit, formState: { errors } } = useForm<SaleForm>({
     resolver: zodResolver(saleSchema),
+    defaultValues: {
+      store_id: isStoreAdmin && scopedStoreId ? String(scopedStoreId) : '',
+    },
   })
 
   const mutation = useMutation({
@@ -120,12 +131,21 @@ function RecordSaleModal({ onClose }: { onClose: () => void }) {
           {/* Store */}
           <div>
             <label className="block text-xs font-medium text-gray-600 mb-1">Store *</label>
-            <select {...register('store_id')} className="input-field">
-              <option value="">Select store…</option>
-              {stores.map(s => (
-                <option key={s.id} value={s.id}>{s.store_name}</option>
-              ))}
-            </select>
+            {isStoreAdmin && scopedStoreId ? (
+              <>
+                <div className="input-field text-gray-500 bg-gray-50 cursor-not-allowed">
+                  {displayStores[0]?.store_name ?? `Store #${scopedStoreId}`}
+                </div>
+                <input type="hidden" value={String(scopedStoreId)} {...register('store_id')} />
+              </>
+            ) : (
+              <select {...register('store_id')} className="input-field">
+                <option value="">Select store…</option>
+                {displayStores.map(s => (
+                  <option key={s.id} value={s.id}>{s.store_name}</option>
+                ))}
+              </select>
+            )}
             {errors.store_id && <p className="text-xs text-red-500 mt-1">{errors.store_id.message}</p>}
           </div>
 
@@ -201,16 +221,20 @@ export default function SalesPage() {
   const [page, setPage]       = useState(1)
   const [showModal, setModal] = useState(false)
 
+  const isStoreAdmin  = useAuthStore(s => s.isStoreAdmin())
+  const scopedStoreId = useAuthStore(s => s.scopedStoreId())
+  const storeFilter   = isStoreAdmin && scopedStoreId ? { store_id: scopedStoreId } : {}
+
   // Summary (current month default)
   const { data: summary } = useQuery({
-    queryKey: ['sales-summary'],
-    queryFn:  () => salesApi.summary().then(r => r.data.data ?? null),
+    queryKey: ['sales-summary', scopedStoreId],
+    queryFn:  () => salesApi.summary({ ...storeFilter }).then(r => r.data.data ?? null),
   })
 
   // Paginated list
   const { data: salesResp, isLoading, isFetching } = useQuery({
-    queryKey:    ['sales', page],
-    queryFn:     () => salesApi.list({ page, limit: 20 }).then(r => {
+    queryKey:    ['sales', page, scopedStoreId],
+    queryFn:     () => salesApi.list({ page, limit: 20, ...storeFilter }).then(r => {
       const meta = r.data.meta ?? { total: 0, page: 1, limit: 20, pages: 1 }
       return { items: (r.data.data ?? []) as SaleRecord[], meta }
     }),

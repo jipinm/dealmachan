@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { ChevronLeft, ChevronRight, ExternalLink } from 'lucide-react'
+import { getImageUrl } from '@/lib/imageUrl'
 
 export interface Ad {
   id: number
@@ -39,7 +40,7 @@ export default function AdBanner({ ads, autoPlayMs = 4000, className = '' }: Pro
       {/* Image */}
       <img
         key={ad.id}
-        src={ad.image_url}
+        src={getImageUrl(ad.image_url)}
         alt={ad.title}
         className="w-full h-full object-cover transition-opacity duration-500"
       />

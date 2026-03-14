@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { Zap, Clock, ChevronRight } from 'lucide-react'
 import { publicApi, type FlashDiscount } from '@/api/endpoints/public'
@@ -22,12 +22,14 @@ function imgSrc(path: string | null): string {
 }
 
 function FlashDealCard({ deal }: { deal: FlashDiscount }) {
+  const displayName = deal.store_name  || deal.merchant_name
+  const displayLogo = deal.store_image || deal.merchant_logo
   return (
     <Link to={`/flash-deals/${deal.id}/${slugify(deal.title)}`} className="card card-hover group overflow-hidden block">
       {/* Banner image */}
       <div className="relative h-44 bg-slate-100 overflow-hidden">
         <img
-          src={deal.banner_image ?? imgSrc(null)}
+          src={imgSrc(deal.banner_image)}
           alt={deal.title}
           loading="lazy"
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
@@ -47,18 +49,18 @@ function FlashDealCard({ deal }: { deal: FlashDiscount }) {
       </div>
       <div className="p-4">
         <div className="flex items-center gap-2 mb-1.5">
-          {deal.merchant_logo ? (
+          {displayLogo ? (
             <img
-              src={imgSrc(deal.merchant_logo)}
-              alt={deal.merchant_name}
+              src={imgSrc(displayLogo)}
+              alt={displayName}
               loading="lazy"
               className="w-5 h-5 rounded-full object-cover bg-slate-100 border border-slate-200"
-              onError={(e) => { (e.target as HTMLImageElement).src = 'https://via.placeholder.com/40?text=M' }}
+              onError={(e) => { (e.target as HTMLImageElement).src = 'https://via.placeholder.com/40?text=S' }}
             />
           ) : (
             <Zap size={14} className="text-cta-500" />
           )}
-          <span className="text-xs text-slate-500 truncate">{deal.merchant_name}</span>
+          <span className="text-xs text-slate-500 truncate">{displayName}</span>
         </div>
         <h3 className="font-semibold text-slate-800 text-sm leading-snug line-clamp-2 mb-2">{deal.title}</h3>
         <div className="flex items-center gap-1.5 text-xs text-cta-500 font-bold">
@@ -70,14 +72,29 @@ function FlashDealCard({ deal }: { deal: FlashDiscount }) {
 }
 
 export default function FlashDealsPage() {
-  const { cityId } = useLocationStore()
+  const [params, setParams] = useSearchParams()
+  const { cityId, areaId } = useLocationStore()
+  const categoryId = params.get('category_id') ? Number(params.get('category_id')) : undefined
+
+  const { data: categoriesData } = useQuery({
+    queryKey: ['categories'],
+    queryFn: () => publicApi.getCategories().then((r) => r.data.data ?? []),
+    staleTime: 10 * 60 * 1000,
+  })
+  const categories = categoriesData ?? []
 
   const { data, isLoading } = useQuery({
-    queryKey: ['flash-deals', cityId],
-    queryFn: () => publicApi.getFlashDiscounts({ city_id: cityId ?? undefined }).then((r) => r.data.data ?? []),
+    queryKey: ['flash-deals', cityId, areaId, categoryId],
+    queryFn: () => publicApi.getFlashDiscounts({ city_id: cityId ?? undefined, area_id: areaId ?? undefined, category_id: categoryId }).then((r) => r.data.data ?? []),
     staleTime: 60 * 1000,
     refetchInterval: 60 * 1000, // refresh every minute for timer accuracy
   })
+
+  function setCategory(id: number | undefined) {
+    const next = new URLSearchParams(params)
+    if (id) next.set('category_id', String(id)); else next.delete('category_id')
+    setParams(next, { replace: true })
+  }
 
   return (
     <div>
@@ -97,6 +114,38 @@ export default function FlashDealsPage() {
           </p>
         </div>
       </div>
+
+      {/* Category filter chips */}
+      {categories.length > 0 && (
+        <div className="bg-white border-b border-slate-100">
+          <div className="site-container py-3">
+            <div className="flex items-center gap-2 flex-wrap">
+              <button
+                onClick={() => setCategory(undefined)}
+                className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${
+                  !categoryId ? 'bg-cta-500 text-white border-cta-500' : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300'
+                }`}
+              >
+                All
+              </button>
+              {categories.map((cat) => (
+                <button
+                  key={cat.id}
+                  onClick={() => setCategory(cat.id)}
+                  className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors flex items-center gap-1 ${
+                    categoryId === cat.id
+                      ? 'bg-cta-500 text-white border-cta-500'
+                      : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300'
+                  }`}
+                >
+                  {cat.icon && <span>{cat.icon}</span>}
+                  {cat.name}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="site-container py-10">
         {isLoading ? (

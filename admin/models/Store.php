@@ -11,7 +11,7 @@ class Store extends Model {
         $sql = "SELECT s.*, c.city_name, a.area_name, l.location_name
                 FROM {$this->table} s
                 JOIN cities c ON s.city_id = c.id
-                JOIN areas  a ON s.area_id = a.id
+                LEFT JOIN areas  a ON s.area_id = a.id
                 LEFT JOIN locations l ON s.location_id = l.id
                 WHERE s.merchant_id = ?
                 ORDER BY s.status DESC, s.created_at DESC";

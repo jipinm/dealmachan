@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { QRCodeSVG } from 'qrcode.react'
-import { Bookmark, Gift, Clock, X, CheckCircle, XCircle, Loader2, Share2 } from 'lucide-react'
+import { Bookmark, Gift, Clock, X, CheckCircle, XCircle, Loader2, Share2, QrCode } from 'lucide-react'
 import { couponsApi } from '@/api/endpoints/coupons'
 import type { WalletCoupon, GiftCoupon } from '@/api/endpoints/coupons'
 import { getApiError } from '@/api/client'
@@ -158,7 +158,7 @@ function SavedCouponCard({ coupon, onRedeem }: { coupon: WalletCoupon; onRedeem:
 }
 
 // ── Gift coupon card ──────────────────────────────────────────────────────────
-function GiftCouponCard({ gift }: { gift: GiftCoupon }) {
+function GiftCouponCard({ gift, onRedeem }: { gift: GiftCoupon; onRedeem?: () => void }) {
   const qc = useQueryClient()
 
   const acceptMutation = useMutation({
@@ -231,9 +231,12 @@ function GiftCouponCard({ gift }: { gift: GiftCoupon }) {
           </div>
         )}
         {gift.acceptance_status === 'accepted' && (
-          <p className="text-xs text-emerald-600 font-semibold flex items-center gap-1">
-            <CheckCircle size={12} /> Accepted — check Saved tab
-          </p>
+          <button
+            onClick={onRedeem}
+            className="w-full btn-primary text-xs py-2 rounded-xl flex items-center justify-center gap-1"
+          >
+            <QrCode size={12} /> Use Coupon
+          </button>
         )}
       </div>
     </div>
@@ -349,7 +352,7 @@ export default function CouponWalletPage() {
             : gifts.length > 0
               ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {gifts.map((g) => <GiftCouponCard key={g.gift_id} gift={g} />)}
+                  {gifts.map((g) => <GiftCouponCard key={g.gift_id} gift={g} onRedeem={() => setRedeemCoupon(g)} />)}
                 </div>
               )
               : (

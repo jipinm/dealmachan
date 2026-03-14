@@ -1,12 +1,16 @@
 import { useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { useForm } from 'react-hook-form'
+import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { ChevronLeft, Save } from 'lucide-react'
+import { ChevronLeft, Save, Camera, X } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { useEffect } from 'react'
+import type React from 'react'
 import { merchantApi, type UpdateProfilePayload } from '@/api/endpoints/merchant'
+import { storeApi } from '@/api/endpoints/stores'
+import { useAuthStore } from '@/store/authStore'
+import { getImageUrl } from '@/lib/imageUrl'
 
 const schema = z.object({
   business_name:       z.string().min(2, 'Min 2 characters'),
@@ -15,6 +19,7 @@ const schema = z.object({
   registration_number: z.string().optional().or(z.literal('')),
   business_address:    z.string().optional().or(z.literal('')),
   website_url:         z.string().url('Enter a valid URL').optional().or(z.literal('')),
+  category_ids:        z.array(z.number()),
 })
 
 type FormValues = z.infer<typeof schema>
@@ -40,6 +45,7 @@ const inputClass = 'w-full px-3 py-2.5 text-sm rounded-xl border border-gray-200
 export default function EditProfilePage() {
   const navigate    = useNavigate()
   const queryClient = useQueryClient()
+  const isStoreAdmin = useAuthStore((s) => s.isStoreAdmin())
 
   const { data, isLoading } = useQuery({
     queryKey: ['merchant-profile'],
@@ -48,13 +54,22 @@ export default function EditProfilePage() {
   })
 
   const {
-    register, handleSubmit, reset,
+    register, handleSubmit, reset, control,
     formState: { errors, isDirty },
-  } = useForm<FormValues>({ resolver: zodResolver(schema) })
+  } = useForm<FormValues>({ resolver: zodResolver(schema), defaultValues: { category_ids: [] } })
+
+  const { data: allCategories = [] } = useQuery({
+    queryKey: ['public-categories'],
+    queryFn:  () => storeApi.getCategories().then((r) => r.data.data),
+    staleTime: Infinity,
+  })
 
   useEffect(() => {
     if (data?.profile) {
       const p = data.profile
+      const uniqueCatIds = (data?.profile.categories ?? [])
+        .filter((c, i, arr) => arr.findIndex((x) => x.category_id === c.category_id) === i)
+        .map((c) => c.category_id)
       reset({
         business_name:       p.business_name ?? '',
         phone:               p.phone ?? '',
@@ -62,6 +77,7 @@ export default function EditProfilePage() {
         registration_number: p.registration_number ?? '',
         business_address:    p.business_address ?? '',
         website_url:         p.website_url ?? '',
+        category_ids:        uniqueCatIds,
       })
     }
   }, [data, reset])
@@ -76,9 +92,34 @@ export default function EditProfilePage() {
     onError: () => toast.error('Failed to update profile'),
   })
 
+  const bannerMutation = useMutation({
+    mutationFn: (file: File) => merchantApi.uploadBanner(file),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['merchant-profile'] })
+      toast.success('Banner updated')
+    },
+    onError: () => toast.error('Failed to upload banner'),
+  })
+
+  const deleteBannerMutation = useMutation({
+    mutationFn: () => merchantApi.deleteBanner(),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['merchant-profile'] })
+      toast.success('Banner removed')
+    },
+    onError: () => toast.error('Failed to remove banner'),
+  })
+
+  const handleBannerChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) bannerMutation.mutate(file)
+    e.target.value = ''
+  }
+
   const onSubmit = (values: FormValues) => {
-    const payload: UpdateProfilePayload = {}
-    Object.entries(values).forEach(([k, v]) => {
+    const { category_ids, ...rest } = values
+    const payload: UpdateProfilePayload = { category_ids }
+    Object.entries(rest).forEach(([k, v]) => {
       if (v !== '') (payload as Record<string, string>)[k] = v as string
     })
     mutation.mutate(payload)
@@ -111,6 +152,47 @@ export default function EditProfilePage() {
           </div>
         ) : (
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+
+            {/* Banner Image — merchant admins only */}
+            {!isStoreAdmin && (
+              <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+                <div className="relative h-32 bg-gray-100">
+                  {data?.profile.banner_image ? (
+                    <img
+                      src={getImageUrl(data.profile.banner_image)}
+                      alt="Banner"
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full gradient-brand opacity-40" />
+                  )}
+                </div>
+                <div className="p-3 flex items-center gap-2">
+                  <p className="flex-1 text-xs font-bold text-gray-500 uppercase tracking-wide">Cover / Banner Image</p>
+                  {data?.profile.banner_image && (
+                    <button
+                      type="button"
+                      onClick={() => deleteBannerMutation.mutate()}
+                      disabled={deleteBannerMutation.isPending}
+                      className="flex items-center gap-1 text-xs text-red-500 font-semibold px-2.5 py-1 rounded-lg border border-red-200 bg-red-50 disabled:opacity-50"
+                    >
+                      <X size={12} />Remove
+                    </button>
+                  )}
+                  <label className="flex items-center gap-1 text-xs text-brand-600 font-semibold px-2.5 py-1 rounded-lg border border-brand-200 bg-brand-50 cursor-pointer">
+                    <Camera size={12} />{data?.profile.banner_image ? 'Change' : 'Upload'}
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      className="hidden"
+                      onChange={handleBannerChange}
+                      disabled={bannerMutation.isPending}
+                    />
+                  </label>
+                </div>
+              </div>
+            )}
+
             <div className="bg-white rounded-2xl p-4 shadow-sm space-y-4">
               <p className="text-xs font-bold text-gray-400 uppercase tracking-wide">Business Info</p>
               <FormField label="Business Name" error={errors.business_name?.message} required>
@@ -139,6 +221,37 @@ export default function EditProfilePage() {
               <FormField label="Business Registration No." error={errors.registration_number?.message}>
                 <input {...register('registration_number')} placeholder="Company / shop registration" className={inputClass} />
               </FormField>
+            </div>
+
+            <div className="bg-white rounded-2xl p-4 shadow-sm space-y-4">
+              <p className="text-xs font-bold text-gray-400 uppercase tracking-wide">Business Categories</p>
+              <Controller
+                name="category_ids"
+                control={control}
+                render={({ field }) => (
+                  <div className="space-y-2">
+                    {allCategories.map((cat) => {
+                      const checked = (field.value ?? []).includes(cat.id)
+                      return (
+                        <label key={cat.id} className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={checked}
+                            onChange={(e) => {
+                              const next = e.target.checked
+                                ? [...(field.value ?? []), cat.id]
+                                : (field.value ?? []).filter((id) => id !== cat.id)
+                              field.onChange(next)
+                            }}
+                            className="w-4 h-4 rounded border-gray-300 text-brand-600 focus:ring-brand-500"
+                          />
+                          <span className="text-sm text-gray-700">{cat.name}</span>
+                        </label>
+                      )
+                    })}
+                  </div>
+                )}
+              />
             </div>
           </form>
         )}

@@ -6,10 +6,11 @@ import {
   Search, MapPin, Zap, Tag, Store, ArrowRight, ChevronRight,
   Star, Clock, Percent, Gift, Heart, Shield, TrendingUp, Lock,
 } from 'lucide-react'
-import { publicApi, type TopCoupon, type FeaturedMerchant, type FlashDiscount } from '@/api/endpoints/public'
+import { publicApi, type TopCoupon, type FlashDiscount, type PublicStore } from '@/api/endpoints/public'
 import { useLocationStore } from '@/store/locationStore'
 import { useAuthStore } from '@/store/authStore'
 import CategoryGrid from '@/components/ui/CategoryGrid'
+import StoreCard from '@/components/ui/StoreCard'
 import { Helmet } from 'react-helmet-async'
 
 // ── How It Works steps ────────────────────────────────────────────────────────
@@ -77,11 +78,13 @@ function CouponCard({ coupon }: { coupon: TopCoupon }) {
     : coupon.discount_type === 'bogo'       ? 'BOGO'
     : coupon.discount_value != null         ? `₹${coupon.discount_value} OFF`
     : 'DEAL'
+  const displayName = coupon.store_name  || coupon.merchant_name
+  const displayLogo = coupon.store_image || coupon.merchant_logo
   return (
     <Link to={`/deals/${coupon.id}/${slugify(coupon.title)}`} className="card card-hover group block overflow-hidden">
       <div className="relative h-40 bg-slate-100 overflow-hidden">
         <img
-          src={imgSrc(coupon.banner_image || coupon.merchant_logo)}
+          src={imgSrc(coupon.banner_image || displayLogo)}
           alt={coupon.title}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
           onError={(e) => { (e.target as HTMLImageElement).src = 'https://via.placeholder.com/400x200?text=Deal' }}
@@ -91,12 +94,12 @@ function CouponCard({ coupon }: { coupon: TopCoupon }) {
       <div className="p-4">
         <div className="flex items-center gap-2 mb-1">
           <img
-            src={imgSrc(coupon.merchant_logo)}
-            alt={coupon.merchant_name}
+            src={imgSrc(displayLogo)}
+            alt={displayName}
             className="w-6 h-6 rounded-full object-cover bg-slate-100"
-            onError={(e) => { (e.target as HTMLImageElement).src = 'https://via.placeholder.com/40?text=M' }}
+            onError={(e) => { (e.target as HTMLImageElement).src = 'https://via.placeholder.com/40?text=S' }}
           />
-          <span className="text-xs text-slate-500 font-medium truncate">{coupon.merchant_name}</span>
+          <span className="text-xs text-slate-500 font-medium truncate">{displayName}</span>
         </div>
         <h3 className="font-semibold text-slate-800 text-sm leading-snug line-clamp-2 mb-2">{coupon.title}</h3>
         <div className="flex items-center justify-between">
@@ -124,56 +127,17 @@ function CouponCard({ coupon }: { coupon: TopCoupon }) {
   )
 }
 
-// ── Merchant card ─────────────────────────────────────────────────────────────
-function MerchantCardLocal({ merchant }: { merchant: FeaturedMerchant }) {
-  return (
-    <Link to={`/stores/${merchant.id}/${slugify(merchant.business_name)}`} className="card card-hover group flex flex-col overflow-hidden">
-      <div className="relative h-32 bg-gradient-to-br from-slate-100 to-slate-200 overflow-hidden">
-        {merchant.business_logo ? (
-          <img
-            src={imgSrc(merchant.business_logo)}
-            alt={merchant.business_name}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-            onError={(e) => { (e.target as HTMLImageElement).src = 'https://via.placeholder.com/300x150?text=Store' }}
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center">
-            <Store size={36} className="text-slate-300" />
-          </div>
-        )}
-        {merchant.is_premium && <span className="absolute top-2 left-2 badge-new">✨ Premium</span>}
-      </div>
-      <div className="p-4 flex-1">
-        <h3 className="font-semibold text-slate-800 text-sm mb-1 line-clamp-1">{merchant.business_name}</h3>
-        <div className="flex items-center gap-1 mb-2">
-          <Star size={12} className="text-yellow-400 fill-yellow-400" />
-          <span className="text-xs font-semibold text-slate-700">{merchant.avg_rating != null ? Number(merchant.avg_rating).toFixed(1) : '–'}</span>
-          <span className="text-xs text-slate-400">({merchant.total_reviews ?? 0})</span>
-          {(merchant.area_name || merchant.city_name) && (
-            <>
-              <span className="text-slate-300 mx-1">·</span>
-              <MapPin size={11} className="text-slate-400" />
-              <span className="text-xs text-slate-400 truncate">{merchant.area_name ?? merchant.city_name}</span>
-            </>
-          )}
-        </div>
-        {merchant.active_coupons_count > 0 && (
-          <span className="text-xs text-brand-600 font-semibold">
-            {merchant.active_coupons_count} active deal{merchant.active_coupons_count > 1 ? 's' : ''}
-          </span>
-        )}
-      </div>
-    </Link>
-  )
-}
+
 
 // ── Flash deal card ───────────────────────────────────────────────────────────
 function FlashDealCard({ deal }: { deal: FlashDiscount }) {
+  const displayName = deal.store_name  || deal.merchant_name
+  const displayLogo = deal.store_image || deal.merchant_logo
   return (
     <Link to={`/flash-deals/${deal.id}/${slugify(deal.title)}`} className="flex-shrink-0 w-64 card card-hover overflow-hidden group">
       <div className="h-28 relative bg-slate-100 overflow-hidden">
         <img
-          src={deal.banner_image ?? 'https://via.placeholder.com/256x112?text=Flash'}
+          src={imgSrc(deal.banner_image, 'https://via.placeholder.com/256x112?text=Flash')}
           alt={deal.title}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
           onError={(e) => { (e.target as HTMLImageElement).src = 'https://via.placeholder.com/256x112?text=Flash' }}
@@ -186,15 +150,15 @@ function FlashDealCard({ deal }: { deal: FlashDiscount }) {
       </div>
       <div className="p-3">
         <div className="flex items-center gap-1.5 mb-1">
-          {deal.merchant_logo && (
+          {displayLogo && (
             <img
-              src={imgSrc(deal.merchant_logo)}
-              alt={deal.merchant_name}
+              src={imgSrc(displayLogo)}
+              alt={displayName}
               className="w-4 h-4 rounded-full object-cover bg-slate-100 border border-slate-200"
-              onError={(e) => { (e.target as HTMLImageElement).src = 'https://via.placeholder.com/40?text=M' }}
+              onError={(e) => { (e.target as HTMLImageElement).src = 'https://via.placeholder.com/40?text=S' }}
             />
           )}
-          <p className="text-xs text-slate-500 truncate">{deal.merchant_name}</p>
+          <p className="text-xs text-slate-500 truncate">{displayName}</p>
         </div>
         <h3 className="font-semibold text-slate-800 text-sm line-clamp-2 mb-1">{deal.title}</h3>
         <div className="flex items-center gap-1 text-xs text-cta-500 font-semibold">
@@ -209,7 +173,7 @@ function FlashDealCard({ deal }: { deal: FlashDiscount }) {
 // Main Page
 // ─────────────────────────────────────────────────────────────────────────────
 export default function HomePage() {
-  const { cityId, cityName, areaName, openLocationModal } = useLocationStore()
+  const { cityId, areaId, cityName, areaName, openLocationModal } = useLocationStore()
   const { isAuthenticated } = useAuthStore()
   const navigate = useNavigate()
   const [searchQuery, setSearchQuery] = useState('')
@@ -226,14 +190,22 @@ export default function HomePage() {
     staleTime: 10 * 60 * 1000,
   })
 
+  const { data: featuredStoresData, isLoading: storesLoading } = useQuery({
+    queryKey: ['home-featured-stores', cityId, areaId],
+    queryFn: () =>
+      publicApi.getStores({ city_id: cityId ?? undefined, area_id: areaId ?? undefined, per_page: 8, page: 1 })
+        .then((r) => r.data.data?.data ?? []),
+    staleTime: 3 * 60 * 1000,
+  })
+  const featuredStores: PublicStore[] = featuredStoresData ?? []
+
   function handleSearch(e: React.FormEvent) {
     e.preventDefault()
     if (searchQuery.trim()) navigate(`/deals?q=${encodeURIComponent(searchQuery.trim())}`)
   }
 
-  const coupons    = homeData?.top_coupons       ?? []
-  const merchants  = homeData?.featured_merchants ?? []
-  const flashDeals = homeData?.flash_discounts    ?? []
+  const coupons    = homeData?.top_coupons    ?? []
+  const flashDeals = homeData?.flash_discounts ?? []
 
   return (
     <div>
@@ -416,17 +388,17 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ═══ FEATURED MERCHANTS ══════════════════════════════════════════════ */}
+      {/* ═══ FEATURED STORES ════════════════════════════════════════════════ */}
       <section className="py-12 bg-white">
         <div className="site-container">
-          <SectionHeader title="Featured Stores" subtitle="Top-rated merchants with exclusive offers" linkTo="/stores" linkLabel="All stores" />
-          {isLoading ? (
+          <SectionHeader title="Featured Stores" subtitle="Stores near you with exclusive offers" linkTo="/stores" linkLabel="All stores" />
+          {storesLoading ? (
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
               {[1, 2, 3, 4].map((i) => <div key={i} className="h-52 skeleton rounded-2xl" />)}
             </div>
-          ) : merchants.length > 0 ? (
+          ) : featuredStores.length > 0 ? (
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-              {merchants.slice(0, 8).map((m) => <MerchantCardLocal key={m.id} merchant={m} />)}
+              {featuredStores.map((s) => <StoreCard key={s.id} store={s} />)}
             </div>
           ) : (
             <div className="text-center py-12 text-slate-400">

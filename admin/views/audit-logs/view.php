@@ -22,25 +22,25 @@ $color = $typeColors[$log['user_type'] ?? ''] ?? 'secondary';
             <div class="card-body">
                 <dl class="row mb-0 small">
                     <dt class="col-5 text-muted">Actor</dt>
-                    <dd class="col-7"><?= escape($log['actor_name'] ?? '—') ?></dd>
+                    <dd class="col-7"><?= escape($log['actor_name'] ?? '&mdash;') ?></dd>
 
                     <dt class="col-5 text-muted">User Type</dt>
                     <dd class="col-7"><span class="badge bg-<?= $color ?>"><?= ucfirst($log['user_type'] ?? '?') ?></span></dd>
 
                     <dt class="col-5 text-muted">User ID</dt>
-                    <dd class="col-7"><?= $log['user_id'] ?? '—' ?></dd>
+                    <dd class="col-7"><?= $log['user_id'] ?? '&mdash;' ?></dd>
 
                     <dt class="col-5 text-muted">Action</dt>
                     <dd class="col-7"><code><?= escape($log['action']) ?></code></dd>
 
                     <dt class="col-5 text-muted">Table</dt>
-                    <dd class="col-7"><code><?= escape($log['table_name'] ?? '—') ?></code></dd>
+                    <dd class="col-7"><code><?= escape($log['table_name'] ?? '&mdash;') ?></code></dd>
 
                     <dt class="col-5 text-muted">Record ID</dt>
-                    <dd class="col-7"><?= $log['record_id'] ?? '—' ?></dd>
+                    <dd class="col-7"><?= $log['record_id'] ?? '&mdash;' ?></dd>
 
                     <dt class="col-5 text-muted">IP Address</dt>
-                    <dd class="col-7 font-monospace"><?= escape($log['ip_address'] ?? '—') ?></dd>
+                    <dd class="col-7 font-monospace"><?= escape($log['ip_address'] ?? '&mdash;') ?></dd>
 
                     <dt class="col-5 text-muted">Timestamp</dt>
                     <dd class="col-7"><?= date('d M Y H:i:s', strtotime($log['created_at'])) ?></dd>

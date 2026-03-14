@@ -75,7 +75,7 @@ $st = $card['status'] ?? 'available';
                     </div>
                     <div class="col-sm-6">
                         <label class="text-muted small">Activated At</label>
-                        <div><?= $card['activated_at'] ? formatDateTime($card['activated_at']) : '<span class="text-muted">—</span>' ?></div>
+                        <div><?= $card['activated_at'] ? formatDateTime($card['activated_at']) : '<span class="text-muted">&mdash;</span>' ?></div>
                     </div>
                     <?php if (!empty($card['parameters_json'])): ?>
                     <div class="col-12">
@@ -176,7 +176,7 @@ $st = $card['status'] ?? 'available';
                                 ?>
                             </td>
                             <td><?= $log['admin_name'] ? escape($log['admin_name']) : '<span class="text-muted">System</span>' ?></td>
-                            <td class="font-monospace text-muted"><?= escape($log['ip_address'] ?? '—') ?></td>
+                            <td class="font-monospace text-muted"><?= escape($log['ip_address'] ?? '&mdash;') ?></td>
                             <td><?= formatDateTime($log['created_at']) ?></td>
                         </tr>
                         <?php endforeach; ?>

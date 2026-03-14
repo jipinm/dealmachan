@@ -422,7 +422,7 @@ class Customer extends Model {
 
     public function getSavedCoupons($customerId, $limit = 20) {
         $stmt = $this->db->prepare(
-            "SELECT cs.*, c.coupon_title, c.coupon_code, c.discount_type, c.discount_value,
+            "SELECT cs.*, c.title AS coupon_title, c.coupon_code, c.discount_type, c.discount_value,
                     m.business_name AS merchant_name
              FROM coupon_subscriptions cs
              JOIN coupons c ON cs.coupon_id = c.id

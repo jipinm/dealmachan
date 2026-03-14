@@ -44,7 +44,7 @@
             <div class="card border-0 shadow-sm mb-4">
                 <div class="card-header bg-white fw-semibold border-bottom">
                     <i class="fas fa-lock me-2 text-warning"></i> Change Password
-                    <span class="badge bg-light text-muted ms-2">Optional — leave blank to keep current</span>
+                    <span class="badge bg-light text-muted ms-2">Optional &mdash; leave blank to keep current</span>
                 </div>
                 <div class="card-body">
                     <div class="row g-3">
@@ -93,7 +93,7 @@
                         <div class="col-md-6" id="cityWrap">
                             <label class="form-label fw-semibold">Assigned City</label>
                             <select name="city_id" class="form-select select2">
-                                <option value="">— All Cities / None —</option>
+                                <option value="">&mdash; All Cities / None &mdash;</option>
                                 <?php foreach ($cities as $c): ?>
                                 <option value="<?= $c['id'] ?>" <?= ($admin['city_id'] ?? '') == $c['id'] ? 'selected' : '' ?>><?= escape($c['name']) ?></option>
                                 <?php endforeach; ?>

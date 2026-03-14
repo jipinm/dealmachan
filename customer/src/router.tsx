@@ -38,6 +38,7 @@ const CouponWalletPage     = lazy(() => import('@/pages/coupons/CouponWalletPage
 const StoreCouponPage      = lazy(() => import('@/pages/coupons/StoreCouponPage'))
 const WishlistPage         = lazy(() => import('@/pages/wishlist/WishlistPage'))
 const LoyaltyCardsPage     = lazy(() => import('@/pages/loyalty/LoyaltyCardsPage'))
+const CardSelectionPage    = lazy(() => import('@/pages/loyalty/CardSelectionPage'))
 const ImportantDaysPage    = lazy(() => import('@/pages/important-days/ImportantDaysPage'))
 const ActivityPage         = lazy(() => import('@/pages/activity/ActivityPage'))
 const NotificationsPage    = lazy(() => import('@/pages/notifications/NotificationsPage'))
@@ -145,6 +146,7 @@ export const router = createBrowserRouter([
           { path: 'wallet/history',           element: <Lazy element={<CouponWalletPage />} /> },
           { path: 'wishlist',                 element: <Lazy element={<WishlistPage />} /> },
           { path: 'loyalty-cards',            element: <Lazy element={<LoyaltyCardsPage />} /> },
+          { path: 'loyalty/select-card',       element: <Lazy element={<CardSelectionPage />} /> },
           { path: 'important-days',           element: <Lazy element={<ImportantDaysPage />} /> },
           { path: 'activity',                 element: <Lazy element={<ActivityPage />} /> },
           { path: 'activity/*',               element: <Lazy element={<ActivityPage />} /> },

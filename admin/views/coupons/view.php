@@ -80,11 +80,11 @@
                     <?php endif; ?>
                     <div class="col-sm-6">
                         <label class="text-muted small">Valid From</label>
-                        <div><?= $coupon['valid_from'] ? formatDateTime($coupon['valid_from']) : '<span class="text-muted">—</span>' ?></div>
+                        <div><?= $coupon['valid_from'] ? formatDateTime($coupon['valid_from']) : '<span class="text-muted">&mdash;</span>' ?></div>
                     </div>
                     <div class="col-sm-6">
                         <label class="text-muted small">Valid Until</label>
-                        <div><?= $coupon['valid_until'] ? formatDateTime($coupon['valid_until']) : '<span class="text-muted">—</span>' ?></div>
+                        <div><?= $coupon['valid_until'] ? formatDateTime($coupon['valid_until']) : '<span class="text-muted">&mdash;</span>' ?></div>
                     </div>
                     <div class="col-sm-6">
                         <label class="text-muted small">Usage</label>
@@ -112,7 +112,32 @@
             <div class="card-header fw-semibold"><i class="fas fa-tags me-2 text-secondary"></i>Tags</div>
             <div class="card-body pb-2">
                 <?php foreach ($tags as $tag): ?>
-                    <span class="badge bg-secondary me-1 mb-2 px-3 py-2"><?= escape($tag['name']) ?></span>
+                    <span class="badge bg-secondary me-1 mb-2 px-3 py-2"><?= escape($tag['tag_name']) ?></span>
+                <?php endforeach; ?>
+            </div>
+        </div>
+        <?php endif; ?>
+
+        <!-- Categories & Sub-categories -->
+        <?php if (!empty($couponCategoryDetails)): ?>
+        <div class="card shadow-sm mb-4">
+            <div class="card-header fw-semibold"><i class="fas fa-layer-group me-2 text-primary"></i>Category Targeting</div>
+            <div class="card-body pb-2">
+                <?php
+                $grouped = [];
+                foreach ($couponCategoryDetails as $row) {
+                    $cName = $row['category_name'];
+                    if (!isset($grouped[$cName])) $grouped[$cName] = [];
+                    if ($row['sub_category_name']) $grouped[$cName][] = $row['sub_category_name'];
+                }
+                foreach ($grouped as $catName => $subCats):
+                ?>
+                <div class="mb-2">
+                    <span class="badge bg-primary me-1 mb-1 px-3 py-2"><?= escape($catName) ?></span>
+                    <?php foreach ($subCats as $sc): ?>
+                        <span class="badge bg-secondary me-1 mb-1 px-2 py-1 small"><?= escape($sc) ?></span>
+                    <?php endforeach; ?>
+                </div>
                 <?php endforeach; ?>
             </div>
         </div>
@@ -135,10 +160,10 @@
                     <tbody>
                     <?php foreach ($redemptions as $r): ?>
                     <tr>
-                        <td><?= escape($r['customer_name'] ?? '—') ?></td>
-                        <td><?= escape($r['store_name'] ?? '—') ?></td>
+                        <td><?= escape($r['customer_name'] ?? '&mdash;') ?></td>
+                        <td><?= escape($r['store_name'] ?? '&mdash;') ?></td>
                         <td>₹<?= number_format($r['discount_amount'], 2) ?></td>
-                        <td><?= $r['transaction_amount'] ? '₹' . number_format($r['transaction_amount'], 2) : '—' ?></td>
+                        <td><?= $r['transaction_amount'] ? '₹' . number_format($r['transaction_amount'], 2) : '&mdash;' ?></td>
                         <td class="small text-muted"><?= formatDateTime($r['redeemed_at']) ?></td>
                         <td>
                             <?php if ($r['verified_by_merchant']): ?>
@@ -167,8 +192,8 @@
                     <tbody>
                     <?php foreach ($gifts as $g): ?>
                     <tr>
-                        <td><?= escape($g['customer_name'] ?? '—') ?></td>
-                        <td><?= escape($g['admin_name'] ?? '—') ?></td>
+                        <td><?= escape($g['customer_name'] ?? '&mdash;') ?></td>
+                        <td><?= escape($g['admin_name'] ?? '&mdash;') ?></td>
                         <td>
                             <?php
                             $gs = $g['acceptance_status'] ?? 'pending';
@@ -177,7 +202,7 @@
                             <span class="badge bg-<?= $gb[$gs] ?? 'secondary' ?>"><?= ucfirst($gs) ?></span>
                         </td>
                         <td class="small text-muted"><?= formatDateTime($g['gifted_at']) ?></td>
-                        <td class="small text-muted"><?= $g['expires_at'] ? formatDate($g['expires_at']) : '—' ?></td>
+                        <td class="small text-muted"><?= $g['expires_at'] ? formatDate($g['expires_at']) : '&mdash;' ?></td>
                     </tr>
                     <?php endforeach; ?>
                     </tbody>
@@ -222,7 +247,7 @@
         <div class="card shadow-sm mb-4">
             <div class="card-header fw-semibold"><i class="fas fa-store me-2 text-warning"></i>Merchant</div>
             <div class="card-body">
-                <div class="fw-semibold"><?= escape($coupon['merchant_name'] ?? '—') ?></div>
+                <div class="fw-semibold"><?= escape($coupon['merchant_name'] ?? '&mdash;') ?></div>
                 <?php if (!empty($coupon['store_name'])): ?>
                     <div class="small text-muted">Store: <?= escape($coupon['store_name']) ?></div>
                 <?php else: ?>

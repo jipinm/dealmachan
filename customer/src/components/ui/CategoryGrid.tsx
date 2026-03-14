@@ -1,43 +1,37 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useQuery } from '@tanstack/react-query'
 import { Tag, Zap, Store, X } from 'lucide-react'
+import { publicApi, type Category } from '@/api/endpoints/public'
 
-// ── Category definition ───────────────────────────────────────────────────
-
-export interface Category {
-  id: string
-  label: string
-  emoji: string
-  color: string
-  count?: string
-}
-
-export const DEFAULT_CATEGORIES: Category[] = [
-  { id: 'food',        label: 'Food & Dining',     emoji: '🍔', color: 'bg-orange-50  text-orange-600  border-orange-200', count: '120+ deals' },
-  { id: 'fashion',     label: 'Fashion',           emoji: '👗', color: 'bg-pink-50    text-pink-600    border-pink-200',   count: '85+ deals'  },
-  { id: 'beauty',      label: 'Beauty & Spa',      emoji: '💆', color: 'bg-rose-50    text-rose-600    border-rose-200',   count: '60+ deals'  },
-  { id: 'electronics', label: 'Electronics',       emoji: '📱', color: 'bg-blue-50    text-blue-600    border-blue-200',   count: '95+ deals'  },
-  { id: 'travel',      label: 'Travel',            emoji: '✈️', color: 'bg-sky-50     text-sky-600     border-sky-200',    count: '40+ deals'  },
-  { id: 'fitness',     label: 'Fitness',           emoji: '💪', color: 'bg-green-50   text-green-600   border-green-200',  count: '55+ deals'  },
-  { id: 'education',   label: 'Education',         emoji: '📚', color: 'bg-indigo-50  text-indigo-600  border-indigo-200', count: '35+ deals'  },
-  { id: 'home',        label: 'Home & Living',     emoji: '🏠', color: 'bg-amber-50   text-amber-600   border-amber-200',  count: '70+ deals'  },
-  { id: 'auto',        label: 'Auto & Services',   emoji: '🚗', color: 'bg-slate-50   text-slate-600   border-slate-200',  count: '45+ deals'  },
-  { id: 'health',      label: 'Health',            emoji: '❤️', color: 'bg-red-50     text-red-600     border-red-200',    count: '50+ deals'  },
-  { id: 'kids',        label: 'Kids & Toys',       emoji: '🧸', color: 'bg-yellow-50  text-yellow-600  border-yellow-200', count: '30+ deals'  },
-  { id: 'gifts',       label: 'Gifts',             emoji: '🎁', color: 'bg-purple-50  text-purple-600  border-purple-200', count: '25+ deals'  },
-  { id: 'groceries',   label: 'Groceries',         emoji: '🛒', color: 'bg-lime-50    text-lime-600    border-lime-200',   count: '65+ deals'  },
-  { id: 'restaurants', label: 'Restaurants',       emoji: '🍽️', color: 'bg-orange-50  text-orange-700  border-orange-300', count: '110+ deals' },
-  { id: 'movies',      label: 'Movies & Events',   emoji: '🎬', color: 'bg-violet-50  text-violet-600  border-violet-200', count: '20+ deals'  },
-  { id: 'banking',     label: 'Finance & Banking', emoji: '🏦', color: 'bg-cyan-50    text-cyan-600    border-cyan-200',   count: '15+ deals'  },
+// Fallback color cycle when a category has no color_code
+const COLOR_CYCLE = [
+  { bg: '#fff7ed', text: '#c2410c' },
+  { bg: '#fdf2f8', text: '#9d174d' },
+  { bg: '#eff6ff', text: '#1d4ed8' },
+  { bg: '#f0fdf4', text: '#15803d' },
+  { bg: '#fefce8', text: '#a16207' },
+  { bg: '#f5f3ff', text: '#6d28d9' },
+  { bg: '#ecfeff', text: '#0e7490' },
+  { bg: '#fff1f2', text: '#be123c' },
 ]
+
+function getColors(cat: Category, index: number) {
+  if (cat.color_code) {
+    return { bg: cat.color_code + '22', text: cat.color_code }
+  }
+  return COLOR_CYCLE[index % COLOR_CYCLE.length]
+}
 
 // ── Split-view popover ────────────────────────────────────────────────────
 
 function CategoryPopover({
   category,
+  colors,
   onClose,
 }: {
   category: Category
+  colors: { bg: string; text: string }
   onClose: () => void
 }) {
   const navigate = useNavigate()
@@ -47,22 +41,19 @@ function CategoryPopover({
       icon: Tag,
       label: 'Coupons',
       description: 'Browse discount coupons',
-      href: `/deals?category=${encodeURIComponent(category.label)}`,
-      color: 'bg-brand-50 text-brand-600',
+      href: `/deals?category_id=${category.id}`,
     },
     {
       icon: Zap,
       label: 'Flash Deals',
       description: 'Limited-time flash offers',
-      href: `/flash-deals?category=${encodeURIComponent(category.label)}`,
-      color: 'bg-cta-50 text-cta-600',
+      href: `/flash-deals?category_id=${category.id}`,
     },
     {
       icon: Store,
       label: 'Merchants',
       description: 'Find stores in this category',
-      href: `/stores?category=${encodeURIComponent(category.label)}`,
-      color: 'bg-purple-50 text-purple-600',
+      href: `/stores?category_id=${category.id}`,
     },
   ]
 
@@ -78,10 +69,12 @@ function CategoryPopover({
         {/* Header */}
         <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b border-slate-100">
           <div className="flex items-center gap-3">
-            <span className="text-3xl">{category.emoji}</span>
+            <span className="text-3xl">{category.icon ?? '🏷️'}</span>
             <div>
-              <h3 className="font-heading font-bold text-slate-800 text-base">{category.label}</h3>
-              {category.count && <p className="text-xs text-slate-400">{category.count}</p>}
+              <h3 className="font-heading font-bold text-slate-800 text-base">{category.name}</h3>
+              {(category.sub_category_count ?? 0) > 0 && (
+                <p className="text-xs text-slate-400">{category.sub_category_count} sub-categories</p>
+              )}
             </div>
           </div>
           <button
@@ -94,13 +87,16 @@ function CategoryPopover({
 
         {/* Action buttons */}
         <div className="p-4 space-y-2">
-          {actions.map(({ icon: Icon, label, description, href, color }) => (
+          {actions.map(({ icon: Icon, label, description, href }) => (
             <button
               key={label}
               onClick={() => { navigate(href); onClose() }}
               className="w-full flex items-center gap-3 p-3.5 rounded-2xl hover:bg-slate-50 transition-colors text-left group"
             >
-              <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${color}`}>
+              <div
+                className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+                style={{ backgroundColor: colors.bg, color: colors.text }}
+              >
                 <Icon size={18} />
               </div>
               <div>
@@ -115,26 +111,35 @@ function CategoryPopover({
   )
 }
 
+// ── Skeleton ──────────────────────────────────────────────────────────────
+
+function CategorySkeleton({ compact, count }: { compact: boolean; count: number }) {
+  return (
+    <>
+      {Array.from({ length: count }).map((_, i) => (
+        <div
+          key={i}
+          className={`skeleton rounded-2xl ${compact ? 'h-20' : 'h-32'}`}
+        />
+      ))}
+    </>
+  )
+}
+
 // ── CategoryGrid ──────────────────────────────────────────────────────────
 
 interface CategoryGridProps {
-  /** Categories to render. Defaults to DEFAULT_CATEGORIES if omitted. */
-  categories?: Category[]
-  /** Number of columns on small screens (default: 4 for compact, 2 for full) */
   compact?: boolean
 }
 
-/**
- * CategoryGrid
- *
- * Renders a responsive grid of category tiles. Clicking any tile opens a
- * split-view popover with three navigation options:
- *  - Coupons  → /deals?category=<label>
- *  - Flash Deals → /flash-deals?category=<label>
- *  - Merchants → /stores?category=<label>
- */
-export default function CategoryGrid({ categories = DEFAULT_CATEGORIES, compact = false }: CategoryGridProps) {
-  const [selected, setSelected] = useState<Category | null>(null)
+export default function CategoryGrid({ compact = false }: CategoryGridProps) {
+  const [selected, setSelected] = useState<{ cat: Category; colors: { bg: string; text: string } } | null>(null)
+
+  const { data: categories, isLoading } = useQuery({
+    queryKey: ['categories'],
+    queryFn: () => publicApi.getCategories().then((r) => r.data.data ?? []),
+    staleTime: 10 * 60 * 1000,
+  })
 
   const gridClass = compact
     ? 'grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-3'
@@ -143,32 +148,45 @@ export default function CategoryGrid({ categories = DEFAULT_CATEGORIES, compact 
   return (
     <>
       <div className={gridClass}>
-        {categories.map((cat) => (
-          <button
-            key={cat.id}
-            onClick={() => setSelected(cat)}
-            className={
-              compact
-                ? `flex flex-col items-center gap-2 p-3 rounded-2xl border hover:shadow-md transition-all group ${cat.color}`
-                : `flex flex-col items-center gap-3 p-6 rounded-2xl border-2 text-center hover:shadow-lg transition-all group ${cat.color}`
-            }
-          >
-            <span className={`${compact ? 'text-2xl' : 'text-4xl'} group-hover:scale-110 transition-transform`}>
-              {cat.emoji}
-            </span>
-            <div>
-              <div className={`font-semibold ${compact ? 'text-[11px] leading-tight' : 'text-sm'}`}>{cat.label}</div>
-              {!compact && cat.count && (
-                <div className="text-xs opacity-70 mt-0.5">{cat.count}</div>
-              )}
-            </div>
-          </button>
-        ))}
+        {isLoading ? (
+          <CategorySkeleton compact={compact} count={compact ? 8 : 12} />
+        ) : (
+          (categories ?? []).map((cat, i) => {
+            const colors = getColors(cat, i)
+            return (
+              <button
+                key={cat.id}
+                onClick={() => setSelected({ cat, colors })}
+                className={
+                  compact
+                    ? 'flex flex-col items-center gap-2 p-3 rounded-2xl border hover:shadow-md transition-all group'
+                    : 'flex flex-col items-center gap-3 p-6 rounded-2xl border-2 text-center hover:shadow-lg transition-all group'
+                }
+                style={{ backgroundColor: colors.bg, borderColor: colors.text + '33', color: colors.text }}
+              >
+                <span className={`${compact ? 'text-2xl' : 'text-4xl'} group-hover:scale-110 transition-transform`}>
+                  {cat.icon ?? '🏷️'}
+                </span>
+                <div>
+                  <div className={`font-semibold ${compact ? 'text-[11px] leading-tight' : 'text-sm'}`}>{cat.name}</div>
+                  {!compact && (cat.sub_category_count ?? 0) > 0 && (
+                    <div className="text-xs opacity-70 mt-0.5">{cat.sub_category_count} types</div>
+                  )}
+                </div>
+              </button>
+            )
+          })
+        )}
       </div>
 
       {selected && (
-        <CategoryPopover category={selected} onClose={() => setSelected(null)} />
+        <CategoryPopover
+          category={selected.cat}
+          colors={selected.colors}
+          onClose={() => setSelected(null)}
+        />
       )}
     </>
   )
 }
+

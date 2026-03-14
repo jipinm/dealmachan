@@ -8,7 +8,7 @@
             </ol>
         </nav>
         <h1 class="h3 mb-0">System Settings</h1>
-        <p class="text-muted mb-0 small">Platform-wide configuration — visible to Super Admin only.</p>
+        <p class="text-muted mb-0 small">Platform-wide configuration &mdash; visible to Super Admin only.</p>
     </div>
 </div>
 
@@ -53,7 +53,7 @@ $s = function(string $key) use ($settings): string {
                     <label class="form-label fw-semibold">Maintenance Mode</label>
                     <select name="maintenance_mode" class="form-select">
                         <option value="0" <?= ($settings['maintenance_mode']['value'] ?? '0') == '0' ? 'selected' : '' ?>>Off</option>
-                        <option value="1" <?= ($settings['maintenance_mode']['value'] ?? '0') == '1' ? 'selected' : '' ?>>On — site under maintenance</option>
+                        <option value="1" <?= ($settings['maintenance_mode']['value'] ?? '0') == '1' ? 'selected' : '' ?>>On &mdash; site under maintenance</option>
                     </select>
                 </div>
             </div>

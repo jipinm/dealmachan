@@ -165,8 +165,11 @@ class Card extends Model {
         $inserted = 0;
         $variant  = strtolower($defaults['card_variant'] ?? 'standard');
         $prefix   = strtoupper(substr($variant, 0, 3));
-        $preprint = (int)($defaults['is_preprinted'] ?? 0);
-        $params   = $defaults['parameters_json'] ?? null;
+        $preprint   = (int)($defaults['is_preprinted'] ?? 0);
+        $params     = $defaults['parameters_json'] ?? null;
+        $configId   = !empty($defaults['card_configuration_id']) ? (int)$defaults['card_configuration_id'] : null;
+        $imgFront   = $defaults['card_image_front'] ?? null;
+        $imgBack    = $defaults['card_image_back']  ?? null;
 
         for ($i = 0; $i < $count; $i++) {
             if ($count === 1 && !empty($defaults['card_number'])) {
@@ -178,10 +181,11 @@ class Card extends Model {
             try {
                 $stmt = $this->db->prepare(
                     "INSERT INTO {$this->table}
-                     (card_number, card_variant, is_preprinted, parameters_json, status, generated_at, created_at)
-                     VALUES (?, ?, ?, ?, 'available', NOW(), NOW())"
+                     (card_number, card_variant, card_configuration_id, is_preprinted, parameters_json,
+                      card_image_front, card_image_back, status, generated_at, created_at)
+                     VALUES (?, ?, ?, ?, ?, ?, ?, 'available', NOW(), NOW())"
                 );
-                $stmt->execute([$num, $variant, $preprint, $params]);
+                $stmt->execute([$num, $variant, $configId, $preprint, $params, $imgFront, $imgBack]);
                 $inserted++;
             } catch (\PDOException $e) {
                 if (str_contains($e->getMessage(), '1062')) continue; // duplicate, skip
@@ -244,8 +248,19 @@ class Card extends Model {
 
     /** Activate a card (assigned → activated). */
     public function activate(int $id): void {
+        // Calculate expiry_date from configuration validity_days if a configuration is linked
         $this->db->prepare(
-            "UPDATE {$this->table} SET status = 'activated', activated_at = NOW(), updated_at = NOW() WHERE id = ?"
+            "UPDATE {$this->table}
+             SET status = 'activated',
+                 activated_at = NOW(),
+                 expiry_date = (
+                     SELECT DATE_ADD(NOW(), INTERVAL cc.validity_days DAY)
+                     FROM card_configurations cc
+                     WHERE cc.id = {$this->table}.card_configuration_id
+                     LIMIT 1
+                 ),
+                 updated_at = NOW()
+             WHERE id = ?"
         )->execute([$id]);
     }
 

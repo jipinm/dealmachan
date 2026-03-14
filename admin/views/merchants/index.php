@@ -208,7 +208,7 @@ $statusColors = [
                         <td class="text-center">
                             <span class="badge bg-light text-dark border"><?= (int)$m['store_count'] ?></span>
                         </td>
-                        <td class="text-muted small"><?= isset($m['registered_at']) ? formatDate($m['registered_at']) : '—' ?></td>
+                        <td class="text-muted small"><?= isset($m['registered_at']) ? formatDate($m['registered_at']) : '&mdash;' ?></td>
                         <td class="text-center text-nowrap">
                             <a href="<?= BASE_URL ?>merchants/profile?id=<?= $m['id'] ?>" class="btn btn-sm btn-outline-info me-1" title="View Profile"><i class="fas fa-eye"></i></a>
                             <a href="<?= BASE_URL ?>merchants/edit?id=<?= $m['id'] ?>" class="btn btn-sm btn-outline-primary me-1" title="Edit"><i class="fas fa-edit"></i></a>
@@ -238,7 +238,7 @@ $statusColors = [
         <?php
             $from = $totalCount === 0 ? 0 : ($currentPage - 1) * $perPage + 1;
             $to   = min($currentPage * $perPage, $totalCount);
-            echo "Showing <strong>{$from}–{$to}</strong> of <strong>{$totalCount}</strong> merchants";
+            echo "Showing <strong>{$from}&ndash;{$to}</strong> of <strong>{$totalCount}</strong> merchants";
         ?>
     </div>
     <?php if ($totalPages > 1): ?>

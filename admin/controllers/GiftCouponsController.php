@@ -136,7 +136,7 @@ class GiftCouponsController extends Controller {
         }
 
         $newId = $this->model->createGift([
-            'admin_id'            => $cu['id'],
+            'admin_id'            => $cu['admin_id'],
             'customer_id'         => $customerId,
             'coupon_id'           => $couponId,
             'requires_acceptance' => $requiresAcceptance,
@@ -144,7 +144,7 @@ class GiftCouponsController extends Controller {
         ]);
 
         logAudit('gift_coupon_created', 'gift_coupons', $newId, [
-            'admin_id'    => $cu['id'],
+            'admin_id'    => $cu['admin_id'],
             'customer_id' => $customerId,
             'coupon_id'   => $couponId,
         ]);
@@ -177,7 +177,7 @@ class GiftCouponsController extends Controller {
             logAudit('gift_coupon_revoked', 'gift_coupons', $id, null, $gift);
             $_SESSION['success'] = 'Gift coupon revoked.';
         } else {
-            $_SESSION['error'] = 'Cannot revoke — coupon has already been accepted.';
+            $_SESSION['error'] = 'Cannot revoke &mdash; coupon has already been accepted.';
         }
 
         $redirect = $_POST['redirect'] ?? 'gift-coupons';

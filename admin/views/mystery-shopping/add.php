@@ -100,7 +100,7 @@ document.getElementById('merchantSelect').addEventListener('change', function ()
             stores.forEach(function(s){
                 var opt = document.createElement('option');
                 opt.value = s.id;
-                opt.textContent = s.store_name + (s.address ? ' – ' + s.address.substring(0,40) : '');
+                opt.textContent = s.store_name + (s.address ? ' &ndash; ' + s.address.substring(0,40) : '');
                 sel.appendChild(opt);
             });
         });

@@ -119,7 +119,7 @@ $typeColors = [
                     </div>
                     <div class="col-md-6">
                         <label class="text-muted small text-uppercase fw-semibold">Referral Code</label>
-                        <div><code><?= escape($customer['referral_code'] ?? '—') ?></code></div>
+                        <div><code><?= escape($customer['referral_code'] ?? '&mdash;') ?></code></div>
                     </div>
                     <?php if ($customer['referrer_name']): ?>
                     <div class="col-md-6">
@@ -159,7 +159,7 @@ $typeColors = [
                         <tbody>
                             <?php foreach ($redemptions as $r): ?>
                             <tr>
-                                <td><?= escape($r['coupon_title'] ?? '—') ?></td>
+                                <td><?= escape($r['coupon_title'] ?? '&mdash;') ?></td>
                                 <td>
                                     <?php if ($r['discount_type'] === 'percentage'): ?>
                                         <?= number_format($r['discount_value']) ?>%
@@ -167,7 +167,7 @@ $typeColors = [
                                         ₹<?= number_format($r['discount_value']) ?>
                                     <?php endif; ?>
                                 </td>
-                                <td><?= isset($r['redeemed_at']) ? formatDateTime($r['redeemed_at']) : '—' ?></td>
+                                <td><?= isset($r['redeemed_at']) ? formatDateTime($r['redeemed_at']) : '&mdash;' ?></td>
                                 <td><span class="badge bg-success-subtle text-success border border-success-subtle">Redeemed</span></td>
                             </tr>
                             <?php endforeach; ?>
@@ -210,8 +210,8 @@ $typeColors = [
                                 </td>
                                 <td><?= escape($t['store_name']) ?></td>
                                 <td class="text-end fw-semibold">₹<?= number_format($t['transaction_amount'], 2) ?></td>
-                                <td class="text-end text-success"><?= $t['discount_amount'] > 0 ? '₹' . number_format($t['discount_amount'], 2) : '—' ?></td>
-                                <td><?= $t['payment_method'] ? ucfirst($t['payment_method']) : '—' ?></td>
+                                <td class="text-end text-success"><?= $t['discount_amount'] > 0 ? '₹' . number_format($t['discount_amount'], 2) : '&mdash;' ?></td>
+                                <td><?= $t['payment_method'] ? ucfirst($t['payment_method']) : '&mdash;' ?></td>
                             </tr>
                             <?php endforeach; ?>
                         </tbody>
@@ -261,7 +261,7 @@ $typeColors = [
                                         <span class="text-muted">No</span>
                                     <?php endif; ?>
                                 </td>
-                                <td><?= $sc['gifted_at'] ? formatDateTime($sc['gifted_at']) : '—' ?></td>
+                                <td><?= $sc['gifted_at'] ? formatDateTime($sc['gifted_at']) : '&mdash;' ?></td>
                             </tr>
                             <?php endforeach; ?>
                         </tbody>
@@ -486,7 +486,7 @@ $typeColors = [
                                 <tr>
                                     <td><span class="badge bg-info-subtle text-info border border-info-subtle"><?= escape($day['event_type']) ?></span>
                                     <?= $day['event_specify'] ? '<br><small class="text-muted">' . escape($day['event_specify']) . '</small>' : '' ?></td>
-                                    <td><?= $day['person_name'] ? escape($day['person_name']) : '<span class="text-muted">—</span>' ?></td>
+                                    <td><?= $day['person_name'] ? escape($day['person_name']) : '<span class="text-muted">&mdash;</span>' ?></td>
                                     <td class="text-center fw-semibold"><?= $day['event_day'] ?> <?= $months[$day['event_month']] ?></td>
                                     <td></td>
                                 </tr>
@@ -563,11 +563,11 @@ $typeColors = [
                     </li>
                     <li class="list-group-item d-flex justify-content-between align-items-center">
                         First Transaction
-                        <span class="small text-muted"><?= $analytics['first_transaction'] ? formatDate($analytics['first_transaction']) : '—' ?></span>
+                        <span class="small text-muted"><?= $analytics['first_transaction'] ? formatDate($analytics['first_transaction']) : '&mdash;' ?></span>
                     </li>
                     <li class="list-group-item d-flex justify-content-between align-items-center">
                         Last Transaction
-                        <span class="small text-muted"><?= $analytics['last_transaction'] ? formatDate($analytics['last_transaction']) : '—' ?></span>
+                        <span class="small text-muted"><?= $analytics['last_transaction'] ? formatDate($analytics['last_transaction']) : '&mdash;' ?></span>
                     </li>
                 </ul>
             </div>

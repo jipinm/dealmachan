@@ -106,6 +106,11 @@ function StoreCouponCard({ coupon }: { coupon: StoreCoupon }) {
                 <MapPin size={10} /> {coupon.store_name}
               </span>
             )}
+            {coupon.store_address && (
+              <span className="flex items-center gap-1 text-xs text-slate-400 mt-0.5">
+                <MapPin size={10} /> {coupon.store_address}
+              </span>
+            )}
           </div>
         </div>
 

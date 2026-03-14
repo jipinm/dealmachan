@@ -7,6 +7,7 @@ import CouponCard from '@/components/ui/CouponCard'
 import SkeletonCard from '@/components/ui/SkeletonCard'
 import { useDebounce } from '@/lib/useDebounce'
 import { useInfiniteScroll } from '@/lib/useInfiniteScroll'
+import { useLocationStore } from '@/store/locationStore'
 
 const DISCOUNT_TYPES = [
   { value: '', label: 'All Types' },
@@ -19,11 +20,14 @@ const DISCOUNT_TYPES = [
 export default function CouponBrowsePage() {
   const [params, setParams] = useSearchParams()
   const [showFilters, setShowFilters] = useState(false)
+  const { cityId, areaId } = useLocationStore()
 
   // URL-driven filter params
   const urlQ         = params.get('q') ?? ''
   const discountType = params.get('type') ?? ''
   const tagId        = params.get('tag') ?? ''
+  const categoryId   = params.get('category_id') ? Number(params.get('category_id')) : undefined
+  const subCategoryId = params.get('sub_category_id') ? Number(params.get('sub_category_id')) : undefined
 
   // Local input state — decoupled from URL so keystrokes feel instant
   const [inputQ, setInputQ] = useState(urlQ)
@@ -60,6 +64,21 @@ export default function CouponBrowsePage() {
   })
   const tags = (tagsData as any[]) ?? []
 
+  const { data: categoriesData } = useQuery({
+    queryKey: ['categories'],
+    queryFn: () => publicApi.getCategories().then((r) => r.data.data ?? []),
+    staleTime: 10 * 60 * 1000,
+  })
+  const categories = categoriesData ?? []
+
+  const { data: subCategoriesData } = useQuery({
+    queryKey: ['sub-categories', categoryId],
+    queryFn: () => publicApi.getSubCategories(categoryId!).then((r) => r.data.data ?? []),
+    enabled: !!categoryId,
+    staleTime: 5 * 60 * 1000,
+  })
+  const subCategories = subCategoriesData ?? []
+
   const {
     data,
     isLoading,
@@ -67,9 +86,9 @@ export default function CouponBrowsePage() {
     fetchNextPage,
     hasNextPage,
   } = useInfiniteQuery({
-    queryKey: ['browse-coupons-inf', debouncedQ, discountType, tagId],
+    queryKey: ['browse-coupons-inf', debouncedQ, discountType, tagId, cityId, areaId, categoryId, subCategoryId],
     queryFn: ({ pageParam = 1 }) =>
-      publicApi.getCoupons({ q: debouncedQ, discount_type: discountType, tag_id: tagId || undefined, page: pageParam as number, per_page: 20 }).then((r) => r.data),
+      publicApi.getCoupons({ q: debouncedQ, discount_type: discountType, tag_id: tagId || undefined, city_id: cityId ?? undefined, area_id: areaId ?? undefined, category_id: categoryId, sub_category_id: subCategoryId, page: pageParam as number, per_page: 20 }).then((r) => r.data),
     initialPageParam: 1,
     getNextPageParam: (lastPage: any, allPages) => {
       const total = lastPage?.data?.pagination?.pages ?? 1
@@ -117,18 +136,79 @@ export default function CouponBrowsePage() {
               </div>
             </div>
 
-            {/* Tags */}
-            {tags.length > 0 && (
+            {/* Categories */}
+            {categories.length > 0 && (
               <div>
                 <p className="text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide">Category</p>
-                <div className="flex flex-col gap-1.5 max-h-80 overflow-y-auto pr-1">
+                <div className="flex flex-col gap-1.5 max-h-60 overflow-y-auto pr-1">
+                  <button
+                    onClick={() => { setParam('category_id', ''); setParam('sub_category_id', '') }}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-medium text-left border transition-colors ${
+                      !categoryId ? 'border-brand-500 bg-brand-50 text-brand-700' : 'border-gray-200 text-gray-500 hover:border-gray-300'
+                    }`}
+                  >
+                    All Categories
+                  </button>
+                  {categories.map((cat) => (
+                    <button
+                      key={cat.id}
+                      onClick={() => { setParam('category_id', String(cat.id)); setParam('sub_category_id', '') }}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-medium text-left border transition-colors flex items-center gap-1.5 ${
+                        categoryId === cat.id
+                          ? 'border-brand-500 bg-brand-50 text-brand-700'
+                          : 'border-gray-200 text-gray-500 hover:border-gray-300'
+                      }`}
+                    >
+                      {cat.icon && <span>{cat.icon}</span>}
+                      {cat.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Sub-categories */}
+            {categoryId && subCategories.length > 0 && (
+              <div>
+                <p className="text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide">Sub-Category</p>
+                <div className="flex flex-col gap-1.5 max-h-48 overflow-y-auto pr-1">
+                  <button
+                    onClick={() => setParam('sub_category_id', '')}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-medium text-left border transition-colors ${
+                      !subCategoryId ? 'border-brand-500 bg-brand-50 text-brand-700' : 'border-gray-200 text-gray-500 hover:border-gray-300'
+                    }`}
+                  >
+                    All
+                  </button>
+                  {subCategories.map((s: any) => (
+                    <button
+                      key={s.id}
+                      onClick={() => setParam('sub_category_id', String(s.id))}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-medium text-left border transition-colors ${
+                        subCategoryId === s.id
+                          ? 'border-brand-500 bg-brand-50 text-brand-700'
+                          : 'border-gray-200 text-gray-500 hover:border-gray-300'
+                      }`}
+                    >
+                      {s.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Tags (legacy) */}
+            {tags.length > 0 && (
+              <div>
+                <p className="text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide">Tags</p>
+                <div className="flex flex-col gap-1.5 max-h-48 overflow-y-auto pr-1">
                   <button
                     onClick={() => setParam('tag', '')}
                     className={`px-3 py-1.5 rounded-lg text-xs font-medium text-left border transition-colors ${
                       !tagId ? 'border-brand-500 bg-brand-50 text-brand-700' : 'border-gray-200 text-gray-500 hover:border-gray-300'
                     }`}
                   >
-                    All Categories
+                    All Tags
                   </button>
                   {tags.slice(0, 20).map((t: any) => (
                     <button
@@ -147,9 +227,9 @@ export default function CouponBrowsePage() {
               </div>
             )}
 
-            {(discountType || tagId) && (
+            {(discountType || tagId || categoryId || subCategoryId) && (
               <button
-                onClick={() => { setParam('type', ''); setParam('tag', '') }}
+                onClick={() => { setParam('type', ''); setParam('tag', ''); setParam('category_id', ''); setParam('sub_category_id', '') }}
                 className="text-xs text-brand-600 hover:underline w-full text-left"
               >
                 × Clear filters
@@ -220,10 +300,71 @@ export default function CouponBrowsePage() {
                 </div>
               </div>
 
-              {/* Tags */}
-              {tags.length > 0 && (
+              {/* Categories */}
+              {categories.length > 0 && (
                 <div>
                   <p className="text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide">Category</p>
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      onClick={() => { setParam('category_id', ''); setParam('sub_category_id', '') }}
+                      className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${
+                        !categoryId ? 'border-brand-500 bg-brand-50 text-brand-700' : 'border-gray-200 text-gray-500 hover:border-gray-300'
+                      }`}
+                    >
+                      All
+                    </button>
+                    {categories.map((cat) => (
+                      <button
+                        key={cat.id}
+                        onClick={() => { setParam('category_id', String(cat.id)); setParam('sub_category_id', '') }}
+                        className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors flex items-center gap-1 ${
+                          categoryId === cat.id
+                            ? 'border-brand-500 bg-brand-50 text-brand-700'
+                            : 'border-gray-200 text-gray-500 hover:border-gray-300'
+                        }`}
+                      >
+                        {cat.icon && <span>{cat.icon}</span>}
+                        {cat.name}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Sub-categories */}
+              {categoryId && subCategories.length > 0 && (
+                <div>
+                  <p className="text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide">Sub-Category</p>
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      onClick={() => setParam('sub_category_id', '')}
+                      className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${
+                        !subCategoryId ? 'border-brand-500 bg-brand-50 text-brand-700' : 'border-gray-200 text-gray-500 hover:border-gray-300'
+                      }`}
+                    >
+                      All
+                    </button>
+                    {subCategories.map((s: any) => (
+                      <button
+                        key={s.id}
+                        onClick={() => setParam('sub_category_id', String(s.id))}
+                        className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${
+                          subCategoryId === s.id
+                            ? 'border-brand-500 bg-brand-50 text-brand-700'
+                            : 'border-gray-200 text-gray-500 hover:border-gray-300'
+                        }`}
+                      >
+                        {s.name}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Tags (legacy) */}
+              {tags.length > 0 && (
+                <div>
+                  <p className="text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide">Tags</p>
                   <div className="flex flex-wrap gap-2">
                     <button
                       onClick={() => setParam('tag', '')}
@@ -253,7 +394,7 @@ export default function CouponBrowsePage() {
           )}
 
           {/* Active filters summary */}
-          {(q || discountType || tagId) && (
+          {(q || discountType || tagId || categoryId || subCategoryId) && (
             <div className="flex flex-wrap gap-2 mb-3">
               {q && (
                 <span className="flex items-center gap-1 bg-gray-100 text-gray-600 text-xs px-2.5 py-1 rounded-full">
@@ -264,6 +405,18 @@ export default function CouponBrowsePage() {
                 <span className="flex items-center gap-1 bg-gray-100 text-gray-600 text-xs px-2.5 py-1 rounded-full">
                   {DISCOUNT_TYPES.find((d) => d.value === discountType)?.label}
                   <button onClick={() => setParam('type', '')} aria-label="Remove type filter"><X size={11} /></button>
+                </span>
+              )}
+              {categoryId && (
+                <span className="flex items-center gap-1 bg-brand-50 text-brand-700 text-xs px-2.5 py-1 rounded-full">
+                  {categories.find((c) => c.id === categoryId)?.name ?? 'Category'}
+                  <button onClick={() => { setParam('category_id', ''); setParam('sub_category_id', '') }} aria-label="Remove category filter"><X size={11} /></button>
+                </span>
+              )}
+              {subCategoryId && (
+                <span className="flex items-center gap-1 bg-brand-50 text-brand-700 text-xs px-2.5 py-1 rounded-full">
+                  {(subCategories as any[]).find((s) => s.id === subCategoryId)?.name ?? 'Sub-cat'}
+                  <button onClick={() => setParam('sub_category_id', '')} aria-label="Remove sub-category filter"><X size={11} /></button>
                 </span>
               )}
             </div>
@@ -295,9 +448,9 @@ export default function CouponBrowsePage() {
             <div className="text-center py-16">
               <p className="text-4xl mb-2">🏷️</p>
               <p className="text-gray-500 text-sm">No deals found.</p>
-              {(q || discountType || tagId) && (
+              {(q || discountType || tagId || categoryId || subCategoryId) && (
                 <button
-                  onClick={() => { setParam('q', ''); setParam('type', ''); setParam('tag', '') }}
+                  onClick={() => { setParam('q', ''); setParam('type', ''); setParam('tag', ''); setParam('category_id', ''); setParam('sub_category_id', '') }}
                   className="mt-3 text-brand-600 text-sm hover:underline"
                 >
                   Clear filters

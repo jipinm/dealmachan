@@ -1,4 +1,4 @@
-<?php $pageTitle = 'Winners & Participants — ' . htmlspecialchars($contest['title']); ?>
+<?php $pageTitle = 'Winners & Participants &mdash; ' . htmlspecialchars($contest['title']); ?>
 
 <!-- Header -->
 <div class="d-flex justify-content-between align-items-center mb-4">
@@ -51,7 +51,7 @@
                                     #<?= $w['position'] ?>
                                 </span>
                                 <strong><?= htmlspecialchars($w['customer_name']) ?></strong>
-                                <div class="text-muted small"><?= htmlspecialchars($w['phone'] ?? '—') ?></div>
+                                <div class="text-muted small"><?= htmlspecialchars($w['phone'] ?? '&mdash;') ?></div>
                                 <?php if ($w['prize_details']): ?>
                                     <div class="text-success small"><i class="bi bi-gift me-1"></i><?= htmlspecialchars($w['prize_details']) ?></div>
                                 <?php endif; ?>
@@ -81,10 +81,10 @@
                     <div class="mb-3">
                         <label class="form-label small">Participant</label>
                         <select name="customer_id" class="form-select form-select-sm" required>
-                            <option value="">— Choose Participant —</option>
+                            <option value="">&mdash; Choose Participant &mdash;</option>
                             <?php foreach ($participants as $p): ?>
                                 <option value="<?= $p['customer_id'] ?>">
-                                    <?= htmlspecialchars($p['customer_name']) ?> (<?= htmlspecialchars($p['phone'] ?? $p['email'] ?? '—') ?>)
+                                    <?= htmlspecialchars($p['customer_name']) ?> (<?= htmlspecialchars($p['phone'] ?? $p['email'] ?? '&mdash;') ?>)
                                 </option>
                             <?php endforeach; ?>
                         </select>
@@ -139,7 +139,7 @@
                             <tr>
                                 <td class="text-muted small"><?= $i + 1 ?></td>
                                 <td><?= htmlspecialchars($p['customer_name']) ?></td>
-                                <td class="small text-muted"><?= htmlspecialchars($p['phone'] ?? $p['email'] ?? '—') ?></td>
+                                <td class="small text-muted"><?= htmlspecialchars($p['phone'] ?? $p['email'] ?? '&mdash;') ?></td>
                                 <td class="small text-muted"><?= date('d M Y, H:i', strtotime($p['participated_at'])) ?></td>
                                 <td class="text-center">
                                     <?php if ($p['winner_id']): ?>
@@ -147,7 +147,7 @@
                                             <i class="bi bi-trophy-fill me-1"></i>#<?= $p['position'] ?>
                                         </span>
                                     <?php else: ?>
-                                        <span class="text-muted">—</span>
+                                        <span class="text-muted">&mdash;</span>
                                     <?php endif; ?>
                                 </td>
                             </tr>
@@ -169,8 +169,8 @@
                 <?php if ($contest['start_date'] || $contest['end_date']): ?>
                     <div class="mb-2 small">
                         <strong>Duration:</strong>
-                        <?= $contest['start_date'] ? date('d M Y', strtotime($contest['start_date'])) : '—' ?>
-                        → <?= $contest['end_date'] ? date('d M Y', strtotime($contest['end_date'])) : '—' ?>
+                        <?= $contest['start_date'] ? date('d M Y', strtotime($contest['start_date'])) : '&mdash;' ?>
+                        → <?= $contest['end_date'] ? date('d M Y', strtotime($contest['end_date'])) : '&mdash;' ?>
                     </div>
                 <?php endif; ?>
                 <?php

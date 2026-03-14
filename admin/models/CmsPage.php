@@ -3,15 +3,7 @@ class CmsPage extends Model {
 
     protected $table = 'cms_pages';
 
-    private function ensureTable(): void {
-        $sql = file_get_contents(ROOT_PATH . '/migrations/create_cms_pages.sql');
-        foreach (array_filter(array_map('trim', explode(';', $sql))) as $stmt) {
-            if ($stmt) { try { $this->db->exec($stmt); } catch (Exception $e) {} }
-        }
-    }
-
     public function getAll(string $status = ''): array {
-        $this->ensureTable();
         $sql    = "SELECT * FROM cms_pages";
         $params = [];
         if ($status) { $sql .= " WHERE status = ?"; $params[] = $status; }
@@ -22,14 +14,12 @@ class CmsPage extends Model {
     }
 
     public function findBySlug(string $slug): ?array {
-        $this->ensureTable();
         $stmt = $this->db->prepare("SELECT * FROM cms_pages WHERE slug = ?");
         $stmt->execute([$slug]);
         return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
     }
 
     public function create($data): int|false {
-        $this->ensureTable();
         $stmt = $this->db->prepare(
             "INSERT INTO cms_pages (slug, title, content, meta_description, status, created_by_admin_id)
              VALUES (:slug, :title, :content, :meta, :status, :admin_id)"

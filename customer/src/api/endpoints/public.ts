@@ -28,6 +28,7 @@ export interface FlashDiscount {
   merchant_description: string | null
   store_id: number | null
   store_name: string | null
+  store_image: string | null
   store_address: string | null
   store_phone: string | null
   city_name: string | null
@@ -67,6 +68,9 @@ export interface TopCoupon {
   merchant_id: number
   merchant_name: string
   merchant_logo: string | null
+  store_id: number | null
+  store_name: string | null
+  store_image: string | null
 }
 
 export interface Tag {
@@ -160,8 +164,72 @@ export interface SearchStore {
   area_name: string | null
 }
 
-export interface SearchResult {
-  query: string
+export interface PublicStore {
+  id: number
+  merchant_id: number
+  store_name: string
+  address: string | null
+  city_name: string | null
+  area_name: string | null
+  phone: string | null
+  avg_rating: number
+  total_reviews: number
+  active_coupons_count: number
+  store_image: string | null
+  is_premium: boolean
+  business_name: string
+  business_logo: string | null
+  categories: Array<{ id: number; name: string; icon: string | null }>
+}
+
+export interface PublicStoreDetail extends PublicStore {
+  email: string | null
+  latitude: number | null
+  longitude: number | null
+  opening_hours: OpeningHoursEntry[]
+  description: string | null
+  city_id: number | null
+  area_id: number | null
+}
+
+export interface StoreReview {
+  id: number
+  rating: number
+  review_text: string | null
+  created_at: string
+  customer_name: string | null
+}
+
+export interface Category {
+  id: number
+  name: string
+  icon: string | null
+  color_code: string | null
+  sub_category_count?: number
+}
+
+export interface CardConfigurationPartner {
+  id: number
+  partner_type: 'premium' | 'normal'
+  partner_image: string | null
+  url: string | null
+}
+
+export interface CardConfiguration {
+  id: number
+  name: string
+  classification: 'silver' | 'gold' | 'platinum' | 'diamond'
+  price: number
+  validity_days: number
+  features_html: string | null
+  max_live_coupons: number | null
+  coupon_authorization: number | null
+  card_image_front: string | null
+  card_image_back: string | null
+  partners: CardConfigurationPartner[]
+}
+
+export interface SearchResult {  query: string
   merchants: Array<FeaturedMerchant & { business_category: string | null; coupon_count: number }>
   coupons: Array<TopCoupon & { description: string | null }>
   stores?: SearchStore[]
@@ -180,6 +248,7 @@ export const publicApi = {
     area_id?: number
     tag_id?: string | number
     label_id?: number
+    category_id?: number
     search?: string
     q?: string
     min_rating?: number
@@ -212,6 +281,9 @@ export const publicApi = {
   getCoupons: (params?: {
     tag_id?: string | number
     city_id?: number
+    area_id?: number
+    category_id?: number
+    sub_category_id?: number
     discount_type?: string
     search?: string
     /** alias for search — sent as `q` */
@@ -225,7 +297,7 @@ export const publicApi = {
     apiClient.get<{ data: { coupon: TopCoupon & { terms_and_conditions?: string; min_purchase_amount?: number; max_discount_amount?: number }; merchant: FeaturedMerchant; stores: unknown[] } }>(`/public/coupons/${id}`),
 
   /** Active flash discounts */
-  getFlashDiscounts: (params?: { city_id?: number }) =>
+  getFlashDiscounts: (params?: { city_id?: number; area_id?: number; category_id?: number }) =>
     apiClient.get<{ data: FlashDiscount[] }>('/public/flash-discounts', { params }),
 
   /** Single flash discount detail */
@@ -271,7 +343,45 @@ export const publicApi = {
   search: (q: string, params?: { city_id?: number }) =>
     apiClient.get<{ data: SearchResult }>('/public/search', { params: { q, ...params } }),
 
+  /** Browse stores (primary discovery entity) */
+  getStores: (params?: {
+    city_id?: number
+    area_id?: number
+    category_id?: number
+    sub_category_id?: number
+    q?: string
+    page?: number
+    per_page?: number
+  }) => apiClient.get<{ data: { data: PublicStore[]; pagination: { total: number; pages: number; page: number; per_page: number } } }>(
+    '/public/stores',
+    { params },
+  ),
+
+  /** Single store public detail */
+  getStore: (id: number) =>
+    apiClient.get<{ data: { store: PublicStoreDetail; coupons: TopCoupon[]; reviews: StoreReview[] } }>(`/public/stores/${id}`),
+
+  /** Categories (replaces tags for store-level filtering) */
+  getCategories: () =>
+    apiClient.get<{ data: Category[] }>('/public/categories'),
+
+  /** Sub-categories for a given category */
+  getSubCategories: (categoryId: number) =>
+    apiClient.get<{ data: Array<{ id: number; name: string; icon: string | null }> }>(`/public/categories/${categoryId}/sub-categories`),
+
+  /** Card configurations available for selection (filtered by city) */
+  getCardConfigurations: (params?: { city_id?: number }) =>
+    apiClient.get<{ data: CardConfiguration[] }>('/public/card-configurations', { params }),
+
+  /** Single card configuration detail */
+  getCardConfiguration: (id: number) =>
+    apiClient.get<{ data: CardConfiguration }>(`/public/card-configurations/${id}`),
+
   /** Submit a review for a merchant (requires auth) */
   submitReview: (merchantId: number, body: { rating: number; review_text?: string }) =>
     apiClient.post<{ data: { message: string } }>(`/public/merchants/${merchantId}/reviews`, body),
+
+  /** Submit a review for a store (requires auth) */
+  submitStoreReview: (storeId: number, body: { rating: number; review_text?: string }) =>
+    apiClient.post<{ data: { message: string } }>(`/public/stores/${storeId}/reviews`, body),
 }

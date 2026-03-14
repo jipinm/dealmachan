@@ -42,7 +42,7 @@
                 <div class="col-md-8">
                     <label class="form-label fw-semibold">Media File <span class="text-danger">*</span></label>
                     <input type="file" name="media_file" id="mediaFileInput" class="form-control" required>
-                    <div id="acceptHint" class="form-text">Accepted: jpg, jpeg, png, gif, webp — max 10 MB</div>
+                    <div id="acceptHint" class="form-text">Accepted: jpg, jpeg, png, gif, webp &mdash; max 10 MB</div>
                 </div>
 
                 <!-- Link URL -->
@@ -98,10 +98,10 @@ function updateAccept(type) {
     const hint  = document.getElementById('acceptHint');
     if (type === 'video') {
         input.accept = 'video/mp4,video/webm,video/ogg,.mp4,.webm,.ogg';
-        hint.textContent = 'Accepted: mp4, webm, ogg — max 10 MB';
+        hint.textContent = 'Accepted: mp4, webm, ogg &mdash; max 10 MB';
     } else {
         input.accept = 'image/jpeg,image/png,image/gif,image/webp,.jpg,.jpeg,.png,.gif,.webp';
-        hint.textContent = 'Accepted: jpg, jpeg, png, gif, webp — max 10 MB';
+        hint.textContent = 'Accepted: jpg, jpeg, png, gif, webp &mdash; max 10 MB';
     }
 }
 updateAccept(document.getElementById('mediaTypeSelect').value);

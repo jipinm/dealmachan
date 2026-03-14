@@ -1,0 +1,2138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Deal Machan — Functional Documentation</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  /* ── RESET & BASE ── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+
+  :root {
+    --bg:       #080C14;
+    --bg2:      #0E1420;
+    --bg3:      #141B2B;
+    --card:     #111827;
+    --border:   rgba(255,255,255,0.07);
+    --gold:     #F0A500;
+    --gold2:    #FFD166;
+    --amber:    #FB923C;
+    --teal:     #2DD4BF;
+    --blue:     #60A5FA;
+    --purple:   #A78BFA;
+    --rose:     #FB7185;
+    --green:    #34D399;
+    --text:     #E2E8F0;
+    --muted:    #94A3B8;
+    --faint:    #475569;
+    --nav-w:    260px;
+    --serif:    'Cormorant Garamond', Georgia, serif;
+    --sans:     'Plus Jakarta Sans', sans-serif;
+    --mono:     'JetBrains Mono', monospace;
+  }
+
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    overflow-x: hidden;
+  }
+
+  /* ── NOISE OVERLAY ── */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 9999;
+    opacity: 0.4;
+  }
+
+  /* ── SCROLLBAR ── */
+  ::-webkit-scrollbar { width: 5px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--faint); border-radius: 3px; }
+
+  /* ── SIDEBAR NAV ── */
+  .sidebar {
+    position: fixed; left: 0; top: 0; bottom: 0;
+    width: var(--nav-w);
+    background: var(--bg2);
+    border-right: 1px solid var(--border);
+    overflow-y: auto;
+    z-index: 100;
+    padding: 0 0 2rem;
+    display: flex; flex-direction: column;
+  }
+  .sidebar-brand {
+    padding: 1.8rem 1.5rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 0.75rem;
+  }
+  .sidebar-brand .logo-mark {
+    font-family: var(--serif);
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--gold);
+    letter-spacing: -0.02em;
+    line-height: 1;
+  }
+  .sidebar-brand .logo-sub {
+    font-size: 0.65rem;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-top: 0.3rem;
+  }
+  .sidebar-version {
+    display: inline-block;
+    font-family: var(--mono);
+    font-size: 0.6rem;
+    background: rgba(240,165,0,0.12);
+    color: var(--gold);
+    border: 1px solid rgba(240,165,0,0.25);
+    border-radius: 3px;
+    padding: 2px 6px;
+    margin-top: 0.5rem;
+  }
+  .nav-group-label {
+    font-size: 0.6rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--faint);
+    padding: 0.8rem 1.5rem 0.3rem;
+  }
+  .nav-item {
+    display: flex; align-items: center; gap: 0.6rem;
+    padding: 0.42rem 1.5rem;
+    font-size: 0.78rem;
+    font-weight: 500;
+    color: var(--muted);
+    text-decoration: none;
+    border-left: 2px solid transparent;
+    transition: all 0.2s;
+  }
+  .nav-item:hover, .nav-item.active {
+    color: var(--text);
+    background: rgba(255,255,255,0.04);
+    border-left-color: var(--gold);
+  }
+  .nav-item .nav-num {
+    font-family: var(--mono);
+    font-size: 0.6rem;
+    color: var(--faint);
+    min-width: 1.4rem;
+  }
+
+  /* ── MAIN CONTENT ── */
+  .main {
+    margin-left: var(--nav-w);
+    min-height: 100vh;
+  }
+
+  /* ── HERO ── */
+  .hero {
+    position: relative;
+    background: linear-gradient(135deg, #0B0F1C 0%, #111827 50%, #0D1520 100%);
+    padding: 5rem 4rem 4rem;
+    border-bottom: 1px solid var(--border);
+    overflow: hidden;
+  }
+  .hero-glow {
+    position: absolute;
+    width: 500px; height: 500px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(240,165,0,0.12) 0%, transparent 70%);
+    top: -150px; right: -100px;
+    pointer-events: none;
+  }
+  .hero-glow2 {
+    position: absolute;
+    width: 300px; height: 300px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(45,212,191,0.07) 0%, transparent 70%);
+    bottom: -80px; left: 200px;
+    pointer-events: none;
+  }
+  .hero-eyebrow {
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 1rem;
+  }
+  .hero h1 {
+    font-family: var(--serif);
+    font-size: clamp(2.8rem, 5vw, 4.5rem);
+    font-weight: 700;
+    line-height: 1.05;
+    color: #fff;
+    margin-bottom: 1.2rem;
+    letter-spacing: -0.02em;
+  }
+  .hero h1 span { color: var(--gold); }
+  .hero-desc {
+    max-width: 620px;
+    font-size: 1rem;
+    color: var(--muted);
+    line-height: 1.8;
+    margin-bottom: 2.5rem;
+  }
+  .hero-meta {
+    display: flex; gap: 2rem; flex-wrap: wrap;
+  }
+  .meta-item {
+    display: flex; flex-direction: column; gap: 0.15rem;
+  }
+  .meta-label {
+    font-size: 0.62rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--faint);
+  }
+  .meta-value {
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    color: var(--muted);
+  }
+
+  /* ── STAT CARDS ── */
+  .stats-bar {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .stat-card {
+    padding: 2rem 2.5rem;
+    border-right: 1px solid var(--border);
+    position: relative;
+    overflow: hidden;
+    transition: background 0.3s;
+  }
+  .stat-card:last-child { border-right: none; }
+  .stat-card::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--accent-color, var(--gold)), transparent);
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  .stat-card:hover::before { opacity: 1; }
+  .stat-card:hover { background: var(--bg3); }
+  .stat-number {
+    font-family: var(--serif);
+    font-size: 3rem;
+    font-weight: 700;
+    line-height: 1;
+    color: var(--accent-color, var(--gold));
+    margin-bottom: 0.4rem;
+  }
+  .stat-label {
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .stat-sub {
+    font-size: 0.68rem;
+    color: var(--faint);
+    margin-top: 0.2rem;
+  }
+
+  /* ── SECTION ── */
+  .section {
+    padding: 4rem 4rem;
+    border-bottom: 1px solid var(--border);
+    opacity: 0;
+    transform: translateY(24px);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+  }
+  .section.visible { opacity: 1; transform: none; }
+
+  .section-header {
+    display: flex; align-items: flex-start; gap: 1.5rem;
+    margin-bottom: 2.5rem;
+  }
+  .section-num {
+    font-family: var(--serif);
+    font-size: 3.5rem;
+    font-weight: 700;
+    line-height: 1;
+    color: var(--border);
+    color: rgba(255,255,255,0.06);
+    min-width: 3rem;
+  }
+  .section-title-wrap {}
+  .section-eyebrow {
+    font-family: var(--mono);
+    font-size: 0.65rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 0.4rem;
+  }
+  .section-title {
+    font-family: var(--serif);
+    font-size: clamp(1.6rem, 3vw, 2.4rem);
+    font-weight: 700;
+    line-height: 1.15;
+    color: #fff;
+    letter-spacing: -0.01em;
+  }
+
+  /* ── CARDS ── */
+  .card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 1.5rem;
+  }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.8rem;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.25s, transform 0.25s;
+  }
+  .card:hover {
+    border-color: rgba(240,165,0,0.3);
+    transform: translateY(-2px);
+  }
+  .card-accent {
+    position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    border-radius: 12px 12px 0 0;
+  }
+  .card-title {
+    font-family: var(--serif);
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 0.6rem;
+  }
+  .card-role {
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 0.8rem;
+  }
+  .card p { font-size: 0.85rem; color: var(--muted); line-height: 1.7; }
+
+  /* ── TAGS / BADGES ── */
+  .tags { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 1rem; }
+  .tag {
+    font-family: var(--mono);
+    font-size: 0.6rem;
+    font-weight: 500;
+    padding: 3px 8px;
+    border-radius: 4px;
+    border: 1px solid;
+  }
+  .tag-gold  { background: rgba(240,165,0,0.1);  color: var(--gold);   border-color: rgba(240,165,0,0.25); }
+  .tag-teal  { background: rgba(45,212,191,0.1); color: var(--teal);   border-color: rgba(45,212,191,0.25); }
+  .tag-blue  { background: rgba(96,165,250,0.1); color: var(--blue);   border-color: rgba(96,165,250,0.25); }
+  .tag-purple{ background: rgba(167,139,250,0.1);color: var(--purple); border-color: rgba(167,139,250,0.25); }
+  .tag-rose  { background: rgba(251,113,133,0.1);color: var(--rose);   border-color: rgba(251,113,133,0.25); }
+  .tag-green { background: rgba(52,211,153,0.1); color: var(--green);  border-color: rgba(52,211,153,0.25); }
+  .tag-amber { background: rgba(251,146,60,0.1); color: var(--amber);  border-color: rgba(251,146,60,0.25); }
+
+  /* ── APP CARDS ── */
+  .app-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+  }
+  .app-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 2.2rem;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.25s, transform 0.25s;
+  }
+  .app-card:hover {
+    transform: translateY(-3px);
+  }
+  .app-icon {
+    width: 44px; height: 44px;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.4rem;
+    margin-bottom: 1.2rem;
+  }
+  .app-card h3 {
+    font-family: var(--serif);
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 0.4rem;
+  }
+  .app-card .app-type {
+    font-size: 0.65rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 1rem;
+  }
+  .app-card p { font-size: 0.83rem; color: var(--muted); line-height: 1.7; }
+  .feature-list {
+    list-style: none;
+    margin-top: 1.2rem;
+    display: flex; flex-direction: column; gap: 0.45rem;
+  }
+  .feature-list li {
+    font-size: 0.78rem;
+    color: var(--muted);
+    padding-left: 1.2rem;
+    position: relative;
+  }
+  .feature-list li::before {
+    content: '›';
+    position: absolute; left: 0;
+    color: var(--gold);
+    font-weight: 700;
+  }
+
+  /* ── MODULE GRID ── */
+  .module-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1rem;
+  }
+  .module-card {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.4rem 1.6rem;
+    transition: border-color 0.2s, background 0.2s;
+    cursor: default;
+  }
+  .module-card:hover {
+    background: var(--card);
+    border-color: rgba(240,165,0,0.2);
+  }
+  .module-num {
+    font-family: var(--mono);
+    font-size: 0.62rem;
+    color: var(--gold);
+    margin-bottom: 0.5rem;
+  }
+  .module-name {
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 0.5rem;
+  }
+  .module-desc { font-size: 0.75rem; color: var(--muted); line-height: 1.6; }
+  .module-apps { display: flex; flex-wrap: wrap; gap: 0.3rem; margin-top: 0.75rem; }
+  .app-pill {
+    font-size: 0.6rem;
+    font-weight: 500;
+    padding: 2px 7px;
+    border-radius: 3px;
+  }
+
+  /* ── FLOW STEPS ── */
+  .flows-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+  }
+  .flow-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.8rem;
+    transition: border-color 0.2s;
+  }
+  .flow-card:hover { border-color: rgba(45,212,191,0.3); }
+  .flow-num-badge {
+    font-family: var(--mono);
+    font-size: 0.65rem;
+    color: var(--teal);
+    background: rgba(45,212,191,0.1);
+    border: 1px solid rgba(45,212,191,0.2);
+    padding: 2px 8px;
+    border-radius: 4px;
+    display: inline-block;
+    margin-bottom: 0.8rem;
+  }
+  .flow-card h4 {
+    font-size: 0.92rem;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 0.9rem;
+  }
+  .flow-steps {
+    display: flex; flex-direction: column; gap: 0.5rem;
+  }
+  .flow-step {
+    display: flex; gap: 0.75rem; align-items: flex-start;
+  }
+  .step-dot {
+    min-width: 20px; height: 20px;
+    border-radius: 50%;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--mono);
+    font-size: 0.55rem;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+  .flow-step p { font-size: 0.75rem; color: var(--muted); line-height: 1.55; }
+
+  /* ── TABLE ── */
+  .table-wrap {
+    overflow-x: auto;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.8rem;
+  }
+  thead tr {
+    background: var(--bg3);
+  }
+  th {
+    padding: 0.9rem 1.2rem;
+    text-align: left;
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    border-bottom: 1px solid var(--border);
+  }
+  td {
+    padding: 0.75rem 1.2rem;
+    color: var(--muted);
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+  td:first-child { color: var(--text); font-weight: 500; }
+  tr:last-child td { border-bottom: none; }
+  tbody tr:hover td { background: var(--bg3); }
+  .check { color: var(--green); font-size: 0.9rem; }
+  .cross { color: var(--faint); font-size: 0.9rem; }
+
+  /* ── RELATIONSHIP BLOCKS ── */
+  .rel-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 1.2rem;
+  }
+  .rel-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.4rem 1.6rem;
+  }
+  .rel-card h4 {
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    color: var(--gold);
+    margin-bottom: 0.6rem;
+    display: flex; align-items: center; gap: 0.4rem;
+  }
+  .rel-card h4 span { color: var(--faint); }
+  .rel-card p { font-size: 0.78rem; color: var(--muted); line-height: 1.65; }
+
+  /* ── ENTITY SECTIONS ── */
+  .entity-group {
+    margin-bottom: 2rem;
+  }
+  .entity-group-title {
+    font-family: var(--mono);
+    font-size: 0.65rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--teal);
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .entity-list {
+    display: flex; flex-direction: column; gap: 1rem;
+  }
+  .entity-item {
+    display: grid;
+    grid-template-columns: 180px 1fr;
+    gap: 1.5rem;
+    padding: 1rem 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .entity-item:last-child { border-bottom: none; }
+  .entity-name {
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    color: var(--text);
+    font-weight: 500;
+  }
+  .entity-desc { font-size: 0.8rem; color: var(--muted); line-height: 1.65; }
+
+  /* ── MASTER DATA TABLE ── */
+  .master-data-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 1rem;
+  }
+  .md-card {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.2rem 1.4rem;
+    transition: border-color 0.2s;
+  }
+  .md-card:hover { border-color: rgba(240,165,0,0.25); }
+  .md-name {
+    font-weight: 600;
+    font-size: 0.85rem;
+    color: var(--text);
+    margin-bottom: 0.5rem;
+  }
+  .md-meta { font-size: 0.72rem; color: var(--muted); line-height: 1.55; }
+
+  /* ── SCOPE CHECKLIST ── */
+  .scope-groups {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+  }
+  .scope-group {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.6rem;
+  }
+  .scope-group-title {
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 1rem;
+    padding-bottom: 0.6rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .scope-item {
+    display: flex; align-items: flex-start; gap: 0.6rem;
+    padding: 0.3rem 0;
+    font-size: 0.78rem;
+    color: var(--muted);
+  }
+  .scope-check { color: var(--green); font-size: 0.7rem; margin-top: 0.2rem; flex-shrink: 0; }
+
+  /* ── CROSS-APP ── */
+  .crossapp-grid {
+    display: flex; flex-direction: column; gap: 1.2rem;
+  }
+  .crossapp-item {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.6rem 2rem;
+    display: grid;
+    grid-template-columns: 260px 1fr;
+    gap: 2rem;
+    align-items: flex-start;
+    transition: border-color 0.2s;
+  }
+  .crossapp-item:hover { border-color: rgba(96,165,250,0.3); }
+  .crossapp-path {
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    color: var(--blue);
+    font-weight: 500;
+  }
+  .crossapp-desc { font-size: 0.82rem; color: var(--muted); line-height: 1.7; }
+
+  /* ── DIVIDER ── */
+  .divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--border), transparent);
+    margin: 2rem 0;
+  }
+
+  /* ── FOOTER ── */
+  .footer {
+    padding: 2rem 4rem;
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+  .footer-brand {
+    font-family: var(--serif);
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--gold);
+  }
+  .footer-meta {
+    font-size: 0.72rem;
+    color: var(--faint);
+    font-family: var(--mono);
+  }
+
+  /* ── PROSE ── */
+  .prose { font-size: 0.88rem; color: var(--muted); line-height: 1.8; max-width: 760px; }
+  .prose strong { color: var(--text); font-weight: 600; }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 1100px) {
+    .stats-bar { grid-template-columns: repeat(2, 1fr); }
+    .app-grid { grid-template-columns: 1fr; }
+    .flows-grid { grid-template-columns: 1fr; }
+    .crossapp-item { grid-template-columns: 1fr; gap: 0.6rem; }
+    .entity-item { grid-template-columns: 1fr; gap: 0.3rem; }
+  }
+
+  @media (max-width: 900px) {
+    .sidebar { display: none; }
+    .main { margin-left: 0; }
+    .hero { padding: 3rem 1.5rem 2.5rem; }
+    .section { padding: 3rem 1.5rem; }
+    .stats-bar { grid-template-columns: repeat(2, 1fr); }
+    .footer { padding: 1.5rem; }
+  }
+
+  @media (max-width: 600px) {
+    .stats-bar { grid-template-columns: 1fr; }
+    .hero h1 { font-size: 2.2rem; }
+  }
+
+  /* ── ANIMATIONS ── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(30px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .hero-eyebrow { animation: fadeUp 0.6s ease both; }
+  .hero h1      { animation: fadeUp 0.6s 0.1s ease both; }
+  .hero-desc    { animation: fadeUp 0.6s 0.2s ease both; }
+  .hero-meta    { animation: fadeUp 0.6s 0.3s ease both; }
+  .stat-card    { animation: fadeUp 0.6s ease both; }
+  .stat-card:nth-child(1) { animation-delay: 0.1s; }
+  .stat-card:nth-child(2) { animation-delay: 0.2s; }
+  .stat-card:nth-child(3) { animation-delay: 0.3s; }
+  .stat-card:nth-child(4) { animation-delay: 0.4s; }
+
+  /* ── HIGHLIGHT ── */
+  mark {
+    background: rgba(240,165,0,0.15);
+    color: var(--gold2);
+    padding: 1px 4px;
+    border-radius: 3px;
+    font-family: var(--mono);
+    font-size: 0.85em;
+  }
+</style>
+</head>
+<body>
+
+<!-- ════════════════════════════ SIDEBAR ════════════════════════════ -->
+<nav class="sidebar">
+  <div class="sidebar-brand">
+    <div class="logo-mark">Deal Machan</div>
+    <div class="logo-sub">Functional Documentation</div>
+    <div class="sidebar-version">v1.1 · March 2026</div>
+  </div>
+
+  <div class="nav-group-label">Platform</div>
+  <a class="nav-item" href="#overview"><span class="nav-num">01</span> System Overview</a>
+  <a class="nav-item" href="#applications"><span class="nav-num">02</span> Applications</a>
+
+  <div class="nav-group-label">Users & Modules</div>
+  <a class="nav-item" href="#users"><span class="nav-num">03</span> User Types</a>
+  <a class="nav-item" href="#modules"><span class="nav-num">04</span> Functional Modules</a>
+  <a class="nav-item" href="#subscription-gate"><span class="nav-num">→</span> Subscription Gate</a>
+
+  <div class="nav-group-label">Architecture</div>
+  <a class="nav-item" href="#relationships"><span class="nav-num">05</span> Module Relationships</a>
+  <a class="nav-item" href="#flows"><span class="nav-num">06</span> System Flows</a>
+  <a class="nav-item" href="#entities"><span class="nav-num">07</span> Entity Relationships</a>
+
+  <div class="nav-group-label">Data & Integration</div>
+  <a class="nav-item" href="#master-data"><span class="nav-num">08</span> Master Data</a>
+  <a class="nav-item" href="#cross-app"><span class="nav-num">09</span> Cross-App Interactions</a>
+  <a class="nav-item" href="#scope"><span class="nav-num">10</span> Implementation Scope</a>
+</nav>
+
+<!-- ════════════════════════════ MAIN ════════════════════════════ -->
+<div class="main">
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-glow"></div>
+    <div class="hero-glow2"></div>
+    <div class="hero-eyebrow">Functional Documentation Report</div>
+    <h1>Deal <span>Machan</span><br>Platform</h1>
+    <p class="hero-desc">
+      A full-stack deal, coupon, and loyalty platform connecting customers, merchants, and administrators within a structured multi-sided marketplace — documented across all four platform applications.
+    </p>
+    <div class="hero-meta">
+      <div class="meta-item">
+        <span class="meta-label">Document Version</span>
+        <span class="meta-value">1.1</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-label">Last Updated</span>
+        <span class="meta-value">March 12, 2026</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-label">Scope</span>
+        <span class="meta-value">Full Codebase · All Applications</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- STATS BAR -->
+  <div class="stats-bar">
+    <div class="stat-card" style="--accent-color: var(--gold);">
+      <div class="stat-number">4</div>
+      <div class="stat-label">Applications</div>
+      <div class="stat-sub">Customer · Merchant · Admin · API</div>
+    </div>
+    <div class="stat-card" style="--accent-color: var(--teal);">
+      <div class="stat-number">33</div>
+      <div class="stat-label">Functional Modules</div>
+      <div class="stat-sub">Fully implemented & documented</div>
+    </div>
+    <div class="stat-card" style="--accent-color: var(--blue);">
+      <div class="stat-number">22</div>
+      <div class="stat-label">System Flows</div>
+      <div class="stat-sub">End-to-end process flows</div>
+    </div>
+    <div class="stat-card" style="--accent-color: var(--purple);">
+      <div class="stat-number">10</div>
+      <div class="stat-label">User Types</div>
+      <div class="stat-sub">Across all platform roles</div>
+    </div>
+  </div>
+
+  <!-- ── 1. SYSTEM OVERVIEW ── -->
+  <section class="section" id="overview">
+    <div class="section-header">
+      <div class="section-num">01</div>
+      <div class="section-title-wrap">
+        <div class="section-eyebrow">Platform Foundation</div>
+        <h2 class="section-title">System Overview</h2>
+      </div>
+    </div>
+
+    <p class="prose">
+      Deal Machan is a <strong>deal, coupon, and loyalty platform</strong> that connects customers, merchants, and administrators within a structured multi-sided marketplace. The platform enables merchants to publish and manage discount offers, loyalty programs, and promotional campaigns, while customers discover offers, redeem coupons, and earn rewards. Administrators oversee all platform activity, approve content, manage users, and generate operational reports.
+    </p>
+
+    <div class="divider"></div>
+
+    <p class="prose" style="margin-bottom: 1.5rem;">
+      The platform operates through <strong>four distinct applications</strong> that work together via a shared database, with the API acting as the communication bridge between front-end applications and data storage. The Admin application has its own direct database access path for operational management functions.
+    </p>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem;">
+      <div class="card">
+        <div class="card-accent" style="background: linear-gradient(90deg, var(--gold), var(--amber));"></div>
+        <div style="font-size: 1.5rem; margin-bottom: 0.8rem;">📱</div>
+        <div class="card-title">Customer Application</div>
+        <p>Consumer-facing mobile interface for browsing deals, saving coupons, managing loyalty, and engaging with programs.</p>
+        <div class="tags"><span class="tag tag-gold">Mobile Web</span><span class="tag tag-amber">Public + Auth</span></div>
+      </div>
+      <div class="card">
+        <div class="card-accent" style="background: linear-gradient(90deg, var(--teal), var(--blue));"></div>
+        <div style="font-size: 1.5rem; margin-bottom: 0.8rem;">🏪</div>
+        <div class="card-title">Merchant Application</div>
+        <p>Business-facing mobile dashboard for managing stores, coupons, analytics, and customer relationships.</p>
+        <div class="tags"><span class="tag tag-teal">Mobile Web</span><span class="tag tag-blue">Auth Only</span></div>
+      </div>
+      <div class="card">
+        <div class="card-accent" style="background: linear-gradient(90deg, var(--purple), var(--rose));"></div>
+        <div style="font-size: 1.5rem; margin-bottom: 0.8rem;">⚙️</div>
+        <div class="card-title">Admin Application</div>
+        <p>Web-based management panel controlling all platform operations, approvals, content, and configuration.</p>
+        <div class="tags"><span class="tag tag-purple">Web</span><span class="tag tag-rose">Direct DB</span></div>
+      </div>
+      <div class="card">
+        <div class="card-accent" style="background: linear-gradient(90deg, var(--green), var(--teal));"></div>
+        <div style="font-size: 1.5rem; margin-bottom: 0.8rem;">🔌</div>
+        <div class="card-title">Backend API</div>
+        <p>Centralised REST API processing all requests from Customer and Merchant apps with JWT auth and subscription-based access control.</p>
+        <div class="tags"><span class="tag tag-green">REST API</span><span class="tag tag-teal">JWT</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── 2. APPLICATIONS ── -->
+  <section class="section" id="applications">
+    <div class="section-header">
+      <div class="section-num">02</div>
+      <div class="section-title-wrap">
+        <div class="section-eyebrow">Platform Architecture</div>
+        <h2 class="section-title">Applications</h2>
+      </div>
+    </div>
+
+    <div class="app-grid">
+      <!-- Customer App -->
+      <div class="app-card" style="border-top: 3px solid var(--gold);">
+        <div class="app-icon" style="background: rgba(240,165,0,0.12);">📱</div>
+        <h3>Customer Application</h3>
+        <div class="app-type" style="color: var(--gold);">Mobile-Optimised Web · Consumer Facing</div>
+        <p>Supports both unauthenticated browsing and authenticated personal features. Location-aware content filtering shows stores and offers relevant to the customer's city.</p>
+        <ul class="feature-list">
+          <li>Public browsing: stores, deals, coupons, flash deals, categories, blogs</li>
+          <li>Personal coupon wallet, wishlist, loyalty card management</li>
+          <li>Referral program, important dates tracker, activity history</li>
+          <li>Contests, surveys, and grievance submission</li>
+          <li>OTP-based registration and onboarding flow</li>
+        </ul>
+        <div class="tags" style="margin-top: 1.2rem;">
+          <span class="tag tag-gold">REST API</span>
+          <span class="tag tag-amber">JWT Auth</span>
+          <span class="tag tag-gold">City-Aware</span>
+        </div>
+      </div>
+
+      <!-- Merchant App -->
+      <div class="app-card" style="border-top: 3px solid var(--teal);">
+        <div class="app-icon" style="background: rgba(45,212,191,0.1);">🏪</div>
+        <h3>Merchant Application</h3>
+        <div class="app-type" style="color: var(--teal);">Mobile-Optimised Web · Business Facing</div>
+        <p>Exclusively for registered business users. All features require authentication. Feature access is controlled by the merchant's subscription plan.</p>
+        <ul class="feature-list">
+          <li>Store management with gallery, categories, and operating hours</li>
+          <li>Merchant profile with multi-select category assignment</li>
+          <li>Coupon management: percentage, fixed, BOGO, add-on types</li>
+          <li>QR code scanning redemption at point of sale</li>
+          <li>Analytics dashboards: redemptions, revenue, top coupons</li>
+          <li>Reviews, grievances, and customer messaging</li>
+          <li>Subscription and profile management</li>
+        </ul>
+        <div class="tags" style="margin-top: 1.2rem;">
+          <span class="tag tag-teal">REST API</span>
+          <span class="tag tag-blue">Feature Gate</span>
+          <span class="tag tag-teal">QR Scan</span>
+        </div>
+      </div>
+
+      <!-- Admin App -->
+      <div class="app-card" style="border-top: 3px solid var(--purple);">
+        <div class="app-icon" style="background: rgba(167,139,250,0.1);">⚙️</div>
+        <h3>Admin Application</h3>
+        <div class="app-type" style="color: var(--purple);">Full Web Panel · Administrative</div>
+        <p>Comprehensive control over all system operations with direct database access through server-side PHP controllers. Approvals here unlock content visibility platform-wide.</p>
+        <ul class="feature-list">
+          <li>Merchant and customer lifecycle management</li>
+          <li>Coupon, campaign, contest and survey management</li>
+          <li>Loyalty card configuration management (silver/gold/platinum/diamond tiers)</li>
+          <li>Mystery shopping task assignment</li>
+          <li>Blog, CMS, advertisements, and referral programs</li>
+          <li>Audit logs, subscription management, master data config</li>
+          <li>Lead management and Deal Maker program oversight</li>
+        </ul>
+        <div class="tags" style="margin-top: 1.2rem;">
+          <span class="tag tag-purple">Direct DB</span>
+          <span class="tag tag-rose">RBAC</span>
+          <span class="tag tag-purple">PHP</span>
+        </div>
+      </div>
+
+      <!-- Backend API -->
+      <div class="app-card" style="border-top: 3px solid var(--green);">
+        <div class="app-icon" style="background: rgba(52,211,153,0.1);">🔌</div>
+        <h3>Backend API</h3>
+        <div class="app-type" style="color: var(--green);">Centralised REST API · Data Layer</div>
+        <p>The communication bridge between front-end applications and data storage. Enforces security, subscription-based access rules, and serves public browsing content.</p>
+        <ul class="feature-list">
+          <li>JWT authentication with refresh token support for all user types</li>
+          <li>Public endpoints for unauthenticated browsing</li>
+          <li>Active card requirement enforcement for loyalty-gated actions</li>
+          <li>Subscription Feature Gate restricting merchant endpoints by plan</li>
+          <li>Store-level access scoping for multi-user merchant accounts</li>
+          <li>Image upload management for banners, galleries, and logos</li>
+          <li>City and area-based filtering across all public content</li>
+        </ul>
+        <div class="tags" style="margin-top: 1.2rem;">
+          <span class="tag tag-green">JWT + Refresh</span>
+          <span class="tag tag-teal">City Filter</span>
+          <span class="tag tag-green">Image CDN</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── 3. USER TYPES ── -->
+  <section class="section" id="users">
+    <div class="section-header">
+      <div class="section-num">03</div>
+      <div class="section-title-wrap">
+        <div class="section-eyebrow">Platform Participants</div>
+        <h2 class="section-title">User Types</h2>
+      </div>
+    </div>
+
+    <div class="card-grid">
+      <div class="card">
+        <div class="card-accent" style="background: var(--gold);"></div>
+        <div class="card-role">Primary Consumer</div>
+        <div class="card-title">Customer</div>
+        <p>End consumer seeking deals and savings. Browses stores, saves coupons, earns loyalty points, participates in contests and surveys, and can apply to become a Deal Maker.</p>
+        <div class="tags">
+          <span class="tag tag-gold">Customer App</span>
+          <span class="tag tag-amber">Public API</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-accent" style="background: var(--amber);"></div>
+        <div class="card-role">Elevated Customer Tier</div>
+        <div class="card-title">Deal Maker Customer</div>
+        <p>Approved community ambassador with all standard customer capabilities plus assigned merchant evaluation tasks, completion tracking, and reward earnings.</p>
+        <div class="tags">
+          <span class="tag tag-amber">Customer App+</span>
+          <span class="tag tag-gold">Task Earnings</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-accent" style="background: var(--teal);"></div>
+        <div class="card-role">Business Partner</div>
+        <div class="card-title">Merchant</div>
+        <p>Business owner who publishes offers and manages customer engagement. Full Merchant Application access — feature set depends on subscription plan tier.</p>
+        <div class="tags">
+          <span class="tag tag-teal">Merchant App</span>
+          <span class="tag tag-blue">Plan-Gated</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-accent" style="background: var(--blue);"></div>
+        <div class="card-role">Staff Member</div>
+        <div class="card-title">Merchant Store User</div>
+        <p>Staff member with access scoped to specific stores as defined by the owning merchant. Performs coupon redemptions within designated store(s) via JWT store scope.</p>
+        <div class="tags">
+          <span class="tag tag-blue">Store-Scoped</span>
+          <span class="tag tag-teal">Redemption Only</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-accent" style="background: var(--purple);"></div>
+        <div class="card-role">Platform Administrator</div>
+        <div class="card-title">Super Admin</div>
+        <p>Highest-level platform administrator with unrestricted access. Exclusive access to subscription management, audit logs, admin user management, and all reports.</p>
+        <div class="tags">
+          <span class="tag tag-purple">All Modules</span>
+          <span class="tag tag-rose">Unrestricted</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-accent" style="background: var(--rose);"></div>
+        <div class="card-role">Regional Administrator</div>
+        <div class="card-title">City Admin</div>
+        <p>Regional administrator scoped to a specific city. Manages merchants, customers, and content within their city, with city-filtered dashboards and notifications.</p>
+        <div class="tags">
+          <span class="tag tag-rose">City-Scoped</span>
+          <span class="tag tag-purple">Most Modules</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-accent" style="background: var(--green);"></div>
+        <div class="card-role">Acquisition Admin</div>
+        <div class="card-title">Sales Admin</div>
+        <p>Focused on merchant acquisition and relationship management. Manages merchant accounts and tracks merchant acquisition leads through the sales pipeline.</p>
+        <div class="tags">
+          <span class="tag tag-green">Merchant Mgmt</span>
+          <span class="tag tag-teal">Leads</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-accent" style="background: #818CF8;"></div>
+        <div class="card-role">Engagement Admin</div>
+        <div class="card-title">Promoter Admin</div>
+        <p>Responsible for community engagement programs. Assigns and manages mystery shopping tasks and oversees the Deal Maker and contest programs.</p>
+        <div class="tags">
+          <span class="tag tag-purple">Mystery Shopping</span>
+          <span class="tag tag-blue">Deal Maker</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-accent" style="background: var(--faint);"></div>
+        <div class="card-role">Domain Admin</div>
+        <div class="card-title">Partner / Club Admin</div>
+        <p>Specialist administrators for partnership and club-based programs. Operational management within their specific domain scope.</p>
+        <div class="tags">
+          <span class="tag tag-gold">Domain-Scoped</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-accent" style="background: var(--muted);"></div>
+        <div class="card-role">Unauthenticated Visitor</div>
+        <div class="card-title">Guest</div>
+        <p>Browses stores, merchants, coupons, flash deals, and categories without an account. Coupon codes are hidden until login. Can submit contact and sign-up forms.</p>
+        <div class="tags">
+          <span class="tag tag-gold">Public API</span>
+          <span class="tag tag-amber">Browse Only</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── 4. MODULES ── -->
+  <section class="section" id="modules">
+    <div class="section-header">
+      <div class="section-num">04</div>
+      <div class="section-title-wrap">
+        <div class="section-eyebrow">33 Modules · Full Coverage</div>
+        <h2 class="section-title">Functional Modules</h2>
+      </div>
+    </div>
+
+    <div class="module-grid">
+      <div class="module-card">
+        <div class="module-num">4.1</div>
+        <div class="module-name">Authentication & Session Management</div>
+        <div class="module-desc">OTP registration, JWT access tokens with refresh support, mandatory first-login password reset, and separate session-based admin auth.</div>
+        <div class="module-apps">
+          <span class="tag tag-gold">Customer</span><span class="tag tag-teal">Merchant</span><span class="tag tag-green">API</span>
+        </div>
+      </div>
+      <div class="module-card">
+        <div class="module-num">4.2</div>
+        <div class="module-name">Merchant Management</div>
+        <div class="module-desc">End-to-end lifecycle: create, approve, reject, deactivate merchant accounts with subscription plans, priority weights, and GST/registration data.</div>
+        <div class="module-apps">
+          <span class="tag tag-purple">Admin</span><span class="tag tag-green">API</span>
+        </div>
+      </div>
+      <div class="module-card">
+        <div class="module-num">4.3</div>
+        <div class="module-name">Store Management</div>
+        <div class="module-desc">Physical store locations with city/area/location assignment, operating hours, gallery images, and multi-category classification via <mark>store_categories</mark> pivot. Merchant profile supports multi-select category assignment stored as <mark>category_ids</mark>.</div>
+        <div class="module-apps">
+          <span class="tag tag-teal">Merchant</span><span class="tag tag-purple">Admin</span><span class="tag tag-green">API</span>
+        </div>
+      </div>
+      <div class="module-card">
+        <div class="module-num">4.4</div>
+        <div class="module-name">Coupon Management</div>
+        <div class="module-desc">Four discount types: percentage, fixed, BOGO, and add-on. Approval workflow, multi-level targeting (category, city, area, location), wallet saves, and QR/manual redemption. Active loyalty card required to save and redeem.</div>
+        <div class="module-apps">
+          <span class="tag tag-gold">Customer</span><span class="tag tag-teal">Merchant</span><span class="tag tag-purple">Admin</span>
+        </div>
+      </div>
+      <div class="module-card">
+        <div class="module-num">4.5</div>
+        <div class="module-name">Store Coupon Management</div>
+        <div class="module-desc">Merchant-issued targeted coupons gifted directly to specific customers. Individual and bulk assignment with code and redemption tracking.</div>
+        <div class="module-apps">
+          <span class="tag tag-teal">Merchant</span><span class="tag tag-green">API</span>
+        </div>
+      </div>
+      <div class="module-card">
+        <div class="module-num">4.6</div>
+        <div class="module-name">Flash Discount Management</div>
+        <div class="module-desc">Time-limited percentage discount promotions that auto-expire on their end datetime. Supports city, area, and location targeting for geo-specific visibility. Prominently featured on the customer home screen.</div>
+        <div class="module-apps">
+          <span class="tag tag-gold">Customer</span><span class="tag tag-teal">Merchant</span><span class="tag tag-green">API</span>
+        </div>
+      </div>
+      <div class="module-card">
+        <div class="module-num">4.7</div>
+        <div class="module-name">Analytics & Reporting</div>
+        <div class="module-desc">Merchant dashboard KPIs, 7-day charts, top coupons, revenue estimates, and redemptions list. Admin platform-wide reports with date-range filtering.</div>
+        <div class="module-apps">
+          <span class="tag tag-teal">Merchant</span><span class="tag tag-purple">Admin</span><span class="tag tag-green">API</span>
+        </div>
+      </div>
+      <div class="module-card">
+        <div class="module-num">4.8</div>
+        <div class="module-name">Review Management</div>
+        <div class="module-desc">Customers submit ratings and text reviews (auto-approved). Merchants view reviews and submit replies. Admins manage all reviews platform-wide.</div>
+        <div class="module-apps">
+          <span class="tag tag-gold">Customer</span><span class="tag tag-teal">Merchant</span><span class="tag tag-purple">Admin</span>
+        </div>
+      </div>
+      <div class="module-card">
+        <div class="module-num">4.9</div>
+        <div class="module-name">Grievance Management</div>
+        <div class="module-desc">Customer complaint submission with threaded message system for merchant-customer resolution. Admin oversight with full visibility across all grievances.</div>
+        <div class="module-apps">
+          <span class="tag tag-gold">Customer</span><span class="tag tag-teal">Merchant</span><span class="tag tag-purple">Admin</span>
+        </div>
+      </div>
+      <div class="module-card">
+        <div class="module-num">4.10</div>
+        <div class="module-name">Loyalty Card System</div>
+        <div class="module-desc">Physical pre-printed card two-step activation (card number + 6-digit time-limited auth code). Card configurations define plans with classification tiers (silver, gold, platinum, diamond), pricing, validity period in days, feature list (HTML), max live coupons, coupon authorisation mode, card face images, and partner merchants. Customers self-select a configuration via the Card Selection page. Expiry tracking: active / expiring_soon / expired. Holding an active card is enforced as a requirement for saving, redeeming, and subscribing to coupons, and for contest participation.</div>
+        <div class="module-apps">
+          <span class="tag tag-gold">Customer</span><span class="tag tag-purple">Admin</span><span class="tag tag-green">API</span>
+        </div>
+      </div>
+      <div class="module-card">
+        <div class="module-num">4.11</div>
+        <div class="module-name">Messaging System</div>
+        <div class="module-desc">In-app direct message threads between merchants and customers. Unread count tracking. Shared infrastructure with the notification system.</div>
+        <div class="module-apps">
+          <span class="tag tag-teal">Merchant</span><span class="tag tag-gold">Customer</span>
+        </div>
+      </div>
+      <div class="module-card">
+        <div class="module-num">4.12</div>
+        <div class="module-name">Notification System</div>
+        <div class="module-desc">In-app alerts for all user types. Admin bulk broadcast targeting customers, merchants, or specific users. Mark as read (individual and all).</div>
+        <div class="module-apps">
+          <span class="tag tag-purple">Admin</span><span class="tag tag-gold">Customer</span><span class="tag tag-teal">Merchant</span>
+        </div>
+      </div>
+      <div class="module-card">
+        <div class="module-num">4.13</div>
+        <div class="module-name">Customer Management</div>
+        <div class="module-desc">Registration, profile management, type classification (standard, premium, deal maker), and admin-level customer account creation and oversight.</div>
+        <div class="module-apps">
+          <span class="tag tag-purple">Admin</span><span class="tag tag-teal">Merchant</span><span class="tag tag-green">API</span>
+        </div>
+      </div>
+      <div class="module-card">
+        <div class="module-num">4.14</div>
+        <div class="module-name">Contest Management</div>
+        <div class="module-desc">Admin-created contests with dates and prize structures. Customer participation recording with winner tracking and prize details.</div>
+        <div class="module-apps">
+          <span class="tag tag-gold">Customer</span><span class="tag tag-purple">Admin</span><span class="tag tag-green">API</span>
+        </div>
+      </div>
+      <div class="module-card">
+        <div class="module-num">4.15</div>
+        <div class="module-name">Survey Management</div>
+        <div class="module-desc">Admin-created surveys with JSON question sets and active periods. Customers submit one response per survey. Submission history accessible to customers.</div>
+        <div class="module-apps">
+          <span class="tag tag-gold">Customer</span><span class="tag tag-purple">Admin</span><span class="tag tag-green">API</span>
+        </div>
+      </div>
+      <div class="module-card">
+        <div class="module-num">4.16</div>
+        <div class="module-name">Referral Program</div>
+        <div class="module-desc">Unique referral code per customer at registration. Referral tracking with statuses: pending, completed, rewarded. Reward amounts per successful referral.</div>
+        <div class="module-apps">
+          <span class="tag tag-gold">Customer</span><span class="tag tag-green">API</span>
+        </div>
+      </div>
+      <div class="module-card">
+        <div class="module-num">4.17</div>
+        <div class="module-name">Deal Maker Program</div>
+        <div class="module-desc">Community ambassador program. Customer application → admin approval → task assignment → progress tracking → reward payment (pending/paid).</div>
+        <div class="module-apps">
+          <span class="tag tag-gold">Customer</span><span class="tag tag-purple">Admin</span><span class="tag tag-green">API</span>
+        </div>
+      </div>
+      <div class="module-card">
+        <div class="module-num">4.18</div>
+        <div class="module-name">Mystery Shopping Management</div>
+        <div class="module-desc">Admin-driven merchant quality evaluation. Tasks with JSON checklists assigned to selected customer-shoppers with lifecycle and payment tracking.</div>
+        <div class="module-apps">
+          <span class="tag tag-purple">Admin</span>
+        </div>
+      </div>
+      <div class="module-card">
+        <div class="module-num">4.19</div>
+        <div class="module-name">Blog & CMS Content</div>
+        <div class="module-desc">Blog posts with featured images and tags for SEO and brand communication. CMS pages with slug-based URL routing for static content.</div>
+        <div class="module-apps">
+          <span class="tag tag-gold">Customer</span><span class="tag tag-purple">Admin</span><span class="tag tag-green">API</span>
+        </div>
+      </div>
+      <div class="module-card">
+        <div class="module-num">4.20</div>
+        <div class="module-name">Advertisement Management</div>
+        <div class="module-desc">Promotional banners with title, media (image/video), display duration, and optional link URL. Served as carousel on the customer home screen.</div>
+        <div class="module-apps">
+          <span class="tag tag-gold">Customer</span><span class="tag tag-purple">Admin</span><span class="tag tag-green">API</span>
+        </div>
+      </div>
+      <div class="module-card">
+        <div class="module-num">4.21</div>
+        <div class="module-name">Subscription Management</div>
+        <div class="module-desc">Four merchant plan tiers: Merchant Only, Coupon Merchant, Hybrid, Advanced. Subscription status (trial/active/expired) and self-service renewal requests.</div>
+        <div class="module-apps">
+          <span class="tag tag-purple">Admin</span><span class="tag tag-teal">Merchant</span>
+        </div>
+      </div>
+      <div class="module-card">
+        <div class="module-num">4.22</div>
+        <div class="module-name">Subscription Feature Gate</div>
+        <div class="module-desc">Plan-based API access control. Merchant's subscription plan is embedded in JWT on login. 403 returned for feature access beyond plan tier.</div>
+        <div class="module-apps">
+          <span class="tag tag-green">API</span>
+        </div>
+      </div>
+      <div class="module-card">
+        <div class="module-num">4.23</div>
+        <div class="module-name">Search</div>
+        <div class="module-desc">Unified cross-entity search across merchants, stores, coupons, and blog posts. Returns structured results for all search sections in a single request.</div>
+        <div class="module-apps">
+          <span class="tag tag-gold">Customer</span><span class="tag tag-green">API</span>
+        </div>
+      </div>
+      <div class="module-card">
+        <div class="module-num">4.24</div>
+        <div class="module-name">Wishlist / Favourites</div>
+        <div class="module-desc">Customer bookmarking of preferred merchants. Tracked per customer. Wishlist page displays all saved merchants for quick access.</div>
+        <div class="module-apps">
+          <span class="tag tag-gold">Customer</span><span class="tag tag-green">API</span>
+        </div>
+      </div>
+      <div class="module-card">
+        <div class="module-num">4.25</div>
+        <div class="module-name">Important Days Tracker</div>
+        <div class="module-desc">Customers record personal important dates (birthdays, anniversaries) with day type labels and optional merchant tags for personalised deal suggestions.</div>
+        <div class="module-apps">
+          <span class="tag tag-gold">Customer</span><span class="tag tag-green">API</span>
+        </div>
+      </div>
+      <div class="module-card">
+        <div class="module-num">4.26</div>
+        <div class="module-name">Activity History</div>
+        <div class="module-desc">Personal log of customer's coupon saves, redemptions, and platform interactions. Displayed in the Customer Application's history section.</div>
+        <div class="module-apps">
+          <span class="tag tag-gold">Customer</span>
+        </div>
+      </div>
+      <div class="module-card">
+        <div class="module-num">4.27</div>
+        <div class="module-name">Audit Log System</div>
+        <div class="module-desc">Immutable record of every significant admin action with actor, action type, entity, timestamp, and IP address. Filterable by super admins only.</div>
+        <div class="module-apps">
+          <span class="tag tag-purple">Admin</span>
+        </div>
+      </div>
+      <div class="module-card">
+        <div class="module-num">4.28</div>
+        <div class="module-name">Admin Team Management</div>
+        <div class="module-desc">Super admins create, edit, and manage all admin accounts with role assignments. City-scoped admins are linked to a specific city on creation.</div>
+        <div class="module-apps">
+          <span class="tag tag-purple">Admin</span>
+        </div>
+      </div>
+      <div class="module-card">
+        <div class="module-num">4.29</div>
+        <div class="module-name">Lead Management</div>
+        <div class="module-desc">Merchant acquisition pipeline tracking. Sales admins log and manage leads with status progression through the sales cycle.</div>
+        <div class="module-apps">
+          <span class="tag tag-purple">Admin</span>
+        </div>
+      </div>
+      <div class="module-card">
+        <div class="module-num">4.30</div>
+        <div class="module-name">Platform Settings</div>
+        <div class="module-desc">Key-value system configuration managed by super admins. Controls platform behaviour such as default values and feature toggles.</div>
+        <div class="module-apps">
+          <span class="tag tag-purple">Admin</span>
+        </div>
+      </div>
+      <div class="module-card">
+        <div class="module-num">4.31</div>
+        <div class="module-name">Contact Enquiries</div>
+        <div class="module-desc">Public contact form and business sign-up interest form submissions. Status tracking (new, read, responded) with auto-read on detail view.</div>
+        <div class="module-apps">
+          <span class="tag tag-gold">Customer</span><span class="tag tag-purple">Admin</span><span class="tag tag-green">API</span>
+        </div>
+      </div>
+      <div class="module-card">
+        <div class="module-num">4.32</div>
+        <div class="module-name">Gift Coupons (Admin-Initiated)</div>
+        <div class="module-desc">Admin sends existing platform coupons as personalised gifts to specific customers. Optional acceptance requirement. Customer can accept or reject gifts from inbox.</div>
+        <div class="module-apps">
+          <span class="tag tag-gold">Customer</span><span class="tag tag-purple">Admin</span><span class="tag tag-green">API</span>
+        </div>
+      </div>
+      <div class="module-card">
+        <div class="module-num">4.33</div>
+        <div class="module-name">Loyalty Card Configuration Management</div>
+        <div class="module-desc">Admin-managed card plan definitions. Each configuration has a name, classification tier (silver / gold / platinum / diamond), price, validity in days, HTML features list, max live coupon slots, coupon authorisation mode, front and back card face images, city-based availability restrictions, and an ordered list of partner merchants with type (premium / normal), image, and URL. Customers browse available configurations filtered by their city and self-select a plan. Free configs are assigned immediately; paid configs queue a payment flow.</div>
+        <div class="module-apps">
+          <span class="tag tag-purple">Admin</span><span class="tag tag-gold">Customer</span><span class="tag tag-green">API</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Subscription Feature Gate Table -->
+    <div id="subscription-gate" style="margin-top: 3rem;">
+      <h3 style="font-family: var(--serif); font-size: 1.5rem; color: #fff; margin-bottom: 0.4rem;">4.22 · Subscription Feature Gate</h3>
+      <p style="font-size: 0.82rem; color: var(--muted); margin-bottom: 1.5rem;">Plan-based access control restricting merchant features. The subscription plan is embedded in the JWT at login. Attempting to access a blocked feature returns HTTP 403.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Feature</th>
+              <th>Merchant Only</th>
+              <th>Coupon Merchant</th>
+              <th>Hybrid</th>
+              <th>Advanced</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>Profile &amp; Stores</td><td><span class="check">✓</span></td><td><span class="check">✓</span></td><td><span class="check">✓</span></td><td><span class="check">✓</span></td></tr>
+            <tr><td>Coupons</td><td><span class="cross">—</span></td><td><span class="check">✓</span></td><td><span class="check">✓</span></td><td><span class="check">✓</span></td></tr>
+            <tr><td>Store Coupons</td><td><span class="cross">—</span></td><td><span class="check">✓</span></td><td><span class="check">✓</span></td><td><span class="check">✓</span></td></tr>
+            <tr><td>Analytics</td><td><span class="cross">—</span></td><td><span class="cross">—</span></td><td><span class="check">✓</span></td><td><span class="check">✓</span></td></tr>
+            <tr><td>Reviews</td><td><span class="cross">—</span></td><td><span class="cross">—</span></td><td><span class="check">✓</span></td><td><span class="check">✓</span></td></tr>
+            <tr><td>Grievances</td><td><span class="cross">—</span></td><td><span class="cross">—</span></td><td><span class="check">✓</span></td><td><span class="check">✓</span></td></tr>
+            <tr><td>Messages</td><td><span class="cross">—</span></td><td><span class="cross">—</span></td><td><span class="check">✓</span></td><td><span class="check">✓</span></td></tr>
+            <tr><td>Loyalty Cards</td><td><span class="cross">—</span></td><td><span class="cross">—</span></td><td><span class="cross">—</span></td><td><span class="check">✓</span></td></tr>
+            <tr><td>Flash Discounts</td><td><span class="cross">—</span></td><td><span class="cross">—</span></td><td><span class="cross">—</span></td><td><span class="check">✓</span></td></tr>
+            <tr><td>Bulk Allotment</td><td><span class="cross">—</span></td><td><span class="cross">—</span></td><td><span class="cross">—</span></td><td><span class="check">✓</span></td></tr>
+            <tr><td>Customer Management</td><td><span class="cross">—</span></td><td><span class="cross">—</span></td><td><span class="cross">—</span></td><td><span class="check">✓</span></td></tr>
+            <tr><td>Sales Registry</td><td><span class="cross">—</span></td><td><span class="cross">—</span></td><td><span class="cross">—</span></td><td><span class="check">✓</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── 5. MODULE RELATIONSHIPS ── -->
+  <section class="section" id="relationships">
+    <div class="section-header">
+      <div class="section-num">05</div>
+      <div class="section-title-wrap">
+        <div class="section-eyebrow">Data Architecture</div>
+        <h2 class="section-title">Module Relationships</h2>
+      </div>
+    </div>
+
+    <div class="rel-grid">
+      <div class="rel-card">
+        <h4>Merchant <span>→</span> Store</h4>
+        <p>A Merchant must have at least one Store to offer coupons, flash discounts, and store coupons. Every coupon, store coupon, and flash discount can be associated with a specific store within the merchant's portfolio.</p>
+      </div>
+      <div class="rel-card">
+        <h4>Store <span>→</span> Category</h4>
+        <p>Stores are classified using a many-to-many pivot relationship with categories and sub-categories via <mark>store_categories</mark>. This drives store discovery by category in the Customer Application.</p>
+      </div>
+      <div class="rel-card">
+        <h4>Coupon <span>→</span> Merchant / Store</h4>
+        <p>Every coupon belongs to a Merchant and optionally to a specific Store. Coupon searches and home-feed filtering leverage both the merchant's location (via stores) and coupon content.</p>
+      </div>
+      <div class="rel-card">
+        <h4>Coupon <span>→</span> Redemption <span>→</span> Customer</h4>
+        <p>When a coupon is redeemed, a redemption record links the coupon, customer, store, merchant, discount applied, and transaction value. This record drives all merchant analytics.</p>
+      </div>
+      <div class="rel-card">
+        <h4>Coupon <span>→</span> Subscription (Customer Saves)</h4>
+        <p>Customers save coupons to their wallet through a <mark>coupon_subscriptions</mark> record, separate from redemption. This allows merchants and admins to track demand before redemption occurs.</p>
+      </div>
+      <div class="rel-card">
+        <h4>Store Coupon <span>→</span> Gift <span>→</span> Customer</h4>
+        <p>Merchant creates store coupon → assigns to customer → customer sees in wallet → redeems at store. A fully directed gift chain distinct from the public coupon flow.</p>
+      </div>
+      <div class="rel-card">
+        <h4>Analytics <span>→</span> Coupon Redemptions</h4>
+        <p>Merchant analytics are computed entirely from the <mark>coupon_redemptions</mark> table. Filtering by merchant_id across redemptions provides all KPI data.</p>
+      </div>
+      <div class="rel-card">
+        <h4>Subscription Plan <span>→</span> Feature Gate</h4>
+        <p>The merchant's <mark>subscription_plan</mark> value is embedded in the JWT on login. Every protected API endpoint checks the plan against the Feature Gate before processing the request.</p>
+      </div>
+      <div class="rel-card">
+        <h4>Home Feed <span>→</span> Five Modules</h4>
+        <p>The customer home screen assembles data from: Advertisements, Flash Discounts, featured Merchants (by coupon count), top Coupons (by save count), and featured Tags from master data — all in one API response.</p>
+      </div>
+      <div class="rel-card">
+        <h4>Coupon Approval <span>→</span> Notification System</h4>
+        <p>When an admin approves or rejects a merchant's coupon, the Notification System delivers an in-app notification to the merchant informing them of the decision.</p>
+      </div>
+      <div class="rel-card">
+        <h4>Contact Enquiries <span>→</span> Lead Management</h4>
+        <p>Business sign-up enquiries are the entry point for the merchant acquisition pipeline. Sales admins can follow up and create acquisition leads from enquiry details.</p>
+      </div>
+      <div class="rel-card">
+        <h4>Gift Coupons <span>→</span> Coupon Wallet</h4>
+        <p>The Gift Coupon module depends on Coupon Management for the source coupon. On acceptance, the gifted coupon enters the customer's wallet and becomes redeemable through the normal flow.</p>
+      </div>
+      <div class="rel-card">
+        <h4>Card Configuration <span>→</span> Card</h4>
+        <p>A card configuration defines the plan a customer selects. When selected, the configuration's <mark>id</mark>, validity period, and expiry date are written to the customer's <mark>cards</mark> record, tying the physical card to a plan tier.</p>
+      </div>
+      <div class="rel-card">
+        <h4>Active Card <span>→</span> Coupon &amp; Contest Actions</h4>
+        <p>Saving, subscribing, and redeeming coupons, plus contest participation, all require the customer to have an active card. The API enforces this via the <mark>requireActiveCard</mark> middleware before processing any of these requests.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── 6. SYSTEM FLOWS ── -->
+  <section class="section" id="flows">
+    <div class="section-header">
+      <div class="section-num">06</div>
+      <div class="section-title-wrap">
+        <div class="section-eyebrow">22 End-to-End Flows</div>
+        <h2 class="section-title">System Flows</h2>
+      </div>
+    </div>
+
+    <div class="flows-grid">
+
+      <div class="flow-card">
+        <div class="flow-num-badge">Flow 6.1</div>
+        <h4>Customer Registration & Onboarding</h4>
+        <div class="flow-steps">
+          <div class="flow-step"><div class="step-dot">1</div><p>New visitor submits name, email/phone, and password</p></div>
+          <div class="flow-step"><div class="step-dot">2</div><p>API creates user record and sends OTP</p></div>
+          <div class="flow-step"><div class="step-dot">3</div><p>Customer verifies OTP → JWT issued → logged in</p></div>
+          <div class="flow-step"><div class="step-dot">4</div><p>Onboarding screen: complete profile (profession, DOB, city)</p></div>
+          <div class="flow-step"><div class="step-dot">5</div><p>Full access to authenticated Customer Application granted</p></div>
+        </div>
+      </div>
+
+      <div class="flow-card">
+        <div class="flow-num-badge">Flow 6.2</div>
+        <h4>Merchant Registration & Approval</h4>
+        <div class="flow-steps">
+          <div class="flow-step"><div class="step-dot">1</div><p>Business owner submits interest form → lead created</p></div>
+          <div class="flow-step"><div class="step-dot">2</div><p>Sales Admin creates merchant account in Admin Application</p></div>
+          <div class="flow-step"><div class="step-dot">3</div><p>Merchant receives login credentials</p></div>
+          <div class="flow-step"><div class="step-dot">4</div><p>Admin verifies business profile → approves</p></div>
+          <div class="flow-step"><div class="step-dot">5</div><p>Approved merchant's stores and coupons become visible to customers</p></div>
+        </div>
+      </div>
+
+      <div class="flow-card">
+        <div class="flow-num-badge">Flow 6.3</div>
+        <h4>Coupon Creation & Publication</h4>
+        <div class="flow-steps">
+          <div class="flow-step"><div class="step-dot">1</div><p>Merchant creates coupon with type, value, dates, usage limit</p></div>
+          <div class="flow-step"><div class="step-dot">2</div><p>API creates coupon with <mark>approval_status = pending</mark></p></div>
+          <div class="flow-step"><div class="step-dot">3</div><p>Admin reviews and approves (or rejects with reason)</p></div>
+          <div class="flow-step"><div class="step-dot">4</div><p>Approved coupon becomes publicly visible in home feed and search</p></div>
+          <div class="flow-step"><div class="step-dot">5</div><p>Admin-created coupons skip approval and are immediately active</p></div>
+        </div>
+      </div>
+
+      <div class="flow-card">
+        <div class="flow-num-badge">Flow 6.4</div>
+        <h4>Customer Coupon Discovery & Save</h4>
+        <div class="flow-steps">
+          <div class="flow-step"><div class="step-dot">1</div><p>Customer browses home screen, search, or category pages</p></div>
+          <div class="flow-step"><div class="step-dot">2</div><p>Views coupon detail — code hidden until login</p></div>
+          <div class="flow-step"><div class="step-dot">3</div><p>Customer taps "Save" → <mark>coupon_subscriptions</mark> record created</p></div>
+          <div class="flow-step"><div class="step-dot">4</div><p>Coupon appears in customer's wallet under "Saved"</p></div>
+        </div>
+      </div>
+
+      <div class="flow-card">
+        <div class="flow-num-badge">Flow 6.5</div>
+        <h4>Coupon Redemption (QR Code)</h4>
+        <div class="flow-steps">
+          <div class="flow-step"><div class="step-dot">1</div><p>Customer opens wallet and selects coupon at merchant's store</p></div>
+          <div class="flow-step"><div class="step-dot">2</div><p>Merchant scans customer's QR code in Merchant Application</p></div>
+          <div class="flow-step"><div class="step-dot">3</div><p>API validates: ownership, expiry, usage limit, merchant eligibility</p></div>
+          <div class="flow-step"><div class="step-dot">4</div><p><mark>coupon_redemptions</mark> record created; coupon marked used in wallet</p></div>
+          <div class="flow-step"><div class="step-dot">5</div><p>Redemption data immediately feeds merchant analytics dashboard</p></div>
+        </div>
+      </div>
+
+      <div class="flow-card">
+        <div class="flow-num-badge">Flow 6.6</div>
+        <h4>Store Coupon Gift & Redemption</h4>
+        <div class="flow-steps">
+          <div class="flow-step"><div class="step-dot">1</div><p>Merchant creates store coupon and assigns to specific customer</p></div>
+          <div class="flow-step"><div class="step-dot">2</div><p>API creates <mark>store_coupon</mark> record with recipient customer</p></div>
+          <div class="flow-step"><div class="step-dot">3</div><p>Coupon appears in customer's wallet</p></div>
+          <div class="flow-step"><div class="step-dot">4</div><p>Merchant redeems via customer identifier lookup; coupon marked used</p></div>
+        </div>
+      </div>
+
+      <div class="flow-card">
+        <div class="flow-num-badge">Flow 6.7</div>
+        <h4>Merchant Analytics</h4>
+        <div class="flow-steps">
+          <div class="flow-step"><div class="step-dot">1</div><p>Every coupon redemption written to <mark>coupon_redemptions</mark> with timestamp</p></div>
+          <div class="flow-step"><div class="step-dot">2</div><p>Merchant opens analytics section; API aggregates data</p></div>
+          <div class="flow-step"><div class="step-dot">3</div><p>Dashboard returns KPIs, 7-day chart, top coupons, revenue estimates</p></div>
+          <div class="flow-step"><div class="step-dot">4</div><p>Merchants drill into redemptions list with date-range filtering</p></div>
+        </div>
+      </div>
+
+      <div class="flow-card">
+        <div class="flow-num-badge">Flow 6.8</div>
+        <h4>Grievance Submission & Resolution</h4>
+        <div class="flow-steps">
+          <div class="flow-step"><div class="step-dot">1</div><p>Customer submits grievance linked to merchant</p></div>
+          <div class="flow-step"><div class="step-dot">2</div><p>Grievance appears in Merchant Application and Admin Application</p></div>
+          <div class="flow-step"><div class="step-dot">3</div><p>Merchant views and adds response to threaded message</p></div>
+          <div class="flow-step"><div class="step-dot">4</div><p>Messages exchanged until resolved; merchant marks as resolved</p></div>
+        </div>
+      </div>
+
+      <div class="flow-card">
+        <div class="flow-num-badge">Flow 6.9</div>
+        <h4>Loyalty Card Activation</h4>
+        <div class="flow-steps">
+          <div class="flow-step"><div class="step-dot">1</div><p>Admin creates loyalty card record and issues physical card to customer</p></div>
+          <div class="flow-step"><div class="step-dot">2</div><p>Customer enters card number → API generates 6-digit 30-min auth code</p></div>
+          <div class="flow-step"><div class="step-dot">3</div><p>Notification sent to card issuer with auth code for relay to customer</p></div>
+          <div class="flow-step"><div class="step-dot">4</div><p>Customer enters auth code → API validates → card activated on account</p></div>
+        </div>
+      </div>
+
+      <div class="flow-card">
+        <div class="flow-num-badge">Flow 6.10</div>
+        <h4>Referral Program</h4>
+        <div class="flow-steps">
+          <div class="flow-step"><div class="step-dot">1</div><p>Each customer auto-assigned unique referral code at registration</p></div>
+          <div class="flow-step"><div class="step-dot">2</div><p>Customer shares code; new user registers using it</p></div>
+          <div class="flow-step"><div class="step-dot">3</div><p>Referral record created with status: pending → completed → rewarded</p></div>
+          <div class="flow-step"><div class="step-dot">4</div><p>Referring customer tracks stats and reward history in Customer App</p></div>
+        </div>
+      </div>
+
+      <div class="flow-card">
+        <div class="flow-num-badge">Flow 6.11</div>
+        <h4>Contest Participation</h4>
+        <div class="flow-steps">
+          <div class="flow-step"><div class="step-dot">1</div><p>Admin creates contest with dates and prize structure</p></div>
+          <div class="flow-step"><div class="step-dot">2</div><p>Active contests visible publicly without login</p></div>
+          <div class="flow-step"><div class="step-dot">3</div><p>Authenticated customer taps "Participate" → entry recorded</p></div>
+          <div class="flow-step"><div class="step-dot">4</div><p>Admin records winners with position and prize details</p></div>
+        </div>
+      </div>
+
+      <div class="flow-card">
+        <div class="flow-num-badge">Flow 6.12</div>
+        <h4>Survey Response</h4>
+        <div class="flow-steps">
+          <div class="flow-step"><div class="step-dot">1</div><p>Admin creates survey with JSON question set and active period</p></div>
+          <div class="flow-step"><div class="step-dot">2</div><p>Active surveys shown to authenticated customers</p></div>
+          <div class="flow-step"><div class="step-dot">3</div><p>Customer submits responses → stored in <mark>survey_responses</mark></p></div>
+          <div class="flow-step"><div class="step-dot">4</div><p>Survey marked completed; one submission per customer per survey</p></div>
+        </div>
+      </div>
+
+      <div class="flow-card">
+        <div class="flow-num-badge">Flow 6.13</div>
+        <h4>Deal Maker Application</h4>
+        <div class="flow-steps">
+          <div class="flow-step"><div class="step-dot">1</div><p>Customer submits Deal Maker application with motivation statement</p></div>
+          <div class="flow-step"><div class="step-dot">2</div><p>Admin reviews and approves → customer's <mark>is_dealmaker</mark> flag set true</p></div>
+          <div class="flow-step"><div class="step-dot">3</div><p>Admin assigns tasks; Deal Maker updates progress in Customer App</p></div>
+          <div class="flow-step"><div class="step-dot">4</div><p>Admin verifies completion and records reward as paid</p></div>
+        </div>
+      </div>
+
+      <div class="flow-card">
+        <div class="flow-num-badge">Flow 6.14</div>
+        <h4>Manual Coupon Redemption</h4>
+        <div class="flow-steps">
+          <div class="flow-step"><div class="step-dot">1</div><p>Customer provides name or phone to merchant at point of sale</p></div>
+          <div class="flow-step"><div class="step-dot">2</div><p>Merchant searches customer in Redemption Lookup section</p></div>
+          <div class="flow-step"><div class="step-dot">3</div><p>System returns customer's active saved coupons valid for this merchant</p></div>
+          <div class="flow-step"><div class="step-dot">4</div><p>Merchant selects coupon; API validates and creates redemption record</p></div>
+        </div>
+      </div>
+
+      <div class="flow-card">
+        <div class="flow-num-badge">Flow 6.15</div>
+        <h4>Admin Gift Coupon Delivery</h4>
+        <div class="flow-steps">
+          <div class="flow-step"><div class="step-dot">1</div><p>Admin selects active coupon and target customer</p></div>
+          <div class="flow-step"><div class="step-dot">2</div><p>Sets optional expiry and acceptance-required flag</p></div>
+          <div class="flow-step"><div class="step-dot">3</div><p>Gift appears in customer's gift inbox; customer accepts or rejects</p></div>
+          <div class="flow-step"><div class="step-dot">4</div><p>Accepted gift added to wallet and becomes redeemable</p></div>
+        </div>
+      </div>
+
+      <div class="flow-card">
+        <div class="flow-num-badge">Flow 6.16</div>
+        <h4>Contact & Business Enquiry</h4>
+        <div class="flow-steps">
+          <div class="flow-step"><div class="step-dot">1</div><p>Visitor submits contact form or business sign-up form</p></div>
+          <div class="flow-step"><div class="step-dot">2</div><p>Enquiry stored in <mark>contact_enquiries</mark> with type flag</p></div>
+          <div class="flow-step"><div class="step-dot">3</div><p>Admin opens enquiry → auto-marked as read</p></div>
+          <div class="flow-step"><div class="step-dot">4</div><p>Sales Admin follows up on business enquiries → creates lead → onboards merchant</p></div>
+        </div>
+      </div>
+
+      <div class="flow-card">
+        <div class="flow-num-badge">Flow 6.17</div>
+        <h4>Flash Discount Lifecycle</h4>
+        <div class="flow-steps">
+          <div class="flow-step"><div class="step-dot">1</div><p>Merchant creates flash discount with percentage, start/end datetime</p></div>
+          <div class="flow-step"><div class="step-dot">2</div><p>If start time passed, flash discount is immediately live</p></div>
+          <div class="flow-step"><div class="step-dot">3</div><p>API evaluates current datetime and returns only active discounts</p></div>
+          <div class="flow-step"><div class="step-dot">4</div><p>Auto-expires once <mark>valid_until</mark> passes — no manual action required</p></div>
+        </div>
+      </div>
+
+      <div class="flow-card">
+        <div class="flow-num-badge">Flow 6.18</div>
+        <h4>Coupon Bulk Allotment</h4>
+        <div class="flow-steps">
+          <div class="flow-step"><div class="step-dot">1</div><p>Admin selects coupon and supplies list of target customer recipients</p></div>
+          <div class="flow-step"><div class="step-dot">2</div><p>System creates <mark>coupon_bulk_allotments</mark> parent record</p></div>
+          <div class="flow-step"><div class="step-dot">3</div><p>Individual <mark>coupon_allotment_items</mark> created per recipient</p></div>
+          <div class="flow-step"><div class="step-dot">4</div><p>Coupons appear in each customer's wallet — no discovery required</p></div>
+        </div>
+      </div>
+
+      <div class="flow-card">
+        <div class="flow-num-badge">Flow 6.19</div>
+        <h4>Mystery Shopping Assignment</h4>
+        <div class="flow-steps">
+          <div class="flow-step"><div class="step-dot">1</div><p>Promoter Admin assigns task to a customer-shopper for a target merchant</p></div>
+          <div class="flow-step"><div class="step-dot">2</div><p>Task created with JSON checklist and optional payment amount</p></div>
+          <div class="flow-step"><div class="step-dot">3</div><p>Customer visits merchant undercover and completes evaluation</p></div>
+          <div class="flow-step"><div class="step-dot">4</div><p>Admin verifies completion and records payment status</p></div>
+        </div>
+      </div>
+
+      <div class="flow-card">
+        <div class="flow-num-badge">Flow 6.20</div>
+        <h4>Admin Notification Broadcast</h4>
+        <div class="flow-steps">
+          <div class="flow-step"><div class="step-dot">1</div><p>Admin selects audience: all customers / merchants / admins / specific user</p></div>
+          <div class="flow-step"><div class="step-dot">2</div><p>Admin composes notification with title, body, and type</p></div>
+          <div class="flow-step"><div class="step-dot">3</div><p>System bulk-inserts notification records for all matching recipients</p></div>
+          <div class="flow-step"><div class="step-dot">4</div><p>Notifications immediately appear as unread in recipients' feeds</p></div>
+        </div>
+      </div>
+
+      <div class="flow-card">
+        <div class="flow-num-badge">Flow 6.21</div>
+        <h4>Loyalty Card Configuration Self-Selection</h4>
+        <div class="flow-steps">
+          <div class="flow-step"><div class="step-dot">1</div><p>Admin creates card configuration with tier, pricing, validity, features HTML, and partner merchants</p></div>
+          <div class="flow-step"><div class="step-dot">2</div><p>Customer visits Card Selection page; API returns configs filtered by customer's city</p></div>
+          <div class="flow-step"><div class="step-dot">3</div><p>Customer selects a free config → API assigns card configuration immediately; card becomes active</p></div>
+          <div class="flow-step"><div class="step-dot">4</div><p>For paid configs → payment flow queued; card activated upon confirmed payment</p></div>
+          <div class="flow-step"><div class="step-dot">5</div><p>Card detail (My Card) shows classification badge, partner logos, expiry, and coupon slot usage</p></div>
+        </div>
+      </div>
+
+      <div class="flow-card">
+        <div class="flow-num-badge">Flow 6.22</div>
+        <h4>Active Card Requirement Enforcement</h4>
+        <div class="flow-steps">
+          <div class="flow-step"><div class="step-dot">1</div><p>Customer attempts to save a coupon, subscribe, redeem a coupon, or participate in a contest</p></div>
+          <div class="flow-step"><div class="step-dot">2</div><p>API middleware checks <mark>requireActiveCard</mark>: customer must have a card with <mark>status = active</mark></p></div>
+          <div class="flow-step"><div class="step-dot">3</div><p>If no card or card is inactive/blocked → API returns HTTP 403 with actionable error message</p></div>
+          <div class="flow-step"><div class="step-dot">4</div><p>Customer directed to Card Selection page to obtain or reactivate a card before proceeding</p></div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ── 7. ENTITY RELATIONSHIPS ── -->
+  <section class="section" id="entities">
+    <div class="section-header">
+      <div class="section-num">07</div>
+      <div class="section-title-wrap">
+        <div class="section-eyebrow">Data Model</div>
+        <h2 class="section-title">Entity Relationships</h2>
+      </div>
+    </div>
+
+    <div class="entity-group">
+      <div class="entity-group-title">Core Entities</div>
+      <div class="entity-list">
+        <div class="entity-item">
+          <div class="entity-name">User</div>
+          <div class="entity-desc">The foundational identity record for all platform participants. Stores login credentials (email, phone, password) and user type. Both customer and merchant profiles are linked to a user record through a one-to-one relationship.</div>
+        </div>
+        <div class="entity-item">
+          <div class="entity-name">Merchant</div>
+          <div class="entity-desc">Represents a registered business linked to one user account. Has multiple stores, a subscription plan, and status. Associated with labels, tags, and a priority weight affecting search position.</div>
+        </div>
+        <div class="entity-item">
+          <div class="entity-name">Customer</div>
+          <div class="entity-desc">Represents a registered consumer with type classification (standard, premium, deal maker), subscription status, referral code, city assignment, and optional loyalty card linkage. The linked card may carry a configuration tier (silver, gold, platinum, diamond) that gates platform actions such as coupon saving and redemption.</div>
+        </div>
+        <div class="entity-item">
+          <div class="entity-name">Store</div>
+          <div class="entity-desc">A physical location owned by a Merchant with city/area assignment, operating hours, contact info, and gallery images. Store-category assignments managed through <mark>store_categories</mark> pivot.</div>
+        </div>
+        <div class="entity-item">
+          <div class="entity-name">Coupon</div>
+          <div class="entity-desc">A promotional offer linked to a Merchant and optionally a Store. Has discount type, value, validity window, usage limit, approval status, and banner image. Linked to categories via <mark>coupon_categories</mark>, cities via <mark>coupon_city_targets</mark>, and tags via <mark>coupon_tags</mark>.</div>
+        </div>
+        <div class="entity-item">
+          <div class="entity-name">Store Coupon</div>
+          <div class="entity-desc">A merchant-issued coupon assigned directly to a specific customer. Targeted and gifted rather than publicly browsable. Tracks assignment and redemption state per recipient.</div>
+        </div>
+        <div class="entity-item">
+          <div class="entity-name">Flash Discount</div>
+          <div class="entity-desc">A time-sensitive store-level percentage discount that auto-expires once its end datetime passes. Independently browsable on the customer home screen.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="entity-group">
+      <div class="entity-group-title">Engagement Entities</div>
+      <div class="entity-list">
+        <div class="entity-item"><div class="entity-name">Review</div><div class="entity-desc">Links a customer to a merchant with rating, text, and merchant reply. Auto-approved on submission.</div></div>
+        <div class="entity-item"><div class="entity-name">Grievance</div><div class="entity-desc">Links a customer to a merchant (optionally referencing a coupon). Has open/resolved status. The <mark>grievance_messages</mark> table stores the threaded correspondence.</div></div>
+        <div class="entity-item"><div class="entity-name">Message / Notification</div><div class="entity-desc">Powers in-app direct messaging between merchants and customers, and the admin notification system. Notification type classification controls display styling.</div></div>
+        <div class="entity-item"><div class="entity-name">Contest / Survey / Referral</div><div class="entity-desc">All engagement modules link participation records back to individual customers, allowing customers to track their own activity within each program.</div></div>
+      </div>
+    </div>
+
+    <div class="entity-group">
+      <div class="entity-group-title">Loyalty & Program Entities</div>
+      <div class="entity-list">
+        <div class="entity-item"><div class="entity-name">Card</div><div class="entity-desc">Loyalty card with card number, variant, status (unassigned, activated, blocked), preprinted flag, customer assignment, and an optional link to a <mark>card_configurations</mark> record. When linked, expiry date, days remaining, and expiry status (active / expiring_soon / expired) are computed and stored.</div></div>
+        <div class="entity-item"><div class="entity-name">Card Configuration</div><div class="entity-desc">Admin-defined card plan: name, classification tier (silver / gold / platinum / diamond), price, validity in days, HTML features list, max live coupon slots, coupon authorisation tinyint, card image front/back, and optional city restrictions via <mark>card_config_cities</mark>. Publicly selectable configurations are surfaced via the <mark>/public/card-configurations</mark> API endpoint.</div></div>
+        <div class="entity-item"><div class="entity-name">Card Config Partners</div><div class="entity-desc">Ordered list of partner merchants associated with a card configuration. Each partner has a type (premium / normal), optional image, optional URL, and sort order. Returned as a nested array with the configuration detail.</div></div>
+        <div class="entity-item"><div class="entity-name">Card Auth Codes</div><div class="entity-desc">Time-limited 6-digit codes generated for pre-printed card activation. Each code is consumed on successful use.</div></div>
+        <div class="entity-item"><div class="entity-name">Dealmaker Application / Tasks</div><div class="entity-desc">Application records and individual tasks assigned to approved Deal Makers, with checklist, progress status, and reward tracking.</div></div>
+        <div class="entity-item"><div class="entity-name">Mystery Shopping Tasks</div><div class="entity-desc">Admin-assigned evaluation tasks for selected customer-shoppers targeting specific merchants, with JSON checklists and payment tracking.</div></div>
+      </div>
+    </div>
+
+    <div class="entity-group">
+      <div class="entity-group-title">Commercial & Administrative Entities</div>
+      <div class="entity-list">
+        <div class="entity-item"><div class="entity-name">Coupon Redemption</div><div class="entity-desc">Transaction record linking coupon, customer, store, merchant, discount amount, and transaction value. The primary data source for all analytics.</div></div>
+        <div class="entity-item"><div class="entity-name">Sales Registry</div><div class="entity-desc">Manual transaction entries logged by merchants to record sales not tied to a specific coupon redemption.</div></div>
+        <div class="entity-item"><div class="entity-name">Coupon Bulk Allotment / Items</div><div class="entity-desc">Parent record groups the batch; individual allotment items record per-recipient assignments for pre-allocated coupons.</div></div>
+        <div class="entity-item"><div class="entity-name">Audit Log</div><div class="entity-desc">Immutable record of every significant admin action with actor, action type, affected entity ID and table, timestamp, and IP address.</div></div>
+        <div class="entity-item"><div class="entity-name">Advertisement / Blog Post / CMS Page</div><div class="entity-desc">Promotional banners, editorial blog content, and static informational pages — all managed through the Admin Application with scheduling and slug routing.</div></div>
+      </div>
+    </div>
+
+    <div class="entity-group">
+      <div class="entity-group-title">Structural Entities</div>
+      <div class="entity-list">
+        <div class="entity-item"><div class="entity-name">City / Area / Location</div><div class="entity-desc">Hierarchical geographic reference data. Stores and customers are associated with cities and areas for location-aware content filtering.</div></div>
+        <div class="entity-item"><div class="entity-name">Category / Sub-Category</div><div class="entity-desc">Hierarchical classification system for stores and coupons driving discovery by category in the Customer Application.</div></div>
+        <div class="entity-item"><div class="entity-name">Tag / Label / Profession / Day Type</div><div class="entity-desc">Free-form and reference data for merchant tagging, customer profile enrichment, and important day tracking. All managed as configurable master data.</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── 8. MASTER DATA ── -->
+  <section class="section" id="master-data">
+    <div class="section-header">
+      <div class="section-num">08</div>
+      <div class="section-title-wrap">
+        <div class="section-eyebrow">Reference Data</div>
+        <h2 class="section-title">Master Data</h2>
+      </div>
+    </div>
+
+    <p class="prose" style="margin-bottom: 2rem;">
+      Master data is centrally managed by the Admin Application and consumed across all applications. The Backend API serves cities, areas, categories, and sub-categories as public endpoints. The Merchant Application fetches these when creating or editing stores.
+    </p>
+
+    <div class="master-data-grid">
+      <div class="md-card">
+        <div class="md-name">Cities</div>
+        <div class="md-meta">Used in: store creation, customer profiles, API city filtering, public endpoints</div>
+      </div>
+      <div class="md-card">
+        <div class="md-name">Areas</div>
+        <div class="md-meta">Used in: store creation, customer profiles, location display</div>
+      </div>
+      <div class="md-card">
+        <div class="md-name">Locations</div>
+        <div class="md-meta">Used in: store creation for precise address details</div>
+      </div>
+      <div class="md-card">
+        <div class="md-name">Categories</div>
+        <div class="md-meta">Used in: store classification, coupon targeting, category browsing</div>
+      </div>
+      <div class="md-card">
+        <div class="md-name">Sub-categories</div>
+        <div class="md-meta">Used in: store classification under parent category</div>
+      </div>
+      <div class="md-card">
+        <div class="md-name">Tags</div>
+        <div class="md-meta">Used in: merchant tagging for home feed, coupon tagging for discovery</div>
+      </div>
+      <div class="md-card">
+        <div class="md-name">Labels</div>
+        <div class="md-meta">Used in: merchant classification for internal admin organisation</div>
+      </div>
+      <div class="md-card">
+        <div class="md-name">Day Types</div>
+        <div class="md-meta">Used in: customer important day tracker labels</div>
+      </div>
+      <div class="md-card">
+        <div class="md-name">Professions</div>
+        <div class="md-meta">Used in: customer profile enrichment during onboarding</div>
+      </div>
+      <div class="md-card">
+        <div class="md-name">Job Titles</div>
+        <div class="md-meta">Used in: customer profile enrichment</div>
+      </div>
+      <div class="md-card">
+        <div class="md-name">Platform Settings</div>
+        <div class="md-meta">Used in: system-wide configuration consumed by API and admin functions</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── 9. CROSS-APP INTERACTIONS ── -->
+  <section class="section" id="cross-app">
+    <div class="section-header">
+      <div class="section-num">09</div>
+      <div class="section-title-wrap">
+        <div class="section-eyebrow">Integration Architecture</div>
+        <h2 class="section-title">Cross-Application Interactions</h2>
+      </div>
+    </div>
+
+    <div class="crossapp-grid">
+      <div class="crossapp-item">
+        <div class="crossapp-path">Customer App ↔ Backend API</div>
+        <div class="crossapp-desc">Every interaction travels as an authenticated HTTP request with JWT access tokens. Browsing uses public endpoints (no auth required). Saving coupons, reviews, contests, and personal actions call authenticated customer endpoints. The API returns location-aware content when a city ID is provided.</div>
+      </div>
+      <div class="crossapp-item">
+        <div class="crossapp-path">Merchant App ↔ Backend API</div>
+        <div class="crossapp-desc">All merchant operations — store config, coupon publishing, redemption scanning, analytics — are processed through the Backend API. The merchant JWT carries the subscription plan and store access scope, which the API uses on every request to enforce feature gates and store-level restrictions.</div>
+      </div>
+      <div class="crossapp-item">
+        <div class="crossapp-path">Admin App ↔ Database (Direct)</div>
+        <div class="crossapp-desc">The Admin Application operates through server-side rendered PHP controllers that interact with the database directly — it does not call the Backend API. Admin actions (approvals, content creation, user management, configuration) are written directly to the database and immediately affect what the API serves.</div>
+      </div>
+      <div class="crossapp-item">
+        <div class="crossapp-path">Admin App → Merchant App (Indirect)</div>
+        <div class="crossapp-desc">Admin approvals change fields like <mark>profile_status</mark> directly in the database. On the next merchant login or API request, these changes are reflected. Coupon approvals, subscription changes, and notification broadcasts all flow from Admin to end-user applications via the shared database.</div>
+      </div>
+      <div class="crossapp-item">
+        <div class="crossapp-path">Merchant App → Customer App (Indirect)</div>
+        <div class="crossapp-desc">Merchants publish content (coupons, stores, flash discounts) through the Merchant Application via the Backend API. This content is then served by the same Backend API to customers. The two front-end applications never communicate directly — all interaction is mediated through the API and shared database.</div>
+      </div>
+      <div class="crossapp-item">
+        <div class="crossapp-path">Notifications Flow (Admin → All)</div>
+        <div class="crossapp-desc">When an Admin broadcasts a notification, the Admin Application bulk-inserts notification records into the <mark>notifications</mark> table for each target recipient. The Backend API surfaces unread notifications to customers and merchants when they next check their notifications feed.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── 10. SCOPE ── -->
+  <section class="section" id="scope">
+    <div class="section-header">
+      <div class="section-num">10</div>
+      <div class="section-title-wrap">
+        <div class="section-eyebrow">Confirmed Implemented</div>
+        <h2 class="section-title">Current Implementation Scope</h2>
+      </div>
+    </div>
+
+    <p class="prose" style="margin-bottom: 2rem;">All functional capabilities below are confirmed as fully implemented in the current codebase.</p>
+
+    <div class="scope-groups">
+      <div class="scope-group">
+        <div class="scope-group-title">Authentication</div>
+        <div class="scope-item"><span class="scope-check">✓</span> Customer registration with OTP verification</div>
+        <div class="scope-item"><span class="scope-check">✓</span> Customer login with JWT issuance</div>
+        <div class="scope-item"><span class="scope-check">✓</span> Customer password reset via token</div>
+        <div class="scope-item"><span class="scope-check">✓</span> Merchant login with JWT (subscription plan + store scope in payload)</div>
+        <div class="scope-item"><span class="scope-check">✓</span> Merchant password reset</div>
+        <div class="scope-item"><span class="scope-check">✓</span> JWT refresh token management</div>
+        <div class="scope-item"><span class="scope-check">✓</span> Admin session-based authentication</div>
+        <div class="scope-item"><span class="scope-check">✓</span> Mandatory first-login password reset</div>
+      </div>
+
+      <div class="scope-group">
+        <div class="scope-group-title">Platform Discovery</div>
+        <div class="scope-item"><span class="scope-check">✓</span> Public home feed (ads, flash discounts, merchants, coupons, tags)</div>
+        <div class="scope-item"><span class="scope-check">✓</span> Public store browsing with city filter</div>
+        <div class="scope-item"><span class="scope-check">✓</span> Public merchant browsing with reviews and gallery</div>
+        <div class="scope-item"><span class="scope-check">✓</span> Public coupon and flash discount browsing</div>
+        <div class="scope-item"><span class="scope-check">✓</span> Unified search across merchants, stores, coupons, and blog</div>
+        <div class="scope-item"><span class="scope-check">✓</span> Category and sub-category public endpoints</div>
+      </div>
+
+      <div class="scope-group">
+        <div class="scope-group-title">Coupon Management</div>
+        <div class="scope-item"><span class="scope-check">✓</span> All four discount types: percentage, fixed, BOGO, add-on</div>
+        <div class="scope-item"><span class="scope-check">✓</span> Coupon approval workflow (merchant creates → admin approves)</div>
+        <div class="scope-item"><span class="scope-check">✓</span> Multi-level targeting: category, city, area, and location</div>
+        <div class="scope-item"><span class="scope-check">✓</span> Customer coupon wallet with save and remove</div>
+        <div class="scope-item"><span class="scope-check">✓</span> QR code scan redemption from Merchant Application</div>
+        <div class="scope-item"><span class="scope-check">✓</span> Manual coupon code redemption</div>
+        <div class="scope-item"><span class="scope-check">✓</span> Coupon redemption history for customers</div>
+        <div class="scope-item"><span class="scope-check">✓</span> Coupon image (banner) upload and management</div>
+      </div>
+
+      <div class="scope-group">
+        <div class="scope-group-title">Store & Flash</div>
+        <div class="scope-item"><span class="scope-check">✓</span> Store CRUD with city/area/location assignment</div>
+        <div class="scope-item"><span class="scope-check">✓</span> Store gallery management (upload, delete, cover, reorder)</div>
+        <div class="scope-item"><span class="scope-check">✓</span> Store categories in pivot table</div>
+        <div class="scope-item"><span class="scope-check">✓</span> Merchant profile multi-select category assignment (category_ids)</div>
+        <div class="scope-item"><span class="scope-check">✓</span> Store coupon CRUD with individual and bulk assignment</div>
+        <div class="scope-item"><span class="scope-check">✓</span> Flash discount merchant creation and management</div>
+        <div class="scope-item"><span class="scope-check">✓</span> Flash discount city/area/location targeting</div>
+        <div class="scope-item"><span class="scope-check">✓</span> Auto-expiry on past valid_until datetime</div>
+      </div>
+
+      <div class="scope-group">
+        <div class="scope-group-title">Analytics & Reviews</div>
+        <div class="scope-item"><span class="scope-check">✓</span> Merchant analytics dashboard (KPIs + weekly chart)</div>
+        <div class="scope-item"><span class="scope-check">✓</span> Redemptions list with date filter</div>
+        <div class="scope-item"><span class="scope-check">✓</span> Top coupons ranking and revenue summary</div>
+        <div class="scope-item"><span class="scope-check">✓</span> Admin platform-wide reports (customers, merchants, redemptions)</div>
+        <div class="scope-item"><span class="scope-check">✓</span> Customer review submission (auto-approved)</div>
+        <div class="scope-item"><span class="scope-check">✓</span> Merchant review listing and reply</div>
+      </div>
+
+      <div class="scope-group">
+        <div class="scope-group-title">Loyalty & Referral</div>
+        <div class="scope-item"><span class="scope-check">✓</span> Card generation and management in Admin Application</div>
+        <div class="scope-item"><span class="scope-check">✓</span> Pre-printed card two-step activation with auth codes</div>
+        <div class="scope-item"><span class="scope-check">✓</span> Card Configuration CRUD in Admin (name, tier, price, validity, features, images)</div>
+        <div class="scope-item"><span class="scope-check">✓</span> Card classification tiers: silver, gold, platinum, diamond</div>
+        <div class="scope-item"><span class="scope-check">✓</span> Card config partner merchants with type, image, URL, and sort order</div>
+        <div class="scope-item"><span class="scope-check">✓</span> City-based card configuration availability restrictions</div>
+        <div class="scope-item"><span class="scope-check">✓</span> Public card configurations endpoint with city filtering</div>
+        <div class="scope-item"><span class="scope-check">✓</span> Customer self-selection of card configuration (Card Selection page)</div>
+        <div class="scope-item"><span class="scope-check">✓</span> Card expiry tracking: active / expiring_soon / expired statuses</div>
+        <div class="scope-item"><span class="scope-check">✓</span> Active card enforcement (save, subscribe, redeem, contest participation)</div>
+        <div class="scope-item"><span class="scope-check">✓</span> My Card page with classification badge, partner logos, expiry, and coupon slots</div>
+        <div class="scope-item"><span class="scope-check">✓</span> Unique referral code per customer</div>
+        <div class="scope-item"><span class="scope-check">✓</span> Referral tracking with status and rewards</div>
+        <div class="scope-item"><span class="scope-check">✓</span> Customer referral statistics and history</div>
+      </div>
+
+      <div class="scope-group">
+        <div class="scope-group-title">Engagement Programs</div>
+        <div class="scope-item"><span class="scope-check">✓</span> Admin contest creation with winner recording</div>
+        <div class="scope-item"><span class="scope-check">✓</span> Customer contest participation and entry recording</div>
+        <div class="scope-item"><span class="scope-check">✓</span> Admin survey creation with JSON question sets</div>
+        <div class="scope-item"><span class="scope-check">✓</span> Customer survey listing and submission</div>
+        <div class="scope-item"><span class="scope-check">✓</span> Deal Maker application, approval workflow, and task tracking</div>
+        <div class="scope-item"><span class="scope-check">✓</span> Mystery Shopping task assignment and lifecycle management</div>
+      </div>
+
+      <div class="scope-group">
+        <div class="scope-group-title">Communications</div>
+        <div class="scope-item"><span class="scope-check">✓</span> Grievance submission with threaded messaging</div>
+        <div class="scope-item"><span class="scope-check">✓</span> Merchant-to-customer message threads</div>
+        <div class="scope-item"><span class="scope-check">✓</span> In-app notifications for all user types</div>
+        <div class="scope-item"><span class="scope-check">✓</span> Admin broadcast to customers, merchants, or admins</div>
+        <div class="scope-item"><span class="scope-check">✓</span> Mark as read (individual and all)</div>
+        <div class="scope-item"><span class="scope-check">✓</span> Unread tracking for messages</div>
+      </div>
+
+      <div class="scope-group">
+        <div class="scope-group-title">Subscriptions & Access</div>
+        <div class="scope-item"><span class="scope-check">✓</span> Plan assignment and status management in Admin Application</div>
+        <div class="scope-item"><span class="scope-check">✓</span> Feature Gate enforcement in API based on subscription plan</div>
+        <div class="scope-item"><span class="scope-check">✓</span> Merchant subscription renewal request</div>
+        <div class="scope-item"><span class="scope-check">✓</span> Role-based access control with admin type enforcement</div>
+        <div class="scope-item"><span class="scope-check">✓</span> City-scoped access for city admins</div>
+        <div class="scope-item"><span class="scope-check">✓</span> Store-scoped JWT claims for merchant store users</div>
+      </div>
+
+      <div class="scope-group">
+        <div class="scope-group-title">Content & Admin</div>
+        <div class="scope-item"><span class="scope-check">✓</span> Blog post management and public listing</div>
+        <div class="scope-item"><span class="scope-check">✓</span> CMS pages with slug routing</div>
+        <div class="scope-item"><span class="scope-check">✓</span> Ad management and active ad serving in home feed</div>
+        <div class="scope-item"><span class="scope-check">✓</span> Admin gift coupon creation with acceptance requirement</div>
+        <div class="scope-item"><span class="scope-check">✓</span> Customer gift inbox with accept and reject</div>
+        <div class="scope-item"><span class="scope-check">✓</span> Audit log capture and viewer with filtering</div>
+        <div class="scope-item"><span class="scope-check">✓</span> CSRF protection on all admin form submissions</div>
+      </div>
+
+      <div class="scope-group">
+        <div class="scope-group-title">Master Data & Settings</div>
+        <div class="scope-item"><span class="scope-check">✓</span> Cities, areas, locations management</div>
+        <div class="scope-item"><span class="scope-check">✓</span> Categories and sub-categories management</div>
+        <div class="scope-item"><span class="scope-check">✓</span> Tags, labels, professions, job titles, day types</div>
+        <div class="scope-item"><span class="scope-check">✓</span> Platform settings management</div>
+        <div class="scope-item"><span class="scope-check">✓</span> Customer important day creation and management</div>
+        <div class="scope-item"><span class="scope-check">✓</span> Public contact form and business sign-up endpoints</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <div>
+      <div class="footer-brand">Deal Machan</div>
+      <div style="font-size: 0.7rem; color: var(--faint); margin-top: 0.3rem;">Multi-sided deal, coupon &amp; loyalty platform</div>
+    </div>
+    <div class="footer-meta">
+      Document v1.1 · March 12, 2026 · Full Codebase Analysis · All Four Applications
+    </div>
+  </footer>
+
+</div><!-- end .main -->
+
+<script>
+  // ── INTERSECTION OBSERVER for section reveals ──
+  const sections = document.querySelectorAll('.section');
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.classList.add('visible');
+        observer.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.05 });
+  sections.forEach(s => observer.observe(s));
+
+  // ── ACTIVE NAV on scroll ──
+  const navItems = document.querySelectorAll('.nav-item');
+  const sectionEls = document.querySelectorAll('section[id], div[id]');
+  window.addEventListener('scroll', () => {
+    let current = '';
+    sectionEls.forEach(s => {
+      if (window.scrollY >= s.offsetTop - 120) current = s.id;
+    });
+    navItems.forEach(n => {
+      n.classList.remove('active');
+      if (n.getAttribute('href') === '#' + current) n.classList.add('active');
+    });
+  }, { passive: true });
+
+  // ── COUNTER ANIMATION ──
+  function animateCount(el, target, duration) {
+    let start = 0;
+    const step = target / (duration / 16);
+    const timer = setInterval(() => {
+      start += step;
+      if (start >= target) { el.textContent = target; clearInterval(timer); }
+      else el.textContent = Math.floor(start);
+    }, 16);
+  }
+  const statObserver = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        const nums = e.target.querySelectorAll('.stat-number');
+        nums.forEach(n => {
+          const val = parseInt(n.textContent);
+          animateCount(n, val, 800);
+        });
+        statObserver.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.5 });
+  document.querySelectorAll('.stats-bar').forEach(el => statObserver.observe(el));
+</script>
+</body>
+</html>

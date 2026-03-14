@@ -52,11 +52,11 @@ $color = $statusColors[$post['status']] ?? 'secondary';
                     <dd class="col-7"><span class="badge bg-<?= $color ?>"><?= ucfirst($post['status']) ?></span></dd>
 
                     <dt class="col-5 text-muted">Author</dt>
-                    <dd class="col-7"><?= escape($post['author_name'] ?? '—') ?></dd>
+                    <dd class="col-7"><?= escape($post['author_name'] ?? '&mdash;') ?></dd>
 
                     <dt class="col-5 text-muted">Published</dt>
                     <dd class="col-7">
-                        <?= $post['published_at'] ? date('d M Y H:i', strtotime($post['published_at'])) : '<span class="text-muted">—</span>' ?>
+                        <?= $post['published_at'] ? date('d M Y H:i', strtotime($post['published_at'])) : '<span class="text-muted">&mdash;</span>' ?>
                     </dd>
                 </dl>
             </div>
@@ -66,10 +66,11 @@ $color = $statusColors[$post['status']] ?? 'secondary';
         <div class="card shadow-sm">
             <div class="card-header fw-semibold small">Featured Image</div>
             <div class="card-body p-0">
-                <img src="<?= BASE_URL ?>public/<?= escape($post['featured_image']) ?>"
+                <img src="<?= imageUrl($post['featured_image']) ?>"
                      class="img-fluid w-100 rounded-bottom"
                      style="max-height:180px;object-fit:cover;"
-                     alt="Featured image">
+                     alt="Featured image"
+                     onerror="this.src='<?= imageUrl('') ?>'">
             </div>
         </div>
         <?php endif; ?>

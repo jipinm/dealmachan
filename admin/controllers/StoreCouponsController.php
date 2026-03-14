@@ -80,7 +80,7 @@ class StoreCouponsController extends Controller {
         if (!$storeCoupon) { $this->redirectWithError('store-coupons', 'Store coupon not found.'); return; }
 
         $this->loadView('store-coupons/view', [
-            'title'       => 'Store Coupon — ' . escape($storeCoupon['coupon_code']),
+            'title'       => 'Store Coupon &mdash; ' . escape($storeCoupon['coupon_code']),
             'storeCoupon' => $storeCoupon,
             'current_user'=> $this->auth->getCurrentUser(),
         ]);
@@ -97,7 +97,7 @@ class StoreCouponsController extends Controller {
 
         $this->storeCouponModel->toggleStatus($id);
         $cu = $this->auth->getCurrentUser();
-        logAudit('store_coupon_toggled', $id, 'store_coupon', $cu['id']);
+        logAudit('store_coupon_toggled', 'store_coupon', $id);
         $_SESSION['success'] = 'Store coupon status updated.';
         $this->redirect($redirect);
     }
@@ -133,7 +133,7 @@ class StoreCouponsController extends Controller {
         try {
             $this->storeCouponModel->deleteStoreCoupon($id);
             $cu = $this->auth->getCurrentUser();
-            logAudit('store_coupon_deleted', $id, 'store_coupon', $cu['id']);
+            logAudit('store_coupon_deleted', 'store_coupon', $id);
             $_SESSION['success'] = "Store coupon '{$sc['coupon_code']}' deleted.";
         } catch (Exception $e) {
             $_SESSION['error'] = 'Cannot delete store coupon: ' . $e->getMessage();

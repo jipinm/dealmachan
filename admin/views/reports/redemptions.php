@@ -111,11 +111,11 @@
                 <td class="text-muted small"><?= $r['id'] ?></td>
                 <td class="text-muted small"><?= date('d M Y, H:i', strtotime($r['redeemed_at'])) ?></td>
                 <td>
-                    <span class="fw-semibold small"><?= htmlspecialchars($r['coupon_title'] ?? '—') ?></span>
+                    <span class="fw-semibold small"><?= htmlspecialchars($r['coupon_title'] ?? '&mdash;') ?></span>
                     <code class="d-block text-muted" style="font-size:.7rem"><?= htmlspecialchars($r['coupon_code'] ?? '') ?></code>
                 </td>
-                <td class="text-muted small"><?= htmlspecialchars($r['customer_name'] ?? '—') ?></td>
-                <td class="text-muted small"><?= htmlspecialchars($r['business_name'] ?? '—') ?></td>
+                <td class="text-muted small"><?= htmlspecialchars($r['customer_name'] ?? '&mdash;') ?></td>
+                <td class="text-muted small"><?= htmlspecialchars($r['business_name'] ?? '&mdash;') ?></td>
                 <td class="text-end text-danger fw-bold small">₹<?= number_format($r['discount_amount'] ?? 0, 2) ?></td>
                 <td class="text-end text-success fw-bold small">₹<?= number_format($r['transaction_amount'] ?? 0, 2) ?></td>
             </tr>

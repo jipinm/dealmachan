@@ -26,6 +26,11 @@ class SalesController {
         $where  = 'sr.merchant_id = ?';
         $binds  = [$merchantId];
 
+        // Store-scoped users can only see sales for their own store
+        if (($user['access_scope'] ?? 'merchant') === 'store' && !empty($user['store_id'])) {
+            $params['store_id'] = (int)$user['store_id'];
+        }
+
         if (!empty($params['store_id'])) {
             $where  .= ' AND sr.store_id = ?';
             $binds[] = (int)$params['store_id'];
@@ -75,7 +80,10 @@ class SalesController {
     // ── POST /merchants/sales-registry ────────────────────────────────────────
     public function store(array $user, array $body): never {
         $merchantId = (int)$user['merchant_id'];
-
+        // For store-scoped users, force store_id to their assigned store
+        if (($user['access_scope'] ?? 'merchant') === 'store' && !empty($user['store_id'])) {
+            $body['store_id'] = (int)$user['store_id'];
+        }
         $v = new Validator($body);
         $v->required('store_id')
           ->required('transaction_amount');

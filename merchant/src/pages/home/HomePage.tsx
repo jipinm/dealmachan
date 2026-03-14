@@ -90,11 +90,14 @@ function ChartTooltip({ active, payload, label }: { active?: boolean; payload?: 
 export default function HomePage() {
   const navigate = useNavigate()
   const merchant = useAuthStore((s) => s.merchant)
+  const isStoreAdmin  = useAuthStore(s => s.isStoreAdmin())
+  const scopedStoreId = useAuthStore(s => s.scopedStoreId())
 
   const { data, isLoading } = useQuery<DashboardData>({
-    queryKey: ['dashboard'],
+    queryKey: ['dashboard', scopedStoreId],
     queryFn: async () => {
-      const res = await apiClient.get('/merchants/analytics/dashboard')
+      const params = isStoreAdmin && scopedStoreId ? { store_id: scopedStoreId } : {}
+      const res = await apiClient.get('/merchants/analytics/dashboard', { params })
       return res.data.data as DashboardData
     },
     staleTime: 60 * 1000, // 1 min

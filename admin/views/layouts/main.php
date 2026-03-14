@@ -192,14 +192,11 @@ $current_user = $auth->getCurrentUser();
                                 <a class="nav-link small" href="<?= BASE_URL ?>reviews">
                                     <i class="fas fa-list me-2"></i> All Reviews
                                 </a>
-                                <a class="nav-link small" href="<?= BASE_URL ?>reviews?status=pending">
-                                    <i class="fas fa-clock me-2"></i> Pending Approval
+                                <a class="nav-link small" href="<?= BASE_URL ?>reviews?status=flagged">
+                                    <i class="fas fa-flag me-2"></i> Flagged
                                 </a>
                                 <a class="nav-link small" href="<?= BASE_URL ?>reviews?status=approved">
                                     <i class="fas fa-check-circle me-2"></i> Approved
-                                </a>
-                                <a class="nav-link small" href="<?= BASE_URL ?>reviews?status=rejected">
-                                    <i class="fas fa-times-circle me-2"></i> Rejected
                                 </a>
                             </div>
                         </div>
@@ -357,6 +354,11 @@ $current_user = $auth->getCurrentUser();
                                 <a class="nav-link small" href="<?= BASE_URL ?>cards/track">
                                     <i class="fas fa-search me-2"></i> Track Cards
                                 </a>
+                                <?php if (in_array($current_user['admin_type'], ['super_admin', 'city_admin'])): ?>
+                                <a class="nav-link small" href="<?= BASE_URL ?>card-configurations">
+                                    <i class="fas fa-cog me-2"></i> Card Configurations
+                                </a>
+                                <?php endif; ?>
                             </div>
                         </div>
                     </div>
@@ -487,6 +489,12 @@ $current_user = $auth->getCurrentUser();
                                 </a>
                                 <a class="nav-link small" href="<?= BASE_URL ?>master-data/tags">
                                     <i class="fas fa-tags me-2"></i> Tags
+                                </a>
+                                <a class="nav-link small" href="<?= BASE_URL ?>master-data/categories">
+                                    <i class="fas fa-th me-2"></i> Categories
+                                </a>
+                                <a class="nav-link small" href="<?= BASE_URL ?>master-data/sub-categories">
+                                    <i class="fas fa-list-ul me-2"></i> Sub-categories
                                 </a>
                                 <a class="nav-link small" href="<?= BASE_URL ?>master-data/professions">
                                     <i class="fas fa-briefcase me-2"></i> Professions
@@ -739,7 +747,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         const hrefPath      = linkUrl.pathname;
         const isExactPath   = currentPath === hrefPath;
-        // Sub-page: e.g. /coupons/detail under /coupons — uses hrefPath + '/' to prevent
+        // Sub-page: e.g. /coupons/detail under /coupons &mdash; uses hrefPath + '/' to prevent
         // /store-coupons from being treated as a sub-page of /coupons
         const isSubPagePath = !isExactPath && currentPath.startsWith(hrefPath + '/');
 
@@ -759,7 +767,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // Boost score so a matching filter link always beats a plain "View All"
             candidates.push({ link, score: hrefPath.length + 1000 });
         } else {
-            // Plain path link — exact or sub-page
+            // Plain path link &mdash; exact or sub-page
             candidates.push({ link, score: hrefPath.length });
         }
     });

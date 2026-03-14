@@ -151,17 +151,17 @@
             <tr>
                 <td class="text-muted small"><?= $r['id'] ?></td>
                 <td>
-                    <?= htmlspecialchars($r['name'] ?? '—') ?>
+                    <?= htmlspecialchars($r['name'] ?? '&mdash;') ?>
                     <?php if ($r['is_dealmaker']): ?><span class="badge bg-success ms-1 small">DM</span><?php endif; ?>
                 </td>
-                <td class="text-muted small"><?= htmlspecialchars($r['email'] ?? '—') ?></td>
-                <td class="text-muted small"><?= htmlspecialchars($r['phone'] ?? '—') ?></td>
+                <td class="text-muted small"><?= htmlspecialchars($r['email'] ?? '&mdash;') ?></td>
+                <td class="text-muted small"><?= htmlspecialchars($r['phone'] ?? '&mdash;') ?></td>
                 <td><span class="badge bg-secondary"><?= htmlspecialchars($r['customer_type'] ?? 'standard') ?></span></td>
-                <td class="text-muted small"><?= htmlspecialchars(str_replace('_',' ',$r['registration_type'] ?? '—')) ?></td>
+                <td class="text-muted small"><?= htmlspecialchars(str_replace('_',' ',$r['registration_type'] ?? '&mdash;')) ?></td>
                 <td>
                     <?php $ss = $r['subscription_status']; ?>
                     <span class="badge bg-<?= $ss === 'active' ? 'success' : ($ss === 'expired' ? 'danger' : 'secondary') ?>">
-                        <?= ucfirst($ss ?? '—') ?>
+                        <?= ucfirst($ss ?? '&mdash;') ?>
                     </span>
                 </td>
                 <td class="text-muted small"><?= date('d M Y', strtotime($r['created_at'])) ?></td>

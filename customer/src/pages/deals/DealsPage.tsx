@@ -32,12 +32,14 @@ function CouponGridCard({ coupon }: { coupon: TopCoupon }) {
     : coupon.discount_type === 'bogo'       ? 'BOGO'
     : coupon.discount_value != null         ? `₹${coupon.discount_value} OFF`
     : 'DEAL'
+  const displayName = coupon.store_name  || coupon.merchant_name
+  const displayLogo = coupon.store_image || coupon.merchant_logo
 
   return (
     <Link to={`/deals/${coupon.id}/${slugify(coupon.title)}`} className="card card-hover group block overflow-hidden">
       <div className="relative h-44 bg-slate-100 overflow-hidden">
         <img
-          src={imgSrc(coupon.banner_image || coupon.merchant_logo)}
+          src={imgSrc(coupon.banner_image || displayLogo)}
           alt={coupon.title}
           loading="lazy"
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
@@ -48,13 +50,13 @@ function CouponGridCard({ coupon }: { coupon: TopCoupon }) {
       <div className="p-4">
         <div className="flex items-center gap-2 mb-1.5">
           <img
-            src={imgSrc(coupon.merchant_logo)}
-            alt={coupon.merchant_name}
+            src={imgSrc(displayLogo)}
+            alt={displayName}
             loading="lazy"
             className="w-6 h-6 rounded-full object-cover bg-slate-100"
-            onError={(e) => { (e.target as HTMLImageElement).src = 'https://via.placeholder.com/40?text=M' }}
+            onError={(e) => { (e.target as HTMLImageElement).src = 'https://via.placeholder.com/40?text=S' }}
           />
-          <span className="text-xs text-slate-500 font-medium truncate">{coupon.merchant_name}</span>
+          <span className="text-xs text-slate-500 font-medium truncate">{displayName}</span>
         </div>
         <h3 className="font-semibold text-slate-800 text-sm leading-snug line-clamp-2 mb-3">{coupon.title}</h3>
         <div className="flex items-center justify-between">

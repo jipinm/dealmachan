@@ -2,7 +2,7 @@ import { apiClient } from '@/api/client'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
-export type DiscountType    = 'percentage' | 'fixed'
+export type DiscountType    = 'percentage' | 'fixed' | 'bogo' | 'addon'
 export type ApprovalStatus  = 'pending' | 'approved' | 'rejected'
 export type CouponStatus    = 'active' | 'inactive' | 'expired'
 export type CouponTab       = 'all' | 'active' | 'pending' | 'expired' | 'inactive'
@@ -61,6 +61,11 @@ export interface CreateCouponPayload {
   valid_until?: string | null
   usage_limit?: number | null
   terms_conditions?: string
+  // BOGO fields
+  bogo_buy_quantity?: number | null
+  bogo_get_quantity?: number | null
+  // Add-on fields
+  addon_item_description?: string | null
 }
 
 export type UpdateCouponPayload = Partial<Omit<CreateCouponPayload, 'coupon_code'>> & {

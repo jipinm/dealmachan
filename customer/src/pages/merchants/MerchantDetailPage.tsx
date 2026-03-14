@@ -259,7 +259,7 @@ export default function MerchantDetailPage() {
                         className="relative aspect-square rounded-xl overflow-hidden group"
                       >
                         <img
-                          src={img.image_url}
+                          src={getImageUrl(img.image_url)}
                           alt={img.store_name}
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
                         />
@@ -300,7 +300,7 @@ export default function MerchantDetailPage() {
                       )}
                       <div className="max-w-lg w-full" onClick={(e) => e.stopPropagation()}>
                         <img
-                          src={gallery[lightboxIdx].image_url}
+                          src={getImageUrl(gallery[lightboxIdx].image_url)}
                           alt={gallery[lightboxIdx].store_name}
                           className="w-full rounded-2xl object-contain max-h-[80vh]"
                         />

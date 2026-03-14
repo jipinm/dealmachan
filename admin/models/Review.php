@@ -105,10 +105,10 @@ class Review extends Model {
     public function getStats() {
         $sql = "SELECT
                     COUNT(*)                                                          AS total,
-                    SUM(CASE WHEN r.status = 'pending'  THEN 1 ELSE 0 END)          AS pending,
                     SUM(CASE WHEN r.status = 'approved' THEN 1 ELSE 0 END)          AS approved,
-                    SUM(CASE WHEN r.status = 'rejected' THEN 1 ELSE 0 END)          AS rejected,
-                    ROUND(AVG(CASE WHEN r.status = 'approved' THEN r.rating END), 1) AS avg_approved_rating,
+                    SUM(CASE WHEN r.status IN ('flagged','rejected') THEN 1 ELSE 0 END) AS flagged,
+                    SUM(CASE WHEN r.status = 'pending'  THEN 1 ELSE 0 END)          AS pending,
+                    ROUND(AVG(CASE WHEN r.status = 'approved' THEN r.rating END), 1) AS avg_rating,
                     SUM(CASE WHEN DATE(r.created_at) = CURDATE() THEN 1 ELSE 0 END) AS today
                 FROM {$this->table} r";
         $stmt = $this->db->prepare($sql);
@@ -116,22 +116,34 @@ class Review extends Model {
         return $stmt->fetch();
     }
 
-    // ─── APPROVE ──────────────────────────────────────────────────────────────
+    // ─── FLAG (post-publish moderation) ─────────────────────────────────────
 
-    public function approve($id) {
+    public function flag($id) {
+        $stmt = $this->db->prepare(
+            "UPDATE {$this->table} SET status = 'flagged', updated_at = NOW() WHERE id = ?"
+        );
+        return $stmt->execute([$id]);
+    }
+
+    // ─── RESTORE (unflag → back to approved) ─────────────────────────────────
+
+    public function restore($id) {
         $stmt = $this->db->prepare(
             "UPDATE {$this->table} SET status = 'approved', updated_at = NOW() WHERE id = ?"
         );
         return $stmt->execute([$id]);
     }
 
-    // ─── REJECT ───────────────────────────────────────────────────────────────
+    // ─── APPROVE (legacy &mdash; kept for backward-compat) ─────────────────────────
+
+    public function approve($id) {
+        return $this->restore($id);
+    }
+
+    // ─── REJECT (legacy &mdash; kept for backward-compat, now means flag) ──────────
 
     public function reject($id) {
-        $stmt = $this->db->prepare(
-            "UPDATE {$this->table} SET status = 'rejected', updated_at = NOW() WHERE id = ?"
-        );
-        return $stmt->execute([$id]);
+        return $this->flag($id);
     }
 
     // ─── BULK UPDATE ──────────────────────────────────────────────────────────

@@ -102,7 +102,7 @@ $pageTitle = 'Deal Maker Requests';
                         <td class="fw-semibold"><?= htmlspecialchars($req['name']) ?></td>
                         <td><?= htmlspecialchars($req['phone']) ?></td>
                         <td class="text-muted small"><?= htmlspecialchars($req['email']) ?></td>
-                        <td><?= $req['gender'] ? ucfirst($req['gender']) : '—' ?></td>
+                        <td><?= $req['gender'] ? ucfirst($req['gender']) : '&mdash;' ?></td>
                         <td class="text-muted small"><?= date('d M Y', strtotime($req['created_at'])) ?></td>
                         <td>
                             <?php if ($req['user_status'] === 'active'): ?>

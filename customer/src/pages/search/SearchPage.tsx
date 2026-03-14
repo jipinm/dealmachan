@@ -94,8 +94,8 @@ export default function SearchPage() {
   const TABS: { id: FilterTab; label: string; count: number }[] = [
     { id: 'all',       label: 'All',       count: total           },
     { id: 'coupons',   label: 'Coupons',   count: coupons.length  },
-    { id: 'merchants', label: 'Stores',    count: merchants.length },
-    { id: 'stores',    label: 'Locations', count: stores.length   },
+    { id: 'merchants', label: 'Merchants', count: merchants.length },
+    { id: 'stores',    label: 'Stores',    count: stores.length   },
   ]
 
   const showMerchants = (tab === 'all' || tab === 'merchants') && merchants.length > 0
@@ -244,7 +244,7 @@ export default function SearchPage() {
                   {merchants.map(m => (
                     <Link
                       key={m.id}
-                      to={`/stores/${m.id}/${slugify(m.business_name)}`}
+                      to={`/merchants/${m.id}`}
                       className="bg-white rounded-2xl border border-slate-100 p-4 flex items-center gap-3 hover:shadow-md transition-shadow"
                     >
                       {logo(m.business_logo, m.business_name)}
@@ -268,17 +268,18 @@ export default function SearchPage() {
               </section>
             )}
 
-            {/* ── Stores/Locations section ─────────────────────────── */}
+            {/* ── Stores section ──────────────────────────────────── */}
             {showStores && (
               <section className="mb-8">
                 <h2 className="font-heading font-bold text-lg text-slate-800 mb-3 flex items-center gap-2">
-                  <MapPin size={18} className="text-rose-500" /> Locations
+                  <MapPin size={18} className="text-rose-500" /> Stores
                 </h2>
                 <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
                   {stores.map(s => (
-                    <div
+                    <Link
                       key={s.id}
-                      className="bg-white rounded-2xl border border-slate-100 p-4 flex items-start gap-3"
+                      to={`/stores/${s.id}/${slugify(s.name)}`}
+                      className="bg-white rounded-2xl border border-slate-100 p-4 flex items-start gap-3 hover:shadow-md transition-shadow"
                     >
                       {logo(s.business_logo, s.business_name)}
                       <div className="flex-1 min-w-0">
@@ -291,7 +292,8 @@ export default function SearchPage() {
                           </span>
                         </div>
                       </div>
-                    </div>
+                      <ChevronRight size={16} className="text-slate-300 flex-shrink-0" />
+                    </Link>
                   ))}
                 </div>
               </section>

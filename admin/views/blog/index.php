@@ -28,7 +28,7 @@
             <?php
             $from = min($totalCount, ($currentPage - 1) * $perPage + 1);
             $to   = min($totalCount, $currentPage * $perPage);
-            echo $totalCount ? "Showing {$from}–{$to} of {$totalCount}" : 'No posts found';
+            echo $totalCount ? "Showing {$from}&ndash;{$to} of {$totalCount}" : 'No posts found';
             ?>
         </small>
     </div>
@@ -104,14 +104,14 @@ $statusColors = ['draft' => 'secondary', 'published' => 'success', 'archived' =>
                     <?php endif; ?>
                 </td>
                 <td><code class="small"><?= escape($p['slug']) ?></code></td>
-                <td class="small"><?= escape($p['author_name'] ?? '—') ?></td>
+                <td class="small"><?= escape($p['author_name'] ?? '&mdash;') ?></td>
                 <td>
                     <span class="badge bg-<?= $statusColors[$p['status']] ?? 'secondary' ?>">
                         <?= ucfirst($p['status']) ?>
                     </span>
                 </td>
                 <td class="small text-muted">
-                    <?= $p['published_at'] ? date('d M Y', strtotime($p['published_at'])) : '—' ?>
+                    <?= $p['published_at'] ? date('d M Y', strtotime($p['published_at'])) : '&mdash;' ?>
                 </td>
                 <td class="text-end">
                     <a href="<?= BASE_URL ?>blog/detail?id=<?= $p['id'] ?>" class="btn btn-sm btn-outline-primary">

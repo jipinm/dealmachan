@@ -177,7 +177,7 @@ class DashboardController extends Controller {
             $stmt->execute($couponCityParam);
             $stats['active_coupons'] = $stmt->fetch()['count'];
             
-            // Redemption statistics (coupon_redemptions has no status column — count all)
+            // Redemption statistics (coupon_redemptions has no status column &mdash; count all)
             $sql = "SELECT COUNT(*) as count FROM coupon_redemptions cr 
                     JOIN coupons c ON cr.coupon_id = c.id" . (empty($couponCityFilter) ? '' : ' WHERE 1=1 ' . $couponCityFilter);
             $stmt = $pdo->prepare($sql);
@@ -363,7 +363,7 @@ class DashboardController extends Controller {
                 $chartCouponParam = [$city_id];
             }
             
-            // Customer registration trend — full range with zeros for missing days
+            // Customer registration trend &mdash; full range with zeros for missing days
             $customer_trend = [];
             if ($admin_type === 'super_admin' || $admin_type === 'city_admin') {
                 $sql = "SELECT DATE(c.created_at) as date, COUNT(*) as count

@@ -55,7 +55,7 @@ $isExpired = $gift['expires_at'] && strtotime($gift['expires_at']) < time();
 
                     <dt class="col-5 text-muted">Coupon Valid Until</dt>
                     <dd class="col-7">
-                        <?= $gift['valid_until'] ? date('d M Y', strtotime($gift['valid_until'])) : '—' ?>
+                        <?= $gift['valid_until'] ? date('d M Y', strtotime($gift['valid_until'])) : '&mdash;' ?>
                     </dd>
                 </dl>
                 <div class="mt-3">
@@ -85,7 +85,7 @@ $isExpired = $gift['expires_at'] && strtotime($gift['expires_at']) < time();
                     <dd class="col-7"><?= escape($gift['customer_phone']) ?></dd>
 
                     <dt class="col-5 text-muted">Email</dt>
-                    <dd class="col-7"><?= escape($gift['customer_email'] ?? '—') ?></dd>
+                    <dd class="col-7"><?= escape($gift['customer_email'] ?? '&mdash;') ?></dd>
 
                     <dt class="col-5 text-muted">Gifted By</dt>
                     <dd class="col-7"><?= escape($gift['gifted_by']) ?></dd>
@@ -102,7 +102,7 @@ $isExpired = $gift['expires_at'] && strtotime($gift['expires_at']) < time();
                         <?php elseif (isset($statusBadge[$gift['acceptance_status']])): ?>
                             <span class="badge <?= $statusBadge[$gift['acceptance_status']][0] ?>"><?= $statusBadge[$gift['acceptance_status']][1] ?></span>
                         <?php else: ?>
-                            <span class="text-muted">—</span>
+                            <span class="text-muted">&mdash;</span>
                         <?php endif; ?>
                     </dd>
 

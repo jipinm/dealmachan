@@ -12,11 +12,12 @@ class Coupon extends Model {
     public function getAllWithDetails($filters = []) {
         $sql = "SELECT c.*,
                        m.business_name AS merchant_name,
-                       s.store_name,
+                       (SELECT GROUP_CONCAT(s.store_name ORDER BY s.store_name SEPARATOR ', ')
+                        FROM coupon_stores cs JOIN stores s ON cs.store_id = s.id
+                        WHERE cs.coupon_id = c.id) AS store_name,
                        (SELECT COUNT(*) FROM coupon_redemptions cr WHERE cr.coupon_id = c.id) AS redemption_count
                 FROM {$this->table} c
                 JOIN merchants m ON c.merchant_id = m.id
-                LEFT JOIN stores s ON c.store_id = s.id
                 WHERE 1=1";
 
         $params = [];
@@ -39,7 +40,6 @@ class Coupon extends Model {
     public function countWithDetails($filters = []) {
         $sql    = "SELECT COUNT(*) FROM {$this->table} c
                    JOIN merchants m ON c.merchant_id = m.id
-                   LEFT JOIN stores s ON c.store_id = s.id
                    WHERE 1=1";
         $params = [];
         $this->applyFilters($sql, $params, $filters);
@@ -91,12 +91,13 @@ class Coupon extends Model {
     public function findWithDetails($id) {
         $sql = "SELECT c.*,
                        m.business_name AS merchant_name,
-                       s.store_name,
+                       (SELECT GROUP_CONCAT(s.store_name ORDER BY s.store_name SEPARATOR ', ')
+                        FROM coupon_stores cs JOIN stores s ON cs.store_id = s.id
+                        WHERE cs.coupon_id = c.id) AS store_name,
                        a.name AS approved_by_name,
                        (SELECT COUNT(*) FROM coupon_redemptions cr WHERE cr.coupon_id = c.id) AS redemption_count
                 FROM {$this->table} c
                 JOIN merchants m ON c.merchant_id = m.id
-                LEFT JOIN stores s ON c.store_id = s.id
                 LEFT JOIN admins a ON c.approved_by_admin_id = a.id
                 WHERE c.id = ?";
         $stmt = $this->db->prepare($sql);

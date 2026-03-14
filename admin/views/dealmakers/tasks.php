@@ -177,7 +177,7 @@ $statusColors = ['assigned' => 'secondary', 'in_progress' => 'warning', 'complet
                                     <span class="badge bg-warning text-dark small">Pending</span>
                                 <?php endif; ?>
                             <?php else: ?>
-                                <span class="text-muted small">—</span>
+                                <span class="text-muted small">&mdash;</span>
                             <?php endif; ?>
                         </td>
                         <td class="text-muted small">

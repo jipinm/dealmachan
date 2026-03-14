@@ -2,6 +2,7 @@ import { createBrowserRouter, Navigate } from 'react-router-dom'
 import { lazy, Suspense } from 'react'
 import AppShell from '@/components/layout/AppShell'
 import AuthGuard from '@/components/layout/AuthGuard'
+import StoreAdminGuard from '@/components/layout/StoreAdminGuard'
 import PageLoader from '@/components/ui/PageLoader'
 
 // Auth pages (not lazy — small and needed immediately)
@@ -30,6 +31,7 @@ const MessageThreadPage = lazy(() => import('@/pages/messages/MessageThreadPage'
 const NotificationsPage = lazy(() => import('@/pages/notifications/NotificationsPage'))
 const ProfilePage      = lazy(() => import('@/pages/profile/ProfilePage'))
 const EditProfilePage  = lazy(() => import('@/pages/profile/EditProfilePage'))
+const ChangePasswordPage = lazy(() => import('@/pages/profile/ChangePasswordPage'))
 const SubscriptionPage = lazy(() => import('@/pages/profile/SubscriptionPage'))
 const MorePage         = lazy(() => import('@/pages/more/MorePage'))
 const FlashDiscountPage = lazy(() => import('@/pages/more/FlashDiscountPage'))
@@ -40,6 +42,8 @@ const StoreCouponDetailPage = lazy(() => import('@/pages/storeCoupons/StoreCoupo
 const StoreCouponFormPage   = lazy(() => import('@/pages/storeCoupons/StoreCouponFormPage'))
 const StoreCouponAssignPage = lazy(() => import('@/pages/storeCoupons/StoreCouponAssignPage'))
 const CustomerDetailPage    = lazy(() => import('@/pages/more/CustomerDetailPage'))
+const StoreAdminListPage    = lazy(() => import('@/pages/storeAdmins/StoreAdminListPage'))
+const StoreAdminFormPage    = lazy(() => import('@/pages/storeAdmins/StoreAdminFormPage'))
 
 const wrap = (el: JSX.Element) => <Suspense fallback={<PageLoader />}>{el}</Suspense>
 
@@ -67,7 +71,7 @@ const router = createBrowserRouter([
 
       // Stores
       { path: '/stores',                      element: wrap(<StoreListPage />) },
-      { path: '/stores/new',                  element: wrap(<StoreFormPage />) },
+      { path: '/stores/new',                  element: wrap(<StoreAdminGuard><StoreFormPage /></StoreAdminGuard>) },
       { path: '/stores/:id',                  element: wrap(<StoreDetailPage />) },
       { path: '/stores/:id/edit',             element: wrap(<StoreFormPage />) },
       { path: '/stores/:id/gallery',          element: wrap(<GalleryPage />) },
@@ -93,18 +97,19 @@ const router = createBrowserRouter([
       { path: '/notifications',               element: wrap(<NotificationsPage />) },
 
       // Profile
-      { path: '/profile',                     element: wrap(<ProfilePage />) },
-      { path: '/profile/edit',                element: wrap(<EditProfilePage />) },
-      { path: '/profile/subscription',        element: wrap(<SubscriptionPage />) },
+      { path: '/profile',                     element: wrap(<StoreAdminGuard fallback="/home"><ProfilePage /></StoreAdminGuard>) },
+      { path: '/profile/edit',                element: wrap(<StoreAdminGuard fallback="/home"><EditProfilePage /></StoreAdminGuard>) },
+      { path: '/profile/subscription',        element: wrap(<StoreAdminGuard fallback="/home"><SubscriptionPage /></StoreAdminGuard>) },
+      { path: '/profile/security',            element: wrap(<ChangePasswordPage />) },
 
       // More
       { path: '/more',                        element: wrap(<MorePage />) },
 
       // Flash Discounts, Labels, Customers (Phase 7)
       { path: '/flash-discounts',             element: wrap(<FlashDiscountPage />) },
-      { path: '/profile/labels',              element: wrap(<LabelsPage />) },
-      { path: '/customers',                   element: wrap(<CustomersPage />) },
-      { path: '/customers/:id',               element: wrap(<CustomerDetailPage />) },
+      { path: '/profile/labels',              element: wrap(<StoreAdminGuard fallback="/home"><LabelsPage /></StoreAdminGuard>) },
+      { path: '/customers',                   element: wrap(<StoreAdminGuard fallback="/home"><CustomersPage /></StoreAdminGuard>) },
+      { path: '/customers/:id',               element: wrap(<StoreAdminGuard fallback="/home"><CustomerDetailPage /></StoreAdminGuard>) },
 
       // Store Coupons
       { path: '/store-coupons',               element: wrap(<StoreCouponListPage />) },
@@ -112,6 +117,11 @@ const router = createBrowserRouter([
       { path: '/store-coupons/:id',            element: wrap(<StoreCouponDetailPage />) },
       { path: '/store-coupons/:id/edit',       element: wrap(<StoreCouponFormPage />) },
       { path: '/store-coupons/:id/assign',     element: wrap(<StoreCouponAssignPage />) },
+
+      // Store Admins (merchant-only)
+      { path: '/store-admins',                 element: wrap(<StoreAdminGuard fallback="/more"><StoreAdminListPage /></StoreAdminGuard>) },
+      { path: '/store-admins/new',             element: wrap(<StoreAdminGuard fallback="/more"><StoreAdminFormPage /></StoreAdminGuard>) },
+      { path: '/store-admins/:id/edit',        element: wrap(<StoreAdminGuard fallback="/more"><StoreAdminFormPage /></StoreAdminGuard>) },
 
       // Legacy / convenience redirects
       { path: '/sales',                       element: <Navigate to="/analytics/sales" replace /> },

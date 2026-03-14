@@ -53,6 +53,8 @@ class PublicBlogController {
             array_merge($params, [$perPage, $offset])
         );
 
+        imageUrlField($posts, 'featured_image');
+
         Response::success($posts, 'OK', 200, [
             'total'    => $total,
             'page'     => $page,
@@ -73,6 +75,8 @@ class PublicBlogController {
 
         if (!$post) Response::notFound('Blog post not found.');
 
+        $post['featured_image'] = imageUrl($post['featured_image']);
+
         // Related posts (same category / tags)
         $related = $this->db->query(
             "SELECT b.id, b.title, b.slug, b.featured_image, b.published_at
@@ -82,6 +86,8 @@ class PublicBlogController {
              LIMIT 4",
             [$post['id']]
         );
+
+        imageUrlField($related, 'featured_image');
 
         Response::success(array_merge($post, ['related' => $related]));
     }

@@ -15,13 +15,14 @@ class MerchantBrowseController {
 
     // ── GET /api/public/merchants ─────────────────────────────────────────────
     public function index(array $query): never {
-        $page     = max(1, (int)($query['page']     ?? 1));
-        $perPage  = min(50, max(10, (int)($query['per_page'] ?? 20)));
-        $offset   = ($page - 1) * $perPage;
-        $cityId   = !empty($query['city_id'])  ? (int)$query['city_id']  : null;
-        $tagId    = !empty($query['tag_id'])   ? (int)$query['tag_id']   : null;
-        $category = !empty($query['category']) ? trim($query['category']) : null;
-        $search   = !empty($query['q'])        ? '%' . trim($query['q']) . '%' : null;
+        $page       = max(1, (int)($query['page']       ?? 1));
+        $perPage    = min(50, max(10, (int)($query['per_page'] ?? 20)));
+        $offset     = ($page - 1) * $perPage;
+        $cityId     = !empty($query['city_id'])    ? (int)$query['city_id']    : null;
+        $tagId      = !empty($query['tag_id'])     ? (int)$query['tag_id']     : null;
+        $category   = !empty($query['category'])   ? trim($query['category'])  : null;
+        $categoryId = !empty($query['category_id']) ? (int)$query['category_id'] : null;
+        $search     = !empty($query['q'])          ? '%' . trim($query['q']) . '%' : null;
 
         $where  = ["m.profile_status = 'approved'"];
         $params = [];
@@ -37,6 +38,10 @@ class MerchantBrowseController {
         if ($category) {
             $where[]  = "m.label_id = ?";
             $params[] = (int)$category;
+        }
+        if ($categoryId) {
+            $where[]  = 'EXISTS (SELECT 1 FROM merchant_categories mc WHERE mc.merchant_id = m.id AND mc.category_id = ?)';
+            $params[] = $categoryId;
         }
         if ($search) {
             $where[]  = "m.business_name LIKE ?";
@@ -68,6 +73,19 @@ class MerchantBrowseController {
         );
 
         imageUrlField($merchants, 'business_logo');
+
+        // Attach categories to each merchant
+        foreach ($merchants as &$row) {
+            $row['categories'] = $this->db->query(
+                "SELECT cat.id, cat.name, cat.icon
+                 FROM merchant_categories mc
+                 JOIN categories cat ON cat.id = mc.category_id
+                 WHERE mc.merchant_id = ?
+                 GROUP BY cat.id",
+                [$row['id']]
+            );
+        }
+        unset($row);
 
         Response::success([
             'data'       => $merchants,
@@ -231,18 +249,18 @@ class MerchantBrowseController {
 
         if ($existing) {
             $this->db->execute(
-                "UPDATE reviews SET rating = ?, review_text = ?, status = 'pending', updated_at = NOW()
+                "UPDATE reviews SET rating = ?, review_text = ?, status = 'approved', updated_at = NOW()
                  WHERE id = ?",
                 [$rating, $reviewText, $existing['id']]
             );
-            Response::success(['message' => 'Review updated. It will appear after approval.']);
+            Response::success(['message' => 'Review updated successfully.']);
         } else {
             $this->db->execute(
                 "INSERT INTO reviews (customer_id, merchant_id, rating, review_text, status)
-                 VALUES (?, ?, ?, ?, 'pending')",
+                 VALUES (?, ?, ?, ?, 'approved')",
                 [$customer['id'], $id, $rating, $reviewText]
             );
-            Response::success(['message' => 'Review submitted. It will appear after approval.']);
+            Response::success(['message' => 'Review submitted successfully.']);
         }
     }
 

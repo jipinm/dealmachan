@@ -28,7 +28,7 @@
             <?php
             $from = min($totalCount, ($currentPage - 1) * $perPage + 1);
             $to   = min($totalCount, $currentPage * $perPage);
-            echo $totalCount ? "Showing {$from}–{$to} of {$totalCount}" : 'No entries found';
+            echo $totalCount ? "Showing {$from}&ndash;{$to} of {$totalCount}" : 'No entries found';
             ?>
         </small>
     </div>
@@ -121,16 +121,16 @@ $typeColors = ['admin' => 'danger', 'merchant' => 'warning', 'customer' => 'info
                 <td class="small text-nowrap text-muted">
                     <?= date('d M Y H:i', strtotime($log['created_at'])) ?>
                 </td>
-                <td class="small"><?= escape($log['actor_name'] ?? '—') ?></td>
+                <td class="small"><?= escape($log['actor_name'] ?? '&mdash;') ?></td>
                 <td>
                     <span class="badge bg-<?= $typeColors[$log['user_type']] ?? 'secondary' ?>">
                         <?= ucfirst($log['user_type'] ?? '?') ?>
                     </span>
                 </td>
                 <td><code class="small"><?= escape($log['action']) ?></code></td>
-                <td class="small text-muted"><?= escape($log['table_name'] ?? '—') ?></td>
-                <td class="small text-muted"><?= $log['record_id'] ?? '—' ?></td>
-                <td class="small font-monospace text-muted"><?= escape($log['ip_address'] ?? '—') ?></td>
+                <td class="small text-muted"><?= escape($log['table_name'] ?? '&mdash;') ?></td>
+                <td class="small text-muted"><?= $log['record_id'] ?? '&mdash;' ?></td>
+                <td class="small font-monospace text-muted"><?= escape($log['ip_address'] ?? '&mdash;') ?></td>
                 <td>
                     <a href="<?= BASE_URL ?>audit-logs/detail?id=<?= $log['id'] ?>" class="btn btn-xs btn-outline-primary btn-sm py-0 px-2">
                         <i class="fas fa-eye"></i>

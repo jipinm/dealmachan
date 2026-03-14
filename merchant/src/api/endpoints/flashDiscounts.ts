@@ -15,6 +15,7 @@ export interface FlashDiscount {
   max_redemptions: number | null
   current_redemptions: number
   status: FlashDiscountStatus
+  banner_image: string | null
   created_at: string
   updated_at: string | null
 }
@@ -46,7 +47,7 @@ export interface FlashDiscountRedeemResult {
 type R<T> = { success: boolean; message: string; data: T }
 
 export const flashDiscountApi = {
-  list: (params?: { status?: FlashDiscountStatus }) =>
+  list: (params?: { status?: FlashDiscountStatus; store_id?: number }) =>
     apiClient.get<R<FlashDiscount[]>>('/merchants/flash-discounts', { params }),
 
   create: (data: CreateFlashDiscountPayload) =>
@@ -60,4 +61,18 @@ export const flashDiscountApi = {
 
   redeem: (id: number, data: RedeemFlashDiscountPayload) =>
     apiClient.post<R<FlashDiscountRedeemResult>>(`/merchants/flash-discounts/${id}/redeem`, data),
+
+  uploadImage: (id: number, file: File) => {
+    const form = new FormData()
+    form.append('image', file)
+    return apiClient.post<{ success: boolean; data: { banner_image: string }; message: string }>(
+      `/merchants/flash-discounts/${id}/image`, form,
+      { headers: { 'Content-Type': 'multipart/form-data' } }
+    )
+  },
+
+  deleteImage: (id: number) =>
+    apiClient.delete<{ success: boolean; message: string }>(
+      `/merchants/flash-discounts/${id}/image`
+    ),
 }

@@ -104,7 +104,7 @@ class AdminManagementController extends Controller {
 
         $cityModel = new City();
         $this->loadView('admin-management/edit', [
-            'title'        => 'Edit Admin — ' . escape($admin['name'] ?: $admin['email']),
+            'title'        => 'Edit Admin &mdash; ' . escape($admin['name'] ?: $admin['email']),
             'admin'        => $admin,
             'adminTypes'   => self::ADMIN_TYPES,
             'cities'       => $cityModel->getActive(),

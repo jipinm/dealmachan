@@ -95,7 +95,7 @@ class CardsController extends Controller {
         }
 
         $this->loadView('cards/view', [
-            'title'        => 'Card — ' . escape($card['card_number']),
+            'title'        => 'Card &mdash; ' . escape($card['card_number']),
             'card'         => $card,
             'audit_logs'   => $auditLogs,
             'current_user' => $this->auth->getCurrentUser(),
@@ -121,6 +121,9 @@ class CardsController extends Controller {
         ]);
     }
 
+    private const ALLOWED_IMAGE_EXT = ['jpg', 'jpeg', 'png', 'webp'];
+    private const MAX_CARD_IMAGE    = 2 * 1024 * 1024; // 2 MB
+
     // ─── GENERATE ─────────────────────────────────────────────────────────────
 
     public function generate() {
@@ -128,10 +131,24 @@ class CardsController extends Controller {
             $this->requireCSRF();
 
             $type       = $_POST['generate_type'] ?? 'single';
-            $variant    = sanitize($_POST['card_variant']   ?? 'standard');
             $preprinted = isset($_POST['is_preprinted']) ? 1 : 0;
             $paramsJson = trim($_POST['parameters_json'] ?? '');
             $cu         = $this->auth->getCurrentUser();
+
+            // Resolve variant from config_id (if provided) or fall back to card_variant
+            $configId = (int)($_POST['config_id'] ?? 0);
+            $variant  = sanitize($_POST['card_variant'] ?? 'standard');
+            if ($configId) {
+                require_once MODEL_PATH . '/CardConfiguration.php';
+                $cfgModel = new CardConfiguration();
+                $cfgRow   = $cfgModel->find($configId);
+                if (!$cfgRow) {
+                    $_SESSION['error'] = 'Selected card configuration not found.';
+                    $this->redirect('cards/generate');
+                    return;
+                }
+                $variant = $cfgRow['classification']; // silver/gold/platinum/diamond
+            }
 
             // Validate JSON if provided
             if ($paramsJson && !json_decode($paramsJson)) {
@@ -140,14 +157,52 @@ class CardsController extends Controller {
                 return;
             }
 
+            $genData = [
+                'card_variant'         => $variant,
+                'is_preprinted'        => $preprinted,
+                'parameters_json'      => $paramsJson ?: null,
+                'card_configuration_id'=> $configId ?: null,
+            ];
+
+            // Handle card image uploads (single preprinted cards only)
+            if ($type === 'single' && $preprinted) {
+                foreach (['card_image_front', 'card_image_back'] as $field) {
+                    if (!empty($_FILES[$field]['name'])) {
+                        $file = $_FILES[$field];
+                        if ($file['error'] !== UPLOAD_ERR_OK) {
+                            $_SESSION['error'] = "Upload error for {$field}.";
+                            $this->redirect('cards/generate');
+                            return;
+                        }
+                        $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+                        if (!in_array($ext, self::ALLOWED_IMAGE_EXT)) {
+                            $_SESSION['error'] = 'Card images must be JPG, PNG, or WebP.';
+                            $this->redirect('cards/generate');
+                            return;
+                        }
+                        if ($file['size'] > self::MAX_CARD_IMAGE) {
+                            $_SESSION['error'] = 'Each card image must be under 2 MB.';
+                            $this->redirect('cards/generate');
+                            return;
+                        }
+                        if (!is_dir(API_CARDS_UPLOAD_DIR)) {
+                            mkdir(API_CARDS_UPLOAD_DIR, 0755, true);
+                        }
+                        $filename = 'card_' . $field . '_' . time() . '_' . bin2hex(random_bytes(4)) . '.' . $ext;
+                        if (!move_uploaded_file($file['tmp_name'], API_CARDS_UPLOAD_DIR . $filename)) {
+                            $_SESSION['error'] = "Failed to upload {$field}.";
+                            $this->redirect('cards/generate');
+                            return;
+                        }
+                        $genData[$field] = 'uploads/cards/' . $filename;
+                    }
+                }
+            }
+
             if ($type === 'bulk') {
                 $count = max(1, min(200, (int)($_POST['bulk_count'] ?? 10)));
-                $n = $this->cardModel->generateCards([
-                    'card_variant'    => $variant,
-                    'is_preprinted'   => $preprinted,
-                    'parameters_json' => $paramsJson ?: null,
-                ], $count);
-                logAudit('cards_bulk_generated', $n, 'card', $cu['id']);
+                $n = $this->cardModel->generateCards($genData, $count);
+                logAudit('cards_bulk_generated', 'card', $n);
                 $_SESSION['success'] = "{$n} cards generated successfully.";
             } else {
                 $number = strtoupper(trim($_POST['card_number'] ?? ''));
@@ -156,13 +211,9 @@ class CardsController extends Controller {
                     $this->redirect('cards/generate');
                     return;
                 }
-                $n = $this->cardModel->generateCards([
-                    'card_variant'    => $variant,
-                    'card_number'     => $number,
-                    'is_preprinted'   => $preprinted,
-                    'parameters_json' => $paramsJson ?: null,
-                ], 1);
-                logAudit('card_generated', $n, 'card', $cu['id']);
+                $genData['card_number'] = $number;
+                $n = $this->cardModel->generateCards($genData, 1);
+                logAudit('card_generated', 'card', $n);
                 $_SESSION['success'] = '1 card generated successfully.';
             }
 
@@ -170,10 +221,15 @@ class CardsController extends Controller {
             return;
         }
 
+        require_once MODEL_PATH . '/CardConfiguration.php';
+        $cfgModel      = new CardConfiguration();
+        $configurations = $cfgModel->getAll(['status' => 'active']);
+
         $this->loadView('cards/generate', [
-            'title'        => 'Generate Cards',
-            'variants'     => $this->cardModel->getVariants(),
-            'current_user' => $this->auth->getCurrentUser(),
+            'title'          => 'Generate Cards',
+            'variants'       => $this->cardModel->getVariants(),
+            'configurations' => $configurations,
+            'current_user'   => $this->auth->getCurrentUser(),
         ]);
     }
 
@@ -203,11 +259,11 @@ class CardsController extends Controller {
 
             if ($customerId) {
                 $this->cardModel->assignToCustomer($cardId, $customerId);
-                logAudit('card_assigned_customer', $cardId, 'card', $cu['id']);
+                logAudit('card_assigned_customer', 'card', $cardId);
                 $_SESSION['success'] = "Card {$card['card_number']} assigned to customer.";
             } elseif ($merchantId) {
                 $this->cardModel->assignToMerchant($cardId, $merchantId);
-                logAudit('card_assigned_merchant', $cardId, 'card', $cu['id']);
+                logAudit('card_assigned_merchant', 'card', $cardId);
                 $_SESSION['success'] = "Card {$card['card_number']} assigned to merchant.";
             } else {
                 $_SESSION['error'] = 'Please select a customer or merchant to assign the card to.';
@@ -243,7 +299,7 @@ class CardsController extends Controller {
         if ($id) {
             $this->cardModel->activate($id);
             $cu = $this->auth->getCurrentUser();
-            logAudit('card_activated', $id, 'card', $cu['id']);
+            logAudit('card_activated', 'card', $id);
             $_SESSION['success'] = 'Card activated.';
         }
         $this->redirect($redirect);
@@ -267,7 +323,7 @@ class CardsController extends Controller {
         if (!$id) { $this->redirectWithError('cards', 'Invalid card ID.'); return; }
         $this->cardModel->unassign($id);
         $cu = $this->auth->getCurrentUser();
-        logAudit('card_unassigned', $id, 'card', $cu['id']);
+        logAudit('card_unassigned', 'card', $id);
         $_SESSION['success'] = 'Card unassigned and reset to available.';
         $this->redirect("cards/detail?id={$id}");
     }
@@ -285,7 +341,7 @@ class CardsController extends Controller {
         $deleted = $this->cardModel->deleteCard($id);
         if ($deleted) {
             $cu = $this->auth->getCurrentUser();
-            logAudit('card_deleted', $id, 'card', $cu['id']);
+            logAudit('card_deleted', 'card', $id);
             $_SESSION['success'] = "Card {$card['card_number']} deleted.";
         } else {
             $_SESSION['error'] = 'Only available (unassigned) cards can be deleted.';

@@ -47,7 +47,7 @@ $statusLabels = ['assigned'=>'Assigned','in_progress'=>'In Progress','completed'
                     <?php endif; ?>
                     <div class="col-12"><hr class="my-2"></div>
                     <div class="col-5 text-muted">Assigned By</div>
-                    <div class="col-7"><?= htmlspecialchars($task['assigned_by_name'] ?? '—') ?></div>
+                    <div class="col-7"><?= htmlspecialchars($task['assigned_by_name'] ?? '&mdash;') ?></div>
                     <div class="col-5 text-muted">Assigned At</div>
                     <div class="col-7"><?= date('d M Y H:i', strtotime($task['assigned_at'])) ?></div>
                     <?php if ($task['completed_at']): ?>

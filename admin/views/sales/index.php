@@ -35,7 +35,7 @@
             <?php
             $from = min($totalCount, ($currentPage - 1) * $perPage + 1);
             $to   = min($totalCount, $currentPage * $perPage);
-            echo $totalCount ? "Showing {$from}–{$to} of {$totalCount}" : 'No sales found';
+            echo $totalCount ? "Showing {$from}&ndash;{$to} of {$totalCount}" : 'No sales found';
             ?>
         </small>
     </div>
@@ -128,10 +128,10 @@
                         </td>
                         <td class="text-end fw-semibold">₹<?= number_format($s['transaction_amount'], 2) ?></td>
                         <td class="text-end text-success small">
-                            <?= $s['discount_amount'] > 0 ? '₹' . number_format($s['discount_amount'], 2) : '—' ?>
+                            <?= $s['discount_amount'] > 0 ? '₹' . number_format($s['discount_amount'], 2) : '&mdash;' ?>
                         </td>
-                        <td class="small"><?= ucfirst($s['payment_method'] ?? '—') ?></td>
-                        <td class="small"><?= $s['coupon_title'] ? escape($s['coupon_title']) : '—' ?></td>
+                        <td class="small"><?= ucfirst($s['payment_method'] ?? '&mdash;') ?></td>
+                        <td class="small"><?= $s['coupon_title'] ? escape($s['coupon_title']) : '&mdash;' ?></td>
                         <td>
                             <a href="<?= BASE_URL ?>sales/detail?id=<?= $s['id'] ?>" class="btn btn-xs btn-outline-primary py-0 px-1">
                                 <i class="fas fa-eye"></i>

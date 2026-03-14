@@ -26,6 +26,11 @@ class FlashDiscountController {
             $where  .= ' AND fd.status = ?';
             $binds[] = $params['status'];
         }
+        // Store-scoped users can only see their own store's flash discounts
+        if (($user['access_scope'] ?? 'merchant') === 'store' && !empty($user['store_id'])) {
+            $where  .= ' AND fd.store_id = ?';
+            $binds[] = (int)$user['store_id'];
+        }
 
         // Auto-expire past discounts
         $this->db->execute(
@@ -43,6 +48,11 @@ class FlashDiscountController {
             $binds
         );
 
+        foreach ($rows as &$row) {
+            $row['banner_image'] = imageUrl($row['banner_image'] ?? null);
+        }
+        unset($row);
+
         Response::success($rows);
     }
 
@@ -58,6 +68,11 @@ class FlashDiscountController {
         $discount = (float)$body['discount_percentage'];
         if ($discount <= 0 || $discount > 100) {
             Response::validationError(['discount_percentage' => 'Must be between 1 and 100']);
+        }
+
+        // For store-scoped users, force store_id to their assigned store
+        if (($user['access_scope'] ?? 'merchant') === 'store' && !empty($user['store_id'])) {
+            $body['store_id'] = (int)$user['store_id'];
         }
 
         // Validate store if given
@@ -88,7 +103,36 @@ class FlashDiscountController {
             ]
         );
 
-        $row = $this->db->queryOne('SELECT * FROM flash_discounts WHERE id = ?', [$this->db->lastInsertId()]);
+        $flashId = $this->db->lastInsertId();
+
+        // Auto-populate location from store
+        if ($storeId) {
+            $store = $this->db->queryOne(
+                "SELECT city_id, area_id, location_id FROM stores WHERE id = ?",
+                [$storeId]
+            );
+            if ($store && $store['city_id']) {
+                $this->db->execute(
+                    "INSERT IGNORE INTO flash_discount_locations (flash_discount_id, city_id, area_id, location_id) VALUES (?, ?, ?, ?)",
+                    [$flashId, $store['city_id'], $store['area_id'], $store['location_id']]
+                );
+            }
+
+            // Auto-populate categories from store
+            $storeCats = $this->db->query(
+                "SELECT category_id, sub_category_id FROM store_categories WHERE store_id = ?",
+                [$storeId]
+            );
+            if ($storeCats) {
+                $ins = "INSERT IGNORE INTO flash_discount_categories (flash_discount_id, category_id, sub_category_id) VALUES (?, ?, ?)";
+                foreach ($storeCats as $sc) {
+                    $this->db->execute($ins, [$flashId, $sc['category_id'], $sc['sub_category_id']]);
+                }
+            }
+        }
+
+        $row = $this->db->queryOne('SELECT * FROM flash_discounts WHERE id = ?', [$flashId]);
+        $row['banner_image'] = imageUrl($row['banner_image'] ?? null);
         Response::created($row, 'Flash discount created');
     }
 
@@ -97,10 +141,15 @@ class FlashDiscountController {
         $merchantId = (int)$user['merchant_id'];
 
         $existing = $this->db->queryOne(
-            'SELECT id FROM flash_discounts WHERE id = ? AND merchant_id = ?',
+            'SELECT id, store_id FROM flash_discounts WHERE id = ? AND merchant_id = ?',
             [$id, $merchantId]
         );
         if (!$existing) Response::notFound('Flash discount not found');
+
+        if (($user['access_scope'] ?? 'merchant') === 'store' &&
+            (int)($user['store_id'] ?? 0) !== (int)($existing['store_id'] ?? 0)) {
+            Response::error('You can only edit flash discounts for your assigned store.', 403, 'FORBIDDEN');
+        }
 
         $fields = [];
         $binds  = [];
@@ -130,6 +179,7 @@ class FlashDiscountController {
         );
 
         $row = $this->db->queryOne('SELECT * FROM flash_discounts WHERE id = ?', [$id]);
+        $row['banner_image'] = imageUrl($row['banner_image'] ?? null);
         Response::success($row, 'Updated');
     }
 
@@ -138,13 +188,105 @@ class FlashDiscountController {
         $merchantId = (int)$user['merchant_id'];
 
         $existing = $this->db->queryOne(
-            'SELECT id FROM flash_discounts WHERE id = ? AND merchant_id = ?',
+            'SELECT id, store_id FROM flash_discounts WHERE id = ? AND merchant_id = ?',
             [$id, $merchantId]
         );
         if (!$existing) Response::notFound('Flash discount not found');
 
+        if (($user['access_scope'] ?? 'merchant') === 'store' &&
+            (int)($user['store_id'] ?? 0) !== (int)($existing['store_id'] ?? 0)) {
+            Response::error('You can only delete flash discounts for your assigned store.', 403, 'FORBIDDEN');
+        }
+
         $this->db->execute('DELETE FROM flash_discounts WHERE id = ?', [$id]);
         Response::success(['id' => $id], 'Deleted');
+    }
+
+    // ── POST /merchants/flash-discounts/:id/image ─────────────────────────────
+    public function uploadImage(array $user, int $id): never {
+        $merchantId = (int)$user['merchant_id'];
+
+        $discount = $this->db->queryOne(
+            'SELECT id, banner_image FROM flash_discounts WHERE id = ? AND merchant_id = ?',
+            [$id, $merchantId]
+        );
+        if (!$discount) Response::notFound('Flash discount not found');
+
+        if (empty($_FILES['image'])) {
+            Response::error('No image uploaded.', 400, 'NO_FILE');
+        }
+
+        $file = $_FILES['image'];
+        if ($file['error'] !== UPLOAD_ERR_OK) {
+            Response::error('Upload error.', 422, 'UPLOAD_ERROR');
+        }
+
+        $allowedMimes = ['image/jpeg', 'image/png', 'image/webp', 'image/jpg'];
+        $maxSize      = 5 * 1024 * 1024;
+
+        if ($file['size'] > $maxSize) {
+            Response::error('Image must be under 5MB.', 422, 'FILE_TOO_LARGE');
+        }
+
+        $finfo = finfo_open(FILEINFO_MIME_TYPE);
+        $mime  = finfo_file($finfo, $file['tmp_name']);
+        finfo_close($finfo);
+
+        if (!in_array($mime, $allowedMimes)) {
+            Response::error('Only JPEG, PNG, or WebP images are allowed.', 422, 'INVALID_TYPE');
+        }
+
+        $uploadDir = API_UPLOAD_PATH . '/flash-discount-banners/';
+        if (!is_dir($uploadDir)) {
+            mkdir($uploadDir, 0755, true);
+        }
+
+        if (!empty($discount['banner_image'])) {
+            $oldFile = $uploadDir . basename($discount['banner_image']);
+            if (file_exists($oldFile)) @unlink($oldFile);
+        }
+
+        $ext      = pathinfo($file['name'], PATHINFO_EXTENSION) ?: 'jpg';
+        $filename = 'flash_' . $id . '_' . uniqid() . '.' . strtolower($ext);
+        $dest     = $uploadDir . $filename;
+
+        if (!move_uploaded_file($file['tmp_name'], $dest)) {
+            Response::error('Failed to save image.', 500, 'SAVE_FAILED');
+        }
+
+        $relPath = '/uploads/flash-discount-banners/' . $filename;
+        $this->db->execute(
+            'UPDATE flash_discounts SET banner_image = ? WHERE id = ?',
+            [$relPath, $id]
+        );
+
+        Response::success(['banner_image' => imageUrl($relPath)], 'Flash deal image uploaded.');
+    }
+
+    // ── DELETE /merchants/flash-discounts/:id/image ───────────────────────────
+    public function deleteImage(array $user, int $id): never {
+        $merchantId = (int)$user['merchant_id'];
+
+        $discount = $this->db->queryOne(
+            'SELECT id, banner_image FROM flash_discounts WHERE id = ? AND merchant_id = ?',
+            [$id, $merchantId]
+        );
+        if (!$discount) Response::notFound('Flash discount not found');
+
+        if (empty($discount['banner_image'])) {
+            Response::error('No image to delete.', 400, 'NO_IMAGE');
+        }
+
+        $uploadDir = API_UPLOAD_PATH . '/flash-discount-banners/';
+        $oldFile   = $uploadDir . basename($discount['banner_image']);
+        if (file_exists($oldFile)) @unlink($oldFile);
+
+        $this->db->execute(
+            'UPDATE flash_discounts SET banner_image = NULL WHERE id = ?',
+            [$id]
+        );
+
+        Response::success(null, 'Flash deal image removed.');
     }
 
     // ── POST /merchants/flash-discounts/:id/redeem ────────────────────────────

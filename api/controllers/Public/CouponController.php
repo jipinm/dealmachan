@@ -20,18 +20,29 @@ class PublicCouponController {
         $perPage  = min(50, max(10, (int)($query['per_page'] ?? 20)));
         $offset   = ($page - 1) * $perPage;
 
-        $cityId       = !empty($query['city_id'])       ? (int)$query['city_id']            : null;
-        $tagId        = !empty($query['tag_id'])        ? (int)$query['tag_id']             : null;
-        $discountType = !empty($query['discount_type']) ? trim($query['discount_type'])      : null;
-        $search       = !empty($query['q'])             ? '%' . trim($query['q']) . '%'
-                      : (!empty($query['search'])       ? '%' . trim($query['search']) . '%' : null);
+        $cityId       = !empty($query['city_id'])        ? (int)$query['city_id']           : null;
+        $areaId       = !empty($query['area_id'])        ? (int)$query['area_id']           : null;
+        $locationId   = !empty($query['location_id'])    ? (int)$query['location_id']       : null;
+        $categoryId   = !empty($query['category_id'])    ? (int)$query['category_id']       : null;
+        $subCatId     = !empty($query['sub_category_id']) ? (int)$query['sub_category_id']  : null;
+        $tagId        = !empty($query['tag_id'])         ? (int)$query['tag_id']            : null;
+        $discountType = !empty($query['discount_type'])  ? trim($query['discount_type'])    : null;
+        $search       = !empty($query['q'])              ? '%' . trim($query['q']) . '%'
+                      : (!empty($query['search'])        ? '%' . trim($query['search']) . '%' : null);
 
         $where  = ["c.status = 'active'", "c.valid_until >= CURDATE()"];
         $params = [];
 
+        // Location targeting: coupons with no location rows are visible everywhere
         if ($cityId) {
-            $where[]  = "EXISTS (SELECT 1 FROM stores s WHERE s.merchant_id = c.merchant_id AND s.city_id = ? AND s.status='active')";
+            $where[] = "(NOT EXISTS (SELECT 1 FROM coupon_locations cl WHERE cl.coupon_id = c.id)
+                         OR EXISTS (SELECT 1 FROM coupon_locations cl WHERE cl.coupon_id = c.id AND cl.city_id = ?))";
             $params[] = $cityId;
+        }
+        if ($areaId) {
+            $where[] = "(NOT EXISTS (SELECT 1 FROM coupon_locations cl WHERE cl.coupon_id = c.id)
+                         OR EXISTS (SELECT 1 FROM coupon_locations cl WHERE cl.coupon_id = c.id AND (cl.area_id = ? OR cl.area_id IS NULL)))";
+            $params[] = $areaId;
         }
         if ($tagId) {
             $where[]  = "EXISTS (SELECT 1 FROM merchant_tags mt WHERE mt.merchant_id = c.merchant_id AND mt.tag_id = ?)";
@@ -40,6 +51,14 @@ class PublicCouponController {
         if ($discountType) {
             $where[]  = "c.discount_type = ?";
             $params[] = $discountType;
+        }
+        if ($categoryId) {
+            $where[]  = 'EXISTS (SELECT 1 FROM coupon_categories cc WHERE cc.coupon_id = c.id AND cc.category_id = ?)';
+            $params[] = $categoryId;
+        }
+        if ($subCatId) {
+            $where[]  = 'EXISTS (SELECT 1 FROM coupon_categories cc WHERE cc.coupon_id = c.id AND cc.sub_category_id = ?)';
+            $params[] = $subCatId;
         }
         if ($search) {
             $where[]  = "(c.title LIKE ? OR c.description LIKE ? OR m.business_name LIKE ?)";
@@ -72,9 +91,13 @@ class PublicCouponController {
                     m.id AS merchant_id,
                     m.business_name AS merchant_name,
                     m.business_logo AS merchant_logo,
-                    m.is_premium
+                    m.is_premium,
+                    c.store_id,
+                    s.store_name,
+                    s.store_image
              FROM coupons c
              JOIN merchants m ON m.id = c.merchant_id AND m.profile_status = 'approved'
+             LEFT JOIN stores s ON s.id = c.store_id
              WHERE {$whereSQL}
              ORDER BY c.created_at DESC
              LIMIT ? OFFSET ?",
@@ -89,8 +112,22 @@ class PublicCouponController {
             unset($c);
         }
 
+        // Attach categories to each coupon
+        foreach ($coupons as &$row) {
+            $row['categories'] = $this->db->query(
+                "SELECT cat.id, cat.name, sub.id AS sub_category_id, sub.name AS sub_category_name
+                 FROM coupon_categories cc
+                 JOIN categories cat ON cat.id = cc.category_id
+                 LEFT JOIN sub_categories sub ON sub.id = cc.sub_category_id
+                 WHERE cc.coupon_id = ?",
+                [$row['id']]
+            );
+        }
+        unset($row);
+
         imageUrlField($coupons, 'merchant_logo');
         imageUrlField($coupons, 'banner_image');
+        imageUrlField($coupons, 'store_image');
 
         Response::success([
             'data'       => $coupons,
@@ -177,9 +214,11 @@ class PublicCouponController {
         $deals = $this->db->query(
             "SELECT fd.id, fd.title, fd.discount_percentage, fd.valid_until,
                     fd.banner_image,
-                    m.id AS merchant_id, m.business_name AS merchant_name, m.business_logo AS merchant_logo
+                    m.id AS merchant_id, m.business_name AS merchant_name, m.business_logo AS merchant_logo,
+                    fd.store_id, s.store_name, s.store_image
              FROM flash_discounts fd
              JOIN merchants m ON m.id = fd.merchant_id AND m.profile_status = 'approved'
+             LEFT JOIN stores s ON s.id = fd.store_id
              WHERE {$whereSQL}
              ORDER BY fd.valid_until ASC
              LIMIT 30",
@@ -188,6 +227,7 @@ class PublicCouponController {
 
         imageUrlField($deals, 'merchant_logo');
         imageUrlField($deals, 'banner_image');
+        imageUrlField($deals, 'store_image');
 
         Response::success($deals);
     }

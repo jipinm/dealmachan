@@ -182,6 +182,19 @@ class Merchant extends Model {
         return $stmt->fetchAll();
     }
 
+    public function getMerchantCategories(int $merchantId): array {
+        $stmt = $this->db->prepare(
+            "SELECT mc.category_id, c.name AS category_name, mc.sub_category_id, s.name AS sub_category_name
+             FROM merchant_categories mc
+             JOIN categories c ON c.id = mc.category_id
+             LEFT JOIN sub_categories s ON s.id = mc.sub_category_id
+             WHERE mc.merchant_id = ?
+             ORDER BY c.name"
+        );
+        $stmt->execute([$merchantId]);
+        return $stmt->fetchAll();
+    }
+
     // ─── CREATE ───────────────────────────────────────────────────────────────
 
     /**
@@ -375,6 +388,30 @@ class Merchant extends Model {
         // Set new cover
         $this->db->prepare("UPDATE store_gallery SET is_cover = 1 WHERE id = ?")->execute([$imageId]);
         return true;
+    }
+
+    public function addGalleryImage($storeId, $merchantId, $imageUrl, $caption = '') {
+        $stmt = $this->db->prepare("SELECT COALESCE(MAX(display_order), 0) + 1 FROM store_gallery WHERE store_id = ?");
+        $stmt->execute([$storeId]);
+        $order = (int)$stmt->fetchColumn();
+
+        $stmt = $this->db->prepare(
+            "INSERT INTO store_gallery (store_id, merchant_id, image_url, caption, display_order, created_at)
+             VALUES (?, ?, ?, ?, ?, NOW())"
+        );
+        $stmt->execute([$storeId, $merchantId ?: null, $imageUrl, $caption ?: null, $order]);
+        return (int)$this->db->lastInsertId();
+    }
+
+    public function getGalleryByStore($storeId) {
+        $stmt = $this->db->prepare(
+            "SELECT id, image_url, caption, display_order, is_cover, created_at
+             FROM store_gallery
+             WHERE store_id = ?
+             ORDER BY display_order ASC, created_at DESC"
+        );
+        $stmt->execute([$storeId]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 }
 

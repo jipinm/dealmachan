@@ -49,7 +49,7 @@
                     <tr>
                         <td class="text-muted small"><?= $i + 1 ?></td>
                         <td class="fw-semibold"><?= escape($area['area_name']) ?></td>
-                        <td><span class="badge bg-primary bg-opacity-10 text-primary"><?= escape($area['city_name'] ?? '—') ?></span></td>
+                        <td><span class="badge bg-primary bg-opacity-10 text-primary"><?= escape($area['city_name'] ?? '&mdash;') ?></span></td>
                         <td class="text-center">
                             <span class="badge bg-info rounded-pill"><?= $area['location_count'] ?? 0 ?></span>
                         </td>

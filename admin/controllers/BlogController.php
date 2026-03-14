@@ -140,7 +140,7 @@ class BlogController extends Controller {
         // Slug
         $slug = $customSlug ?: $this->blogModel->generateSlug($title, $postId);
         if ($slug !== $customSlug && $customSlug) {
-            // custom slug provided — validate and ensure uniqueness
+            // custom slug provided &mdash; validate and ensure uniqueness
             $slug = $this->blogModel->generateSlug($customSlug, $postId);
         }
 
@@ -155,7 +155,7 @@ class BlogController extends Controller {
             if ($file['size'] > self::MAX_IMG_BYTES) {
                 $this->redirectWithError($redirect, 'Image exceeds 5 MB.'); return;
             }
-            $uploadDir = PUBLIC_PATH . '/uploads/blog/';
+            $uploadDir = API_BLOG_UPLOAD_DIR;
             if (!is_dir($uploadDir)) mkdir($uploadDir, 0755, true);
             $newName = 'blog_' . time() . '_' . bin2hex(random_bytes(4)) . '.' . $ext;
             if (!move_uploaded_file($file['tmp_name'], $uploadDir . $newName)) {
@@ -186,14 +186,14 @@ class BlogController extends Controller {
 
         if ($postId) {
             $this->blogModel->updatePost($postId, $data);
-            logAudit('blog_post_updated', $postId, 'blog_posts', $cu['id']);
+            logAudit('blog_post_updated', 'blog_posts', $postId);
             $_SESSION['success'] = 'Post updated.';
             $this->redirect("blog/detail?id={$postId}");
         } else {
-            $data['author_id'] = $cu['id'];
+            $data['author_id'] = $cu['admin_id'];
             $newId = $this->blogModel->createPost($data);
             if ($newId) {
-                logAudit('blog_post_created', $newId, 'blog_posts', $cu['id']);
+                logAudit('blog_post_created', 'blog_posts', $newId);
                 $_SESSION['success'] = 'Post created.';
                 $this->redirect("blog/detail?id={$newId}");
             } else {
@@ -211,7 +211,7 @@ class BlogController extends Controller {
 
         $this->blogModel->publish($id);
         $cu = $this->auth->getCurrentUser();
-        logAudit('blog_post_published', $id, 'blog_posts', $cu['id']);
+        logAudit('blog_post_published', 'blog_posts', $id);
         $_SESSION['success'] = 'Post published.';
         $this->redirect("blog/detail?id={$id}");
     }
@@ -225,7 +225,7 @@ class BlogController extends Controller {
 
         $this->blogModel->setStatus($id, 'archived');
         $cu = $this->auth->getCurrentUser();
-        logAudit('blog_post_archived', $id, 'blog_posts', $cu['id']);
+        logAudit('blog_post_archived', 'blog_posts', $id);
         $_SESSION['success'] = 'Post archived.';
         $this->redirect("blog/detail?id={$id}");
     }
@@ -242,7 +242,7 @@ class BlogController extends Controller {
 
         $this->blogModel->deletePost($id);
         $cu = $this->auth->getCurrentUser();
-        logAudit('blog_post_deleted', $id, 'blog_posts', $cu['id']);
+        logAudit('blog_post_deleted', 'blog_posts', $id);
         $_SESSION['success'] = 'Post deleted.';
         $this->redirect('blog');
     }

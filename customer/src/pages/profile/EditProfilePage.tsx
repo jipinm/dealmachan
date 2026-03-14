@@ -5,6 +5,7 @@ import { ChevronLeft, Camera, Loader2, Check } from 'lucide-react'
 import { profileApi, type UpdateProfileRequest } from '@/api/endpoints/profile'
 import { publicApi } from '@/api/endpoints/public'
 import { useAuthStore } from '@/store/authStore'
+import { getImageUrl } from '@/lib/imageUrl'
 import { getApiError } from '@/api/client'
 import toast from 'react-hot-toast'
 
@@ -82,7 +83,7 @@ export default function EditProfilePage() {
     )
   }
 
-  const avatarSrc = preview ?? profile?.profile_image
+  const avatarSrc = preview ?? (profile?.profile_image ? getImageUrl(profile.profile_image) : null)
 
   return (
     <div className="max-w-[1200px] mx-auto px-4 py-6 pb-10">

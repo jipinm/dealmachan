@@ -125,7 +125,7 @@ $pageTitle = 'Deal Makers';
                         <td class="text-muted small"><?= ($page - 1) * 25 + $i + 1 ?></td>
                         <td>
                             <div class="fw-semibold"><?= htmlspecialchars($dm['name']) ?></div>
-                            <div class="text-muted small"><?= $dm['gender'] ? ucfirst($dm['gender']) : '—' ?></div>
+                            <div class="text-muted small"><?= $dm['gender'] ? ucfirst($dm['gender']) : '&mdash;' ?></div>
                         </td>
                         <td><?= htmlspecialchars($dm['phone']) ?></td>
                         <td class="text-muted small"><?= htmlspecialchars($dm['email']) ?></td>
@@ -135,7 +135,7 @@ $pageTitle = 'Deal Makers';
                         </td>
                         <td>₹<?= number_format($dm['total_rewards_paid'], 2) ?></td>
                         <td class="text-muted small">
-                            <?= $dm['dealmaker_approved_at'] ? date('d M Y', strtotime($dm['dealmaker_approved_at'])) : '—' ?>
+                            <?= $dm['dealmaker_approved_at'] ? date('d M Y', strtotime($dm['dealmaker_approved_at'])) : '&mdash;' ?>
                         </td>
                         <td>
                             <?php if ($dm['user_status'] === 'active'): ?>

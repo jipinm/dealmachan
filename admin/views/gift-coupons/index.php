@@ -28,7 +28,7 @@
             <?php
             $from = min($totalCount, ($currentPage - 1) * $perPage + 1);
             $to   = min($totalCount, $currentPage * $perPage);
-            echo $totalCount ? "Showing {$from}–{$to} of {$totalCount}" : 'No gift coupons found';
+            echo $totalCount ? "Showing {$from}&ndash;{$to} of {$totalCount}" : 'No gift coupons found';
             ?>
         </small>
     </div>
@@ -131,7 +131,7 @@ $now = time();
                     <?php elseif (isset($statusBadge[$g['acceptance_status']])): ?>
                         <span class="badge <?= $statusBadge[$g['acceptance_status']][0] ?>"><?= $statusBadge[$g['acceptance_status']][1] ?></span>
                     <?php else: ?>
-                        <span class="badge bg-secondary">—</span>
+                        <span class="badge bg-secondary">&mdash;</span>
                     <?php endif; ?>
                 </td>
                 <td class="small text-muted text-nowrap"><?= date('d M Y', strtotime($g['gifted_at'])) ?></td>

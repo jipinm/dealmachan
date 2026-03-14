@@ -20,8 +20,10 @@ class HomeController {
     }
 
     public function index(array $query): never {
-        $cityId = !empty($query['city_id']) ? (int)$query['city_id'] : null;
-        $limit  = min(20, max(5, (int)($query['limit'] ?? 10)));
+        $cityId     = !empty($query['city_id'])     ? (int)$query['city_id']     : null;
+        $areaId     = !empty($query['area_id'])     ? (int)$query['area_id']     : null;
+        $categoryId = !empty($query['category_id']) ? (int)$query['category_id'] : null;
+        $limit      = min(20, max(5, (int)($query['limit'] ?? 10)));
 
         // Optional auth — coupon codes are only shown to logged-in users
         $isAuthenticated = AuthMiddleware::optional();
@@ -38,9 +40,24 @@ class HomeController {
         );
 
         // ── Flash discounts ───────────────────────────────────────────────────
-        $fdWhere = $cityId
-            ? "AND EXISTS (SELECT 1 FROM stores st WHERE st.id = fd.store_id AND st.city_id = {$cityId})"
-            : '';
+        $fdWhere  = ["fd.status = 'active'", "fd.valid_from <= NOW()", "fd.valid_until >= NOW()"];
+        $fdParams = [];
+
+        if ($cityId) {
+            $fdWhere[]  = "(NOT EXISTS (SELECT 1 FROM flash_discount_locations fdl WHERE fdl.flash_discount_id = fd.id)
+                            OR EXISTS (SELECT 1 FROM flash_discount_locations fdl WHERE fdl.flash_discount_id = fd.id AND fdl.city_id = ?))";
+            $fdParams[] = $cityId;
+        }
+        if ($areaId) {
+            $fdWhere[]  = "(NOT EXISTS (SELECT 1 FROM flash_discount_locations fdl WHERE fdl.flash_discount_id = fd.id)
+                            OR EXISTS (SELECT 1 FROM flash_discount_locations fdl WHERE fdl.flash_discount_id = fd.id AND (fdl.area_id = ? OR fdl.area_id IS NULL)))";
+            $fdParams[] = $areaId;
+        }
+        if ($categoryId) {
+            $fdWhere[]  = "EXISTS (SELECT 1 FROM flash_discount_categories fdc WHERE fdc.flash_discount_id = fd.id AND fdc.category_id = ?)";
+            $fdParams[] = $categoryId;
+        }
+
         $flashDiscounts = $this->db->query(
             "SELECT fd.id,
                     fd.title,
@@ -50,16 +67,16 @@ class HomeController {
                     fd.merchant_id,
                     m.business_name    AS merchant_name,
                     m.business_logo    AS merchant_logo,
-                    s.store_name
+                    fd.store_id,
+                    s.store_name,
+                    s.store_image
              FROM flash_discounts fd
              JOIN merchants m ON m.id = fd.merchant_id
              LEFT JOIN stores s ON s.id = fd.store_id
-             WHERE fd.status = 'active'
-               AND fd.valid_from <= NOW()
-               AND fd.valid_until >= NOW()
-               {$fdWhere}
+             WHERE " . implode(' AND ', $fdWhere) . "
              ORDER BY fd.valid_from DESC
-             LIMIT {$limit}"
+             LIMIT ?",
+            array_merge($fdParams, [$limit])
         );
 
         // ── Featured merchants ────────────────────────────────────────────────
@@ -98,9 +115,13 @@ class HomeController {
                     c.merchant_id,
                     m.business_name AS merchant_name,
                     m.business_logo AS merchant_logo,
+                    c.store_id,
+                    s.store_name,
+                    s.store_image,
                     COUNT(cs.id) AS save_count
              FROM coupons c
              JOIN merchants m ON m.id = c.merchant_id
+             LEFT JOIN stores s ON s.id = c.store_id
              LEFT JOIN coupon_subscriptions cs ON cs.coupon_id = c.id
              WHERE c.status = 'active'
                AND c.valid_until >= CURDATE()
@@ -131,6 +152,7 @@ class HomeController {
             'flash_discounts'    => array_map(static function ($fd) {
                 $fd['merchant_logo'] = imageUrl($fd['merchant_logo']);
                 $fd['banner_image']  = imageUrl($fd['banner_image']);
+                $fd['store_image']   = imageUrl($fd['store_image'] ?? null);
                 return $fd;
             }, $flashDiscounts),
             'featured_merchants' => array_map(static function ($m) {
@@ -140,6 +162,7 @@ class HomeController {
             'top_coupons'        => array_map(static function ($c) use ($isAuthenticated) {
                 $c['merchant_logo'] = imageUrl($c['merchant_logo']);
                 $c['banner_image']  = imageUrl($c['banner_image']);
+                $c['store_image']   = imageUrl($c['store_image'] ?? null);
                 if (!$isAuthenticated) $c['coupon_code'] = null;
                 return $c;
             }, $coupons),

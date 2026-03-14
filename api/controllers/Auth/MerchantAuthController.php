@@ -34,13 +34,31 @@ class MerchantAuthController {
         $row = $this->db->queryOne(
             "SELECT u.id AS user_id, u.email, u.password_hash, u.status, u.phone,
                     m.id AS merchant_id, m.business_name, m.profile_status,
-                    m.subscription_status, m.business_logo
+                    m.subscription_status, m.subscription_plan, m.business_logo
              FROM users u
              JOIN merchants m ON m.user_id = u.id
              WHERE u.email = ? AND u.user_type = 'merchant'
              LIMIT 1",
             [$email]
         );
+
+        // Also check store-level sub-users
+        $storeUser = null;
+        if (!$row) {
+            $storeUser = $this->db->queryOne(
+                "SELECT u.id AS user_id, u.email, u.password_hash, u.status, u.phone,
+                        m.id AS merchant_id, m.business_name, m.profile_status,
+                        m.subscription_status, m.subscription_plan, m.business_logo,
+                        msu.store_id, msu.access_scope
+                 FROM users u
+                 JOIN merchant_store_users msu ON msu.user_id = u.id
+                 JOIN merchants m ON m.id = msu.merchant_id
+                 WHERE u.email = ? AND msu.status = 'active'
+                 LIMIT 1",
+                [$email]
+            );
+            $row = $storeUser;
+        }
 
         if (!$row || !password_verify($password, $row['password_hash'])) {
             Response::error('Invalid email or password.', 401, 'INVALID_CREDENTIALS');
@@ -56,8 +74,16 @@ class MerchantAuthController {
             [$row['user_id']]
         );
 
-        // Generate token pair
-        $accessToken  = JWT::createAccessToken($row['user_id'], $row['email']);
+        // Generate token pair — embed access_scope so middleware can gate routes
+        $accessScope  = $storeUser ? ($storeUser['access_scope'] ?? 'store') : 'merchant';
+        $storeId      = $storeUser ? ((int)($storeUser['store_id'] ?? 0) ?: null) : null;
+
+        $accessToken  = JWT::createAccessToken(
+            $row['user_id'],
+            $row['email'],
+            'merchant',
+            ['access_scope' => $accessScope, 'merchant_id' => $row['merchant_id'], 'store_id' => $storeId]
+        );
         $refreshToken = JWT::createRefreshToken($row['user_id']);
 
         // Store refresh token in DB (password_resets table re-purposed as token store, or use a dedicated table)
@@ -78,6 +104,9 @@ class MerchantAuthController {
                 'logo_url'            => imageUrl($row['business_logo']),
                 'profile_status'      => $row['profile_status'],
                 'subscription_status' => $row['subscription_status'],
+                'subscription_plan'   => $row['subscription_plan'] ?? 'merchant_only',
+                'access_scope'        => $accessScope,
+                'store_id'            => $storeId,
             ],
         ], 'Login successful');
     }
@@ -122,7 +151,25 @@ class MerchantAuthController {
             Response::unauthorized('Account no longer active.');
         }
 
-        $newAccessToken  = JWT::createAccessToken($user['id'], $user['email']);
+        // Re-load scope claims so they survive token rotation for store admins
+        $storeUser = $this->db->queryOne(
+            "SELECT msu.access_scope, msu.store_id, msu.merchant_id
+             FROM merchant_store_users msu
+             WHERE msu.user_id = ? AND msu.status = 'active'
+             LIMIT 1",
+            [$user['id']]
+        );
+        $accessScope = $storeUser['access_scope'] ?? 'merchant';
+        $storeId     = $storeUser ? ((int)($storeUser['store_id'] ?? 0) ?: null) : null;
+        $merchantId  = $storeUser['merchant_id'] ?? null;
+
+        $extraClaims = array_filter([
+            'access_scope' => $accessScope,
+            'store_id'     => $storeId,
+            'merchant_id'  => $merchantId ? (int)$merchantId : null,
+        ], static fn($v) => $v !== null);
+
+        $newAccessToken  = JWT::createAccessToken($user['id'], $user['email'], 'merchant', $extraClaims);
         $newRefreshToken = JWT::createRefreshToken($user['id']);
         $this->storeRefreshToken($user['id'], $newRefreshToken);
 

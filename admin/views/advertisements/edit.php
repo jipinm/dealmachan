@@ -43,9 +43,9 @@
                     <label class="form-label fw-semibold">Current Media</label>
                     <div class="border rounded p-2 bg-light" style="max-height:120px;overflow:hidden;">
                         <?php if ($ad['media_type'] === 'image'): ?>
-                            <img src="<?= BASE_URL ?>public/<?= escape($ad['media_url']) ?>"
+                            <img src="<?= imageUrl($ad['media_url']) ?>"
                                  style="max-height:100px;max-width:100%;object-fit:contain;"
-                                 alt="current image" onerror="this.parentNode.innerHTML='<span class=text-muted>Preview unavailable</span>'">
+                                 alt="current image" onerror="this.src='<?= imageUrl('') ?>'">
                         <?php else: ?>
                             <span class="text-muted"><i class="fas fa-video me-1"></i><?= escape($ad['media_url']) ?></span>
                         <?php endif; ?>
@@ -62,7 +62,7 @@
                 <!-- Link URL -->
                 <div class="col-md-8">
                     <label class="form-label fw-semibold">Link URL</label>
-                    <input type="url" name="link_url" class="form-control" placeholder="https://…"
+                    <input type="url" name="link_url" class="form-control" placeholder="https://&hellip;"
                            value="<?= escape($d['link_url'] ?? '') ?>">
                 </div>
 
@@ -120,10 +120,10 @@
     const hint = document.getElementById('acceptHint');
     if (type === 'video') {
         document.getElementById('mediaFileInput').accept = 'video/mp4,video/webm,video/ogg';
-        hint.textContent = 'Accepted: mp4, webm, ogg — max 10 MB';
+        hint.textContent = 'Accepted: mp4, webm, ogg &mdash; max 10 MB';
     } else {
         document.getElementById('mediaFileInput').accept = 'image/jpeg,image/png,image/gif,image/webp';
-        hint.textContent = 'Accepted: jpg, jpeg, png, gif, webp — max 10 MB';
+        hint.textContent = 'Accepted: jpg, jpeg, png, gif, webp &mdash; max 10 MB';
     }
 })();
 </script>

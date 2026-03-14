@@ -31,7 +31,7 @@ $now = time();
             <?php
             $from = min($totalCount, ($currentPage - 1) * $perPage + 1);
             $to   = min($totalCount, $currentPage * $perPage);
-            echo $totalCount ? "Showing {$from}–{$to} of {$totalCount}" : 'No advertisements found';
+            echo $totalCount ? "Showing {$from}&ndash;{$to} of {$totalCount}" : 'No advertisements found';
             ?>
         </small>
     </div>
@@ -47,7 +47,7 @@ $now = time();
             <div class="col-12 col-md-4">
                 <label class="form-label form-label-sm mb-1">Search</label>
                 <input type="text" name="search" class="form-control form-control-sm"
-                       placeholder="Search by title…" value="<?= escape($filters['search'] ?? '') ?>">
+                       placeholder="Search by title" value="<?= escape($filters['search'] ?? '') ?>">
             </div>
             <div class="col-6 col-md-2">
                 <label class="form-label form-label-sm mb-1">Status</label>
@@ -90,16 +90,16 @@ $now = time();
             <!-- Thumbnail -->
             <div class="position-relative bg-dark" style="height:140px;overflow:hidden;border-radius:.375rem .375rem 0 0;">
                 <?php if ($ad['media_type'] === 'image'): ?>
-                    <img src="<?= BASE_URL ?>public/<?= escape($ad['media_url']) ?>"
+                    <img src="<?= imageUrl($ad['media_url']) ?>"
                          class="w-100 h-100 object-fit-cover" alt="<?= escape($ad['title']) ?>"
-                         onerror="this.style.display='none'">
+                         onerror="this.src='<?= imageUrl('') ?>'">
                 <?php else: ?>
                     <div class="d-flex align-items-center justify-content-center h-100">
                         <i class="fas fa-play-circle text-white fa-3x opacity-50"></i>
                     </div>
                 <?php endif; ?>
                 <?php if ($isLive): ?>
-                <span class="badge bg-danger position-absolute top-0 end-0 m-2">● LIVE</span>
+                <span class="badge bg-danger position-absolute top-0 end-0 m-2">&mdash; LIVE</span>
                 <?php endif; ?>
                 <span class="badge bg-<?= $ad['media_type'] === 'image' ? 'info' : 'dark' ?> position-absolute top-0 start-0 m-2">
                     <i class="fas fa-<?= $ad['media_type'] === 'image' ? 'image' : 'video' ?> me-1"></i><?= ucfirst($ad['media_type']) ?>
@@ -116,8 +116,8 @@ $now = time();
                 </div>
                 <?php if ($ad['start_date'] || $ad['end_date']): ?>
                 <div class="text-muted small">
-                    <?= $ad['start_date'] ? date('d M Y', strtotime($ad['start_date'])) : '—' ?>
-                    → <?= $ad['end_date'] ? date('d M Y', strtotime($ad['end_date'])) : '∞' ?>
+                    <?= $ad['start_date'] ? date('d M Y', strtotime($ad['start_date'])) : '&mdash;' ?>
+                    &rarr; <?= $ad['end_date'] ? date('d M Y', strtotime($ad['end_date'])) : '&infin;' ?>
                 </div>
                 <?php endif; ?>
             </div>

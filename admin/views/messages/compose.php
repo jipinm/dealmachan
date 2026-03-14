@@ -50,7 +50,7 @@
                     <div id="recipient_<?= $type ?>" class="mb-3" style="display:<?= (($_POST['receiver_type'] ?? $prefill['receiver_type'] ?? 'admin') === $type) ? 'block' : 'none' ?>">
                         <label class="form-label">Select <?= ucfirst($type) ?> <span class="text-danger">*</span></label>
                         <select name="receiver_id" class="form-select recipient-select" <?= (($_POST['receiver_type'] ?? $prefill['receiver_type'] ?? 'admin') !== $type) ? 'disabled' : '' ?>>
-                            <option value="">— Choose <?= ucfirst($type) ?> —</option>
+                            <option value="">&mdash; Choose <?= ucfirst($type) ?> &mdash;</option>
                             <?php foreach ($list as $item): ?>
                                 <?php
                                 $id   = $item['id'];

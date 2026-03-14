@@ -58,7 +58,7 @@
             <?php
             $from = min($totalCount, ($currentPage - 1) * $perPage + 1);
             $to   = min($totalCount, $currentPage * $perPage);
-            echo $totalCount ? "Showing {$from}–{$to} of {$totalCount}" : 'No store coupons found';
+            echo $totalCount ? "Showing {$from}&ndash;{$to} of {$totalCount}" : 'No store coupons found';
             ?>
         </small>
     </div>
@@ -172,7 +172,7 @@
                                     <i class="fas fa-gift me-1"></i><?= $sc['gifted_to_name'] ? escape($sc['gifted_to_name']) : 'Yes' ?>
                                 </span>
                             <?php else: ?>
-                                <span class="text-muted">—</span>
+                                <span class="text-muted">&mdash;</span>
                             <?php endif; ?>
                         </td>
                         <td class="text-center">
@@ -186,8 +186,8 @@
                         </td>
                         <td class="small">
                             <?php if ($sc['valid_from'] || $sc['valid_until']): ?>
-                                <?= $sc['valid_from'] ? formatDate($sc['valid_from']) : '—' ?>
-                                → <?= $sc['valid_until'] ? formatDate($sc['valid_until']) : '—' ?>
+                                <?= $sc['valid_from'] ? formatDate($sc['valid_from']) : '&mdash;' ?>
+                                → <?= $sc['valid_until'] ? formatDate($sc['valid_until']) : '&mdash;' ?>
                             <?php else: ?>
                                 <span class="text-muted">No expiry</span>
                             <?php endif; ?>

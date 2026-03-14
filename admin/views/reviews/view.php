@@ -96,7 +96,7 @@ $detailUrl    = 'reviews/detail?id=' . $review['id'];
                     </p>
                 <?php else: ?>
                     <p class="text-muted fst-italic mb-0">
-                        This review has no text — rating only.
+                        This review has no text &mdash; rating only.
                     </p>
                 <?php endif; ?>
             </div>

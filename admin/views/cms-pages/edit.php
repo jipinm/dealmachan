@@ -28,7 +28,7 @@ $post   = array_merge($page ?? [], $post ?? []);
                 </div>
                 <div class="mb-3">
                     <label class="form-label fw-semibold">Slug <span class="text-danger">*</span>
-                        <small class="text-muted fw-normal ms-1">— URL path, lowercase with hyphens</small>
+                        <small class="text-muted fw-normal ms-1">&mdash; URL path, lowercase with hyphens</small>
                     </label>
                     <div class="input-group">
                         <span class="input-group-text text-muted">/</span>

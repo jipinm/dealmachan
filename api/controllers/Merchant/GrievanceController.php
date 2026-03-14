@@ -2,10 +2,12 @@
 /**
  * Merchant Grievance Controller
  *
- * GET  /merchants/grievances                → index   (list with status filter)
- * GET  /merchants/grievances/:id            → show    (detail)
- * POST /merchants/grievances/:id/respond    → respond (set resolution_notes + in_progress)
- * PUT  /merchants/grievances/:id/resolve    → resolve (close grievance)
+ * GET  /merchants/grievances                      → index   (list with status filter)
+ * GET  /merchants/grievances/:id                  → show    (detail + messages)
+ * POST /merchants/grievances/:id/respond          → respond (legacy: set resolution_notes)
+ * PUT  /merchants/grievances/:id/resolve          → resolve (close grievance)
+ * GET  /merchants/grievances/:id/messages         → messages (thread)
+ * POST /merchants/grievances/:id/messages         → addMessage
  */
 class GrievanceController {
 
@@ -26,13 +28,19 @@ class GrievanceController {
             $where  .= ' AND g.status = ?';
             $binds[] = $params['status'];
         }
+        // Store-scoped users can only see grievances for their own store
+        if (($user['access_scope'] ?? 'merchant') === 'store' && !empty($user['store_id'])) {
+            $where  .= ' AND g.store_id = ?';
+            $binds[] = (int)$user['store_id'];
+        }
 
         $rows = $this->db->query(
             "SELECT g.id, g.subject, g.description, g.status, g.priority,
                     g.created_at, g.resolved_at, g.resolution_notes,
                     c.name  AS customer_name,
                     u.phone AS customer_phone,
-                    s.store_name
+                    s.store_name,
+                    (SELECT COUNT(*) FROM grievance_messages gm WHERE gm.grievance_id = g.id) AS message_count
              FROM grievances g
              LEFT JOIN customers c ON c.id = g.customer_id
              LEFT JOIN users    u ON u.id = c.user_id
@@ -81,10 +89,63 @@ class GrievanceController {
         );
 
         if (!$grievance) Response::notFound('Grievance not found');
+
+        // Include message thread
+        $grievance['messages'] = $this->fetchMessages($id);
+
         Response::success($grievance);
     }
 
+    // ── GET /merchants/grievances/:id/messages ────────────────────────────────
+    public function messages(array $user, int $id): never {
+        $merchantId = (int)$user['merchant_id'];
+
+        $grievance = $this->db->queryOne(
+            'SELECT id FROM grievances WHERE id = ? AND merchant_id = ?',
+            [$id, $merchantId]
+        );
+        if (!$grievance) Response::notFound('Grievance not found');
+
+        Response::success($this->fetchMessages($id));
+    }
+
+    // ── POST /merchants/grievances/:id/messages ───────────────────────────────
+    public function addMessage(array $user, int $id, array $body): never {
+        $merchantId = (int)$user['merchant_id'];
+
+        $grievance = $this->db->queryOne(
+            'SELECT id, status FROM grievances WHERE id = ? AND merchant_id = ?',
+            [$id, $merchantId]
+        );
+        if (!$grievance) Response::notFound('Grievance not found');
+        if ($grievance['status'] === 'closed') {
+            Response::error('Cannot add messages to a closed grievance.', 400, 'GRIEVANCE_CLOSED');
+        }
+
+        $message = trim((string)($body['message'] ?? ''));
+        if ($message === '') Response::validationError(['message' => 'Message text is required.']);
+
+        $this->db->execute(
+            "INSERT INTO grievance_messages (grievance_id, sender_type, sender_id, message)
+             VALUES (?, 'merchant', ?, ?)",
+            [$id, $user['id'], $message]
+        );
+
+        // Move to in_progress if still open
+        if ($grievance['status'] === 'open') {
+            $this->db->execute(
+                "UPDATE grievances SET status = 'in_progress' WHERE id = ?",
+                [$id]
+            );
+        }
+
+        Response::created([
+            'messages' => $this->fetchMessages($id),
+        ], 'Message sent.');
+    }
+
     // ── POST /merchants/grievances/:id/respond ────────────────────────────────
+    // Legacy endpoint: still supported, just creates a message + updates notes.
     public function respond(array $user, int $id, array $body): never {
         $merchantId = (int)$user['merchant_id'];
 
@@ -94,19 +155,27 @@ class GrievanceController {
         );
         if (!$grievance) Response::notFound('Grievance not found');
         if (in_array($grievance['status'], ['resolved', 'closed'])) {
-            Response::error('Grievance is already closed', 400);
+            Response::error('Grievance is already closed.', 400, 'ALREADY_CLOSED');
         }
 
         $notes = trim((string)($body['resolution_notes'] ?? $body['response'] ?? ''));
-        if ($notes === '') Response::validationError(['resolution_notes' => 'Response text is required']);
+        if ($notes === '') Response::validationError(['resolution_notes' => 'Response text is required.']);
 
         $this->db->execute(
             "UPDATE grievances SET resolution_notes = ?, status = 'in_progress' WHERE id = ?",
             [$notes, $id]
         );
 
-        $updated = $this->db->queryOne('SELECT * FROM grievances WHERE id = ?', [$id]);
-        Response::success($updated, 'Response submitted');
+        // Also save as a message to the thread
+        $this->db->execute(
+            "INSERT INTO grievance_messages (grievance_id, sender_type, sender_id, message)
+             VALUES (?, 'merchant', ?, ?)",
+            [$id, $user['id'], $notes]
+        );
+
+        $updated             = $this->db->queryOne('SELECT * FROM grievances WHERE id = ?', [$id]);
+        $updated['messages'] = $this->fetchMessages($id);
+        Response::success($updated, 'Response submitted.');
     }
 
     // ── PUT /merchants/grievances/:id/resolve ─────────────────────────────────
@@ -119,7 +188,7 @@ class GrievanceController {
         );
         if (!$grievance) Response::notFound('Grievance not found');
         if ($grievance['status'] === 'closed') {
-            Response::error('Grievance is already closed', 400);
+            Response::error('Grievance is already closed.', 400, 'ALREADY_CLOSED');
         }
 
         $this->db->execute(
@@ -127,7 +196,24 @@ class GrievanceController {
             [$id]
         );
 
-        $updated = $this->db->queryOne('SELECT * FROM grievances WHERE id = ?', [$id]);
-        Response::success($updated, 'Grievance resolved');
+        $updated             = $this->db->queryOne('SELECT * FROM grievances WHERE id = ?', [$id]);
+        $updated['messages'] = $this->fetchMessages($id);
+        Response::success($updated, 'Grievance resolved.');
+    }
+
+    // ── Private: fetch message thread ─────────────────────────────────────────
+    private function fetchMessages(int $grievanceId): array {
+        return $this->db->query(
+            "SELECT gm.id, gm.sender_type, gm.sender_id, gm.message, gm.created_at,
+                    CASE gm.sender_type
+                        WHEN 'customer' THEN (SELECT c.name FROM customers c WHERE c.id = gm.sender_id)
+                        WHEN 'merchant' THEN (SELECT u.email FROM users u WHERE u.id = gm.sender_id)
+                        ELSE 'Store'
+                    END AS sender_name
+             FROM grievance_messages gm
+             WHERE gm.grievance_id = ?
+             ORDER BY gm.created_at ASC",
+            [$grievanceId]
+        );
     }
 }

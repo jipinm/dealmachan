@@ -11,10 +11,11 @@ class FlashDiscount extends Model {
     public function getAllWithDetails($filters = []) {
         $sql = "SELECT fd.*,
                        m.business_name AS merchant_name,
-                       s.store_name
+                       (SELECT GROUP_CONCAT(s.store_name ORDER BY s.store_name SEPARATOR ', ')
+                        FROM flash_discount_stores fds JOIN stores s ON fds.store_id = s.id
+                        WHERE fds.flash_discount_id = fd.id) AS store_name
                 FROM {$this->table} fd
                 JOIN merchants m ON fd.merchant_id = m.id
-                LEFT JOIN stores s ON fd.store_id = s.id
                 WHERE 1=1";
 
         $params = [];
@@ -37,7 +38,6 @@ class FlashDiscount extends Model {
     public function countWithDetails($filters = []) {
         $sql    = "SELECT COUNT(*) FROM {$this->table} fd
                    JOIN merchants m ON fd.merchant_id = m.id
-                   LEFT JOIN stores s ON fd.store_id = s.id
                    WHERE 1=1";
         $params = [];
         $this->applyFilters($sql, $params, $filters);
@@ -78,10 +78,11 @@ class FlashDiscount extends Model {
     public function findWithDetails($id) {
         $sql = "SELECT fd.*,
                        m.business_name AS merchant_name,
-                       s.store_name
+                       (SELECT GROUP_CONCAT(s.store_name ORDER BY s.store_name SEPARATOR ', ')
+                        FROM flash_discount_stores fds JOIN stores s ON fds.store_id = s.id
+                        WHERE fds.flash_discount_id = fd.id) AS store_name
                 FROM {$this->table} fd
                 JOIN merchants m ON fd.merchant_id = m.id
-                LEFT JOIN stores s ON fd.store_id = s.id
                 WHERE fd.id = ?";
         $stmt = $this->db->prepare($sql);
         $stmt->execute([$id]);
@@ -105,9 +106,11 @@ class FlashDiscount extends Model {
 
     /** Get flash discounts belonging to a specific merchant. */
     public function getByMerchant($merchantId) {
-        $sql = "SELECT fd.*, s.store_name
+        $sql = "SELECT fd.*,
+                       (SELECT GROUP_CONCAT(s.store_name ORDER BY s.store_name SEPARATOR ', ')
+                        FROM flash_discount_stores fds JOIN stores s ON fds.store_id = s.id
+                        WHERE fds.flash_discount_id = fd.id) AS store_name
                 FROM {$this->table} fd
-                LEFT JOIN stores s ON fd.store_id = s.id
                 WHERE fd.merchant_id = ?
                 ORDER BY fd.created_at DESC";
         $stmt = $this->db->prepare($sql);

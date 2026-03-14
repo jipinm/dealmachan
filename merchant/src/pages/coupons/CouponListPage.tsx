@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Plus, Ticket, Copy, ChevronRight, Store } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { couponApi, type Coupon, type CouponTab } from '@/api/endpoints/coupons'
+import { useAuthStore } from '@/store/authStore'
 
 const TABS: { key: CouponTab; label: string }[] = [
   { key: 'all',     label: 'All' },
@@ -102,11 +103,15 @@ function CouponCard({ coupon }: { coupon: Coupon }) {
 export default function CouponListPage() {
   const navigate = useNavigate()
   const [tab, setTab]   = useState<CouponTab>('all')
+  const isStoreAdmin  = useAuthStore(s => s.isStoreAdmin())
+  const scopedStoreId = useAuthStore(s => s.scopedStoreId())
 
   const { data, isLoading } = useQuery({
-    queryKey: ['coupons', tab],
+    queryKey: ['coupons', tab, scopedStoreId],
     queryFn: async () => {
-      const res = await couponApi.list({ tab, limit: 50 })
+      const params: Parameters<typeof couponApi.list>[0] = { tab, limit: 50 }
+      if (isStoreAdmin && scopedStoreId) params.store_id = scopedStoreId
+      const res = await couponApi.list(params)
       return res.data
     },
   })

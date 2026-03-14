@@ -96,7 +96,7 @@
                         <?= ucfirst($m['profile_status']) ?>
                     </span>
                 </td>
-                <td><?= $m['is_premium'] ? '<span class="badge bg-warning text-dark">Premium</span>' : '<span class="text-muted small">—</span>' ?></td>
+                <td><?= $m['is_premium'] ? '<span class="badge bg-warning text-dark">Premium</span>' : '<span class="text-muted small">&mdash;</span>' ?></td>
                 <td class="text-end fw-bold"><?= number_format($m['redemption_count']) ?></td>
                 <td class="text-end text-success fw-bold">₹<?= number_format($m['total_discount'], 2) ?></td>
             </tr>
@@ -129,12 +129,12 @@
                     <?= htmlspecialchars($m['business_name']) ?>
                     <?php if ($m['is_premium']): ?><span class="badge bg-warning text-dark ms-1 small">Premium</span><?php endif; ?>
                 </td>
-                <td class="text-muted small"><?= htmlspecialchars($m['email'] ?? '—') ?></td>
-                <td class="text-muted small"><?= htmlspecialchars($m['phone'] ?? '—') ?></td>
+                <td class="text-muted small"><?= htmlspecialchars($m['email'] ?? '&mdash;') ?></td>
+                <td class="text-muted small"><?= htmlspecialchars($m['phone'] ?? '&mdash;') ?></td>
                 <td><span class="badge bg-<?= $m['profile_status']==='approved'?'success':($m['profile_status']==='pending'?'warning':'danger') ?>">
                     <?= ucfirst($m['profile_status']) ?></span></td>
                 <td><span class="badge bg-<?= $m['subscription_status']==='active'?'success':($m['subscription_status']==='trial'?'info':'secondary') ?>">
-                    <?= ucfirst($m['subscription_status'] ?? '—') ?></span></td>
+                    <?= ucfirst($m['subscription_status'] ?? '&mdash;') ?></span></td>
                 <td class="text-end fw-bold"><?= number_format($m['redemption_count']) ?></td>
                 <td class="text-muted small"><?= date('d M Y', strtotime($m['created_at'])) ?></td>
             </tr>
