@@ -1,4 +1,4 @@
-<?php /* views/card-configurations/view.php */
+<?php /* views/card-configurations/detail.php */
 $cfg             = $config;
 $classColors     = ['silver' => 'secondary', 'gold' => 'warning', 'platinum' => 'info', 'diamond' => 'primary'];
 $premiumPartners = array_filter($cfg['partners'] ?? [], fn($p) => $p['partner_type'] === 'premium');

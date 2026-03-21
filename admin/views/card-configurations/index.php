@@ -110,7 +110,7 @@
             <tr>
                 <td class="text-muted small"><?= $cfg['id'] ?></td>
                 <td>
-                    <a href="<?= BASE_URL ?>card-configurations/view?id=<?= $cfg['id'] ?>" class="fw-semibold text-decoration-none">
+                    <a href="<?= BASE_URL ?>card-configurations/detail?id=<?= $cfg['id'] ?>" class="fw-semibold text-decoration-none">
                         <?= escape($cfg['name']) ?>
                     </a>
                     <?php if ($cfg['is_publicly_selectable']): ?>
@@ -131,7 +131,7 @@
                     </span>
                 </td>
                 <td class="text-end">
-                    <a href="<?= BASE_URL ?>card-configurations/view?id=<?= $cfg['id'] ?>" class="btn btn-sm btn-outline-secondary" title="View">
+                    <a href="<?= BASE_URL ?>card-configurations/detail?id=<?= $cfg['id'] ?>" class="btn btn-sm btn-outline-secondary" title="View">
                         <i class="fas fa-eye"></i>
                     </a>
                     <a href="<?= BASE_URL ?>card-configurations/edit?id=<?= $cfg['id'] ?>" class="btn btn-sm btn-outline-primary" title="Edit">

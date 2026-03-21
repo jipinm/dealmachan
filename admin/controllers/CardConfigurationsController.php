@@ -64,14 +64,14 @@ class CardConfigurationsController extends Controller {
 
     // ─── DETAIL ───────────────────────────────────────────────────────────────
 
-    public function view() {
+    public function detail() {
         $id = (int)($_GET['id'] ?? 0);
         if (!$id) { $this->redirectWithError('card-configurations', 'Invalid configuration ID.'); return; }
 
         $config = $this->configModel->findWithDetails($id);
         if (!$config) { $this->redirectWithError('card-configurations', 'Configuration not found.'); return; }
 
-        $this->loadView('card-configurations/view', [
+        $this->loadView('card-configurations/detail', [
             'title'        => 'Card Config &mdash; ' . escape($config['name']),
             'config'       => $config,
             'current_user' => $this->auth->getCurrentUser(),
@@ -132,7 +132,7 @@ class CardConfigurationsController extends Controller {
 
         if ($this->configModel->isLinkedToCards($id)) {
             $_SESSION['error'] = 'Cannot delete: cards are already linked to this configuration.';
-            $this->redirect("card-configurations/view?id={$id}");
+            $this->redirect("card-configurations/detail?id={$id}");
             return;
         }
 
@@ -257,7 +257,7 @@ class CardConfigurationsController extends Controller {
         }
         $this->configModel->syncPartners($targetId, $partners);
 
-        $this->redirect("card-configurations/view?id={$targetId}");
+        $this->redirect("card-configurations/detail?id={$targetId}");
     }
 
     // ─── DB helper ────────────────────────────────────────────────────────────

@@ -13,10 +13,10 @@ $normalPartners  = array_filter($partners, fn($p) => $p['partner_type'] === 'nor
         <h4 class="mb-0">Edit Card Configuration</h4>
         <small class="text-muted">
             <a href="<?= BASE_URL ?>card-configurations">Card Configurations</a> /
-            <a href="<?= BASE_URL ?>card-configurations/view?id=<?= $cfg['id'] ?>"><?= escape($cfg['name']) ?></a> / Edit
+            <a href="<?= BASE_URL ?>card-configurations/detail?id=<?= $cfg['id'] ?>"><?= escape($cfg['name']) ?></a> / Edit
         </small>
     </div>
-    <a href="<?= BASE_URL ?>card-configurations/view?id=<?= $cfg['id'] ?>" class="btn btn-outline-secondary btn-sm">
+    <a href="<?= BASE_URL ?>card-configurations/detail?id=<?= $cfg['id'] ?>" class="btn btn-outline-secondary btn-sm">
         <i class="fas fa-arrow-left me-1"></i> Back
     </a>
 </div>
@@ -310,7 +310,7 @@ $normalPartners  = array_filter($partners, fn($p) => $p['partner_type'] === 'nor
                 <button type="submit" class="btn btn-primary">
                     <i class="fas fa-save me-1"></i> Save Changes
                 </button>
-                <a href="<?= BASE_URL ?>card-configurations/view?id=<?= $cfg['id'] ?>" class="btn btn-outline-secondary">Cancel</a>
+                <a href="<?= BASE_URL ?>card-configurations/detail?id=<?= $cfg['id'] ?>" class="btn btn-outline-secondary">Cancel</a>
             </div>
 
         </div>
