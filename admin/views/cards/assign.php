@@ -1,9 +1,9 @@
 <div class="d-flex align-items-center justify-content-between mb-4">
     <div>
         <h4 class="mb-0">Assign Card</h4>
-        <small class="text-muted"><a href="<?= BASE_URL ?>/cards">Cards</a> / Assign</small>
+        <small class="text-muted"><a href="<?= BASE_URL ?>cards">Cards</a> / Assign</small>
     </div>
-    <a href="<?= BASE_URL ?>/cards" class="btn btn-outline-secondary btn-sm"><i class="fas fa-arrow-left me-1"></i> Back</a>
+    <a href="<?= BASE_URL ?>cards" class="btn btn-outline-secondary btn-sm"><i class="fas fa-arrow-left me-1"></i> Back</a>
 </div>
 
 <div class="row justify-content-center">
@@ -14,10 +14,10 @@
                 <?php if (empty($available)): ?>
                     <div class="alert alert-warning mb-0">
                         <i class="fas fa-exclamation-triangle me-2"></i>
-                        No available cards to assign. <a href="<?= BASE_URL ?>/cards/generate">Generate cards first.</a>
+                        No available cards to assign. <a href="<?= BASE_URL ?>cards/generate">Generate cards first.</a>
                     </div>
                 <?php else: ?>
-                <form method="POST" action="<?= BASE_URL ?>/cards/assign" id="assignForm">
+                <form method="POST" action="<?= BASE_URL ?>cards/assign" id="assignForm">
                     <input type="hidden" name="csrf_token" value="<?= generateCSRFToken() ?>">
 
                     <!-- Select Card -->
@@ -85,7 +85,7 @@
 </div>
 
 <script>
-const ASSIGN_SEARCH_URL = '<?= BASE_URL ?>/cards/assign';
+const ASSIGN_SEARCH_URL = '<?= BASE_URL ?>cards/assign';
 
 function toggleAssignType() {
     const type = document.querySelector('input[name="assign_type"]:checked').value;

@@ -62,7 +62,7 @@
             ?>
         </small>
     </div>
-    <a href="<?= BASE_URL ?>/coupons/add" class="btn btn-primary">
+    <a href="<?= BASE_URL ?>coupons/add" class="btn btn-primary">
         <i class="fas fa-plus me-1"></i> New Coupon
     </a>
 </div>
@@ -70,7 +70,7 @@
 <!-- Filter bar -->
 <div class="card mb-3 shadow-sm">
     <div class="card-body py-2 px-3">
-        <form method="GET" action="<?= BASE_URL ?>/coupons" class="row g-2 align-items-end">
+        <form method="GET" action="<?= BASE_URL ?>coupons" class="row g-2 align-items-end">
             <div class="col-12 col-md-3">
                 <label class="form-label form-label-sm mb-1">Search</label>
                 <input type="text" name="search" class="form-control form-control-sm" placeholder="Title or code…" value="<?= escape($filters['search']) ?>">
@@ -112,7 +112,7 @@
             </div>
             <div class="col-12 col-md-auto ms-md-auto d-flex gap-2">
                 <button type="submit" class="btn btn-sm btn-primary"><i class="fas fa-filter me-1"></i>Filter</button>
-                <a href="<?= BASE_URL ?>/coupons" class="btn btn-sm btn-outline-secondary">Clear</a>
+                <a href="<?= BASE_URL ?>coupons" class="btn btn-sm btn-outline-secondary">Clear</a>
             </div>
         </form>
     </div>
@@ -144,7 +144,7 @@
                     <td class="text-muted small"><?= ($currentPage - 1) * $perPage + $i + 1 ?></td>
                     <td>
                         <div class="fw-semibold">
-                            <a href="<?= BASE_URL ?>/coupons/detail?id=<?= $c['id'] ?>" class="text-decoration-none">
+                            <a href="<?= BASE_URL ?>coupons/detail?id=<?= $c['id'] ?>" class="text-decoration-none">
                                 <?= escape($c['title']) ?>
                             </a>
                         </div>
@@ -192,7 +192,7 @@
                     </td>
                     <td>
                         <?php $st = $c['status'] ?? 'inactive'; ?>
-                        <form method="POST" action="<?= BASE_URL ?>/coupons/toggle" class="d-inline">
+                        <form method="POST" action="<?= BASE_URL ?>coupons/toggle" class="d-inline">
                             <input type="hidden" name="csrf_token" value="<?= generateCSRFToken() ?>">
                             <input type="hidden" name="id" value="<?= $c['id'] ?>">
                             <input type="hidden" name="redirect" value="coupons">
@@ -205,15 +205,15 @@
                     <td class="text-end" style="white-space:nowrap">
                         <!-- Approve if pending -->
                         <?php if ($ap === 'pending'): ?>
-                        <form method="POST" action="<?= BASE_URL ?>/coupons/approve" class="d-inline">
+                        <form method="POST" action="<?= BASE_URL ?>coupons/approve" class="d-inline">
                             <input type="hidden" name="csrf_token" value="<?= generateCSRFToken() ?>">
                             <input type="hidden" name="id" value="<?= $c['id'] ?>">
                             <input type="hidden" name="redirect" value="coupons">
                             <button class="btn btn-sm btn-outline-success" title="Approve"><i class="fas fa-check"></i></button>
                         </form>
                         <?php endif; ?>
-                        <a href="<?= BASE_URL ?>/coupons/detail?id=<?= $c['id'] ?>" class="btn btn-sm btn-outline-info" title="View"><i class="fas fa-eye"></i></a>
-                        <a href="<?= BASE_URL ?>/coupons/edit?id=<?= $c['id'] ?>" class="btn btn-sm btn-outline-primary" title="Edit"><i class="fas fa-edit"></i></a>
+                        <a href="<?= BASE_URL ?>coupons/detail?id=<?= $c['id'] ?>" class="btn btn-sm btn-outline-info" title="View"><i class="fas fa-eye"></i></a>
+                        <a href="<?= BASE_URL ?>coupons/edit?id=<?= $c['id'] ?>" class="btn btn-sm btn-outline-primary" title="Edit"><i class="fas fa-edit"></i></a>
                         <button class="btn btn-sm btn-outline-danger" title="Delete"
                             onclick="confirmDelete(<?= $c['id'] ?>, '<?= escape(addslashes($c['title'])) ?>')">
                             <i class="fas fa-trash"></i>
@@ -262,7 +262,7 @@
 <?php endif; ?>
 
 <!-- Hidden delete form -->
-<form id="deleteForm" method="POST" action="<?= BASE_URL ?>/coupons/delete" style="display:none">
+<form id="deleteForm" method="POST" action="<?= BASE_URL ?>coupons/delete" style="display:none">
     <input type="hidden" name="csrf_token" value="<?= generateCSRFToken() ?>">
     <input type="hidden" name="id" id="deleteId">
 </form>

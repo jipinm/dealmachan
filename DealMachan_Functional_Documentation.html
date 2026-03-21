@@ -752,7 +752,7 @@
   <div class="sidebar-brand">
     <div class="logo-mark">Deal Machan</div>
     <div class="logo-sub">Functional Documentation</div>
-    <div class="sidebar-version">v1.1 · March 2026</div>
+    <div class="sidebar-version">v1.2 · March 2026</div>
   </div>
 
   <div class="nav-group-label">Platform</div>
@@ -782,23 +782,23 @@
   <section class="hero">
     <div class="hero-glow"></div>
     <div class="hero-glow2"></div>
-    <div class="hero-eyebrow">Functional Documentation Report</div>
+    <div class="hero-eyebrow">Functional Documentation</div>
     <h1>Deal <span>Machan</span><br>Platform</h1>
     <p class="hero-desc">
-      A full-stack deal, coupon, and loyalty platform connecting customers, merchants, and administrators within a structured multi-sided marketplace — documented across all four platform applications.
+      A deal, coupon, and loyalty platform connecting customers, merchants, and administrators within a structured multi-sided marketplace. This document covers all functional capabilities across the four platform applications.
     </p>
     <div class="hero-meta">
       <div class="meta-item">
         <span class="meta-label">Document Version</span>
-        <span class="meta-value">1.1</span>
+        <span class="meta-value">1.2</span>
       </div>
       <div class="meta-item">
         <span class="meta-label">Last Updated</span>
-        <span class="meta-value">March 12, 2026</span>
+        <span class="meta-value">March 14, 2026</span>
       </div>
       <div class="meta-item">
         <span class="meta-label">Scope</span>
-        <span class="meta-value">Full Codebase · All Applications</span>
+        <span class="meta-value">All Four Applications</span>
       </div>
     </div>
   </section>
@@ -867,14 +867,14 @@
         <div style="font-size: 1.5rem; margin-bottom: 0.8rem;">⚙️</div>
         <div class="card-title">Admin Application</div>
         <p>Web-based management panel controlling all platform operations, approvals, content, and configuration.</p>
-        <div class="tags"><span class="tag tag-purple">Web</span><span class="tag tag-rose">Direct DB</span></div>
+        <div class="tags"><span class="tag tag-purple">Web Panel</span><span class="tag tag-rose">Approval Centre</span></div>
       </div>
       <div class="card">
         <div class="card-accent" style="background: linear-gradient(90deg, var(--green), var(--teal));"></div>
         <div style="font-size: 1.5rem; margin-bottom: 0.8rem;">🔌</div>
         <div class="card-title">Backend API</div>
-        <p>Centralised REST API processing all requests from Customer and Merchant apps with JWT auth and subscription-based access control.</p>
-        <div class="tags"><span class="tag tag-green">REST API</span><span class="tag tag-teal">JWT</span></div>
+        <p>Centralised secure platform layer processing all requests from the Customer and Merchant applications with subscription-based access control.</p>
+        <div class="tags"><span class="tag tag-green">Secure API</span><span class="tag tag-teal">City-Aware</span></div>
       </div>
     </div>
   </section>
@@ -897,15 +897,16 @@
         <div class="app-type" style="color: var(--gold);">Mobile-Optimised Web · Consumer Facing</div>
         <p>Supports both unauthenticated browsing and authenticated personal features. Location-aware content filtering shows stores and offers relevant to the customer's city.</p>
         <ul class="feature-list">
-          <li>Public browsing: stores, deals, coupons, flash deals, categories, blogs</li>
+          <li>Dedicated Stores page: browse stores with store images, names, and locations</li>
+          <li>Public browsing of deals, coupons, flash deals, categories, and blogs</li>
           <li>Personal coupon wallet, wishlist, loyalty card management</li>
           <li>Referral program, important dates tracker, activity history</li>
           <li>Contests, surveys, and grievance submission</li>
           <li>OTP-based registration and onboarding flow</li>
         </ul>
         <div class="tags" style="margin-top: 1.2rem;">
-          <span class="tag tag-gold">REST API</span>
-          <span class="tag tag-amber">JWT Auth</span>
+          <span class="tag tag-gold">Secure Login</span>
+          <span class="tag tag-amber">City-Aware</span>
           <span class="tag tag-gold">City-Aware</span>
         </div>
       </div>
@@ -926,7 +927,7 @@
           <li>Subscription and profile management</li>
         </ul>
         <div class="tags" style="margin-top: 1.2rem;">
-          <span class="tag tag-teal">REST API</span>
+          <span class="tag tag-teal">Secure Login</span>
           <span class="tag tag-blue">Feature Gate</span>
           <span class="tag tag-teal">QR Scan</span>
         </div>
@@ -937,7 +938,7 @@
         <div class="app-icon" style="background: rgba(167,139,250,0.1);">⚙️</div>
         <h3>Admin Application</h3>
         <div class="app-type" style="color: var(--purple);">Full Web Panel · Administrative</div>
-        <p>Comprehensive control over all system operations with direct database access through server-side PHP controllers. Approvals here unlock content visibility platform-wide.</p>
+        <p>Comprehensive control over all system operations. Approvals here unlock content visibility platform-wide, with changes taking immediate effect across all applications.</p>
         <ul class="feature-list">
           <li>Merchant and customer lifecycle management</li>
           <li>Coupon, campaign, contest and survey management</li>
@@ -948,9 +949,9 @@
           <li>Lead management and Deal Maker program oversight</li>
         </ul>
         <div class="tags" style="margin-top: 1.2rem;">
-          <span class="tag tag-purple">Direct DB</span>
-          <span class="tag tag-rose">RBAC</span>
-          <span class="tag tag-purple">PHP</span>
+          <span class="tag tag-purple">Web Panel</span>
+          <span class="tag tag-rose">Role-Based Access</span>
+          <span class="tag tag-purple">Approval Centre</span>
         </div>
       </div>
 
@@ -958,21 +959,21 @@
       <div class="app-card" style="border-top: 3px solid var(--green);">
         <div class="app-icon" style="background: rgba(52,211,153,0.1);">🔌</div>
         <h3>Backend API</h3>
-        <div class="app-type" style="color: var(--green);">Centralised REST API · Data Layer</div>
-        <p>The communication bridge between front-end applications and data storage. Enforces security, subscription-based access rules, and serves public browsing content.</p>
+        <div class="app-type" style="color: var(--green);">Centralised Platform Backend · Data Layer</div>
+        <p>The secure platform layer that processes all requests from the Customer and Merchant applications. Enforces security, subscription-based access rules, and serves public browsing content.</p>
         <ul class="feature-list">
-          <li>JWT authentication with refresh token support for all user types</li>
-          <li>Public endpoints for unauthenticated browsing</li>
+          <li>Secure authentication with session management for all user types</li>
+          <li>Open browsing for unauthenticated visitors</li>
           <li>Active card requirement enforcement for loyalty-gated actions</li>
-          <li>Subscription Feature Gate restricting merchant endpoints by plan</li>
-          <li>Store-level access scoping for multi-user merchant accounts</li>
-          <li>Image upload management for banners, galleries, and logos</li>
+          <li>Subscription Feature Gate restricting merchant features by plan</li>
+          <li>Store-level access control for multi-user merchant accounts</li>
+          <li>Image hosting for banners, galleries, and logos</li>
           <li>City and area-based filtering across all public content</li>
         </ul>
         <div class="tags" style="margin-top: 1.2rem;">
-          <span class="tag tag-green">JWT + Refresh</span>
+          <span class="tag tag-green">Secure Auth</span>
           <span class="tag tag-teal">City Filter</span>
-          <span class="tag tag-green">Image CDN</span>
+          <span class="tag tag-green">Image Hosting</span>
         </div>
       </div>
     </div>
@@ -1026,7 +1027,7 @@
         <div class="card-accent" style="background: var(--blue);"></div>
         <div class="card-role">Staff Member</div>
         <div class="card-title">Merchant Store User</div>
-        <p>Staff member with access scoped to specific stores as defined by the owning merchant. Performs coupon redemptions within designated store(s) via JWT store scope.</p>
+        <p>Staff member with access scoped to specific stores as defined by the owning merchant. Performs coupon redemptions within their designated store(s) only.</p>
         <div class="tags">
           <span class="tag tag-blue">Store-Scoped</span>
           <span class="tag tag-teal">Redemption Only</span>
@@ -1114,7 +1115,7 @@
       <div class="module-card">
         <div class="module-num">4.1</div>
         <div class="module-name">Authentication & Session Management</div>
-        <div class="module-desc">OTP registration, JWT access tokens with refresh support, mandatory first-login password reset, and separate session-based admin auth.</div>
+        <div class="module-desc">OTP-based registration, secure session management with refresh support, mandatory first-login password reset, and separate session-based admin authentication.</div>
         <div class="module-apps">
           <span class="tag tag-gold">Customer</span><span class="tag tag-teal">Merchant</span><span class="tag tag-green">API</span>
         </div>
@@ -1130,7 +1131,7 @@
       <div class="module-card">
         <div class="module-num">4.3</div>
         <div class="module-name">Store Management</div>
-        <div class="module-desc">Physical store locations with city/area/location assignment, operating hours, gallery images, and multi-category classification via <mark>store_categories</mark> pivot. Merchant profile supports multi-select category assignment stored as <mark>category_ids</mark>.</div>
+        <div class="module-desc">Physical store locations with city and area assignment, operating hours, gallery images, and multi-category classification. Merchant profile supports multi-select category assignment. Stores are now featured as primary browsable entities in the Customer Application, with each store's name, banner image, and location displayed prominently on the dedicated Stores page.</div>
         <div class="module-apps">
           <span class="tag tag-teal">Merchant</span><span class="tag tag-purple">Admin</span><span class="tag tag-green">API</span>
         </div>
@@ -1138,7 +1139,7 @@
       <div class="module-card">
         <div class="module-num">4.4</div>
         <div class="module-name">Coupon Management</div>
-        <div class="module-desc">Four discount types: percentage, fixed, BOGO, and add-on. Approval workflow, multi-level targeting (category, city, area, location), wallet saves, and QR/manual redemption. Active loyalty card required to save and redeem.</div>
+        <div class="module-desc">Four discount types: percentage, fixed, BOGO, and add-on. Approval workflow, multi-level targeting (category, city, area, location), wallet saves, and QR/manual redemption. Coupon cards display the associated store's name and image for immediate location clarity. Active loyalty card required to save and redeem.</div>
         <div class="module-apps">
           <span class="tag tag-gold">Customer</span><span class="tag tag-teal">Merchant</span><span class="tag tag-purple">Admin</span>
         </div>
@@ -1154,7 +1155,7 @@
       <div class="module-card">
         <div class="module-num">4.6</div>
         <div class="module-name">Flash Discount Management</div>
-        <div class="module-desc">Time-limited percentage discount promotions that auto-expire on their end datetime. Supports city, area, and location targeting for geo-specific visibility. Prominently featured on the customer home screen.</div>
+        <div class="module-desc">Time-limited percentage discount promotions that auto-expire on their end datetime. Supports city, area, and location targeting for geo-specific visibility. Flash deal cards display the store's name and banner image for clear location context. Prominently featured on the customer home screen and the dedicated Flash Deals page.</div>
         <div class="module-apps">
           <span class="tag tag-gold">Customer</span><span class="tag tag-teal">Merchant</span><span class="tag tag-green">API</span>
         </div>
@@ -1282,7 +1283,7 @@
       <div class="module-card">
         <div class="module-num">4.22</div>
         <div class="module-name">Subscription Feature Gate</div>
-        <div class="module-desc">Plan-based API access control. Merchant's subscription plan is embedded in JWT on login. 403 returned for feature access beyond plan tier.</div>
+        <div class="module-desc">Plan-based access control restricting merchant feature availability. The merchant's subscription plan is enforced on every action. Features outside the plan tier are automatically blocked.</div>
         <div class="module-apps">
           <span class="tag tag-green">API</span>
         </div>
@@ -1370,7 +1371,7 @@
       <div class="module-card">
         <div class="module-num">4.33</div>
         <div class="module-name">Loyalty Card Configuration Management</div>
-        <div class="module-desc">Admin-managed card plan definitions. Each configuration has a name, classification tier (silver / gold / platinum / diamond), price, validity in days, HTML features list, max live coupon slots, coupon authorisation mode, front and back card face images, city-based availability restrictions, and an ordered list of partner merchants with type (premium / normal), image, and URL. Customers browse available configurations filtered by their city and self-select a plan. Free configs are assigned immediately; paid configs queue a payment flow.</div>
+        <div class="module-desc">Admin-managed card plan definitions. Each configuration has a name, classification tier (silver / gold / platinum / diamond), price, validity in days, features list, maximum active coupon slots, coupon authorisation mode, front and back card face images, optional city-based availability restrictions, and an ordered list of partner merchants with type (premium / normal), image, and URL. Customers browse available configurations filtered by their city and self-select a plan. Free configurations are assigned immediately; paid configurations queue a payment flow.</div>
         <div class="module-apps">
           <span class="tag tag-purple">Admin</span><span class="tag tag-gold">Customer</span><span class="tag tag-green">API</span>
         </div>
@@ -1380,7 +1381,7 @@
     <!-- Subscription Feature Gate Table -->
     <div id="subscription-gate" style="margin-top: 3rem;">
       <h3 style="font-family: var(--serif); font-size: 1.5rem; color: #fff; margin-bottom: 0.4rem;">4.22 · Subscription Feature Gate</h3>
-      <p style="font-size: 0.82rem; color: var(--muted); margin-bottom: 1.5rem;">Plan-based access control restricting merchant features. The subscription plan is embedded in the JWT at login. Attempting to access a blocked feature returns HTTP 403.</p>
+      <p style="font-size: 0.82rem; color: var(--muted); margin-bottom: 1.5rem;">Plan-based access control restricting merchant features. Feature availability is automatically enforced based on the merchant's active subscription plan. Features outside the active plan are blocked at the platform level.</p>
       <div class="table-wrap">
         <table>
           <thead>
@@ -1428,7 +1429,7 @@
       </div>
       <div class="rel-card">
         <h4>Store <span>→</span> Category</h4>
-        <p>Stores are classified using a many-to-many pivot relationship with categories and sub-categories via <mark>store_categories</mark>. This drives store discovery by category in the Customer Application.</p>
+        <p>Stores are classified using a many-to-many relationship with categories and sub-categories. This drives store discovery by category in the Customer Application, including the dedicated Stores browsing page.</p>
       </div>
       <div class="rel-card">
         <h4>Coupon <span>→</span> Merchant / Store</h4>
@@ -1440,7 +1441,7 @@
       </div>
       <div class="rel-card">
         <h4>Coupon <span>→</span> Subscription (Customer Saves)</h4>
-        <p>Customers save coupons to their wallet through a <mark>coupon_subscriptions</mark> record, separate from redemption. This allows merchants and admins to track demand before redemption occurs.</p>
+        <p>Customers save coupons to their wallet through a saved coupon record, separate from redemption. This allows merchants and admins to track demand before redemption occurs.</p>
       </div>
       <div class="rel-card">
         <h4>Store Coupon <span>→</span> Gift <span>→</span> Customer</h4>
@@ -1448,11 +1449,11 @@
       </div>
       <div class="rel-card">
         <h4>Analytics <span>→</span> Coupon Redemptions</h4>
-        <p>Merchant analytics are computed entirely from the <mark>coupon_redemptions</mark> table. Filtering by merchant_id across redemptions provides all KPI data.</p>
+        <p>Merchant analytics are computed from the full history of coupon redemptions. Filtering by merchant across all redemption records provides all KPI data.</p>
       </div>
       <div class="rel-card">
         <h4>Subscription Plan <span>→</span> Feature Gate</h4>
-        <p>The merchant's <mark>subscription_plan</mark> value is embedded in the JWT on login. Every protected API endpoint checks the plan against the Feature Gate before processing the request.</p>
+        <p>The merchant's subscription plan is verified on every platform action. The system automatically enforces which features are accessible based on the active subscription tier.</p>
       </div>
       <div class="rel-card">
         <h4>Home Feed <span>→</span> Five Modules</h4>
@@ -1472,11 +1473,11 @@
       </div>
       <div class="rel-card">
         <h4>Card Configuration <span>→</span> Card</h4>
-        <p>A card configuration defines the plan a customer selects. When selected, the configuration's <mark>id</mark>, validity period, and expiry date are written to the customer's <mark>cards</mark> record, tying the physical card to a plan tier.</p>
+        <p>A card configuration defines the plan a customer selects. When selected, the validity period and expiry date are applied to the customer's card record, tying the physical card to a plan tier.</p>
       </div>
       <div class="rel-card">
         <h4>Active Card <span>→</span> Coupon &amp; Contest Actions</h4>
-        <p>Saving, subscribing, and redeeming coupons, plus contest participation, all require the customer to have an active card. The API enforces this via the <mark>requireActiveCard</mark> middleware before processing any of these requests.</p>
+        <p>Saving, subscribing, and redeeming coupons, plus contest participation, all require the customer to have an active card. The platform enforces this check before processing any of these requests.</p>
       </div>
     </div>
   </section>
@@ -1499,7 +1500,7 @@
         <div class="flow-steps">
           <div class="flow-step"><div class="step-dot">1</div><p>New visitor submits name, email/phone, and password</p></div>
           <div class="flow-step"><div class="step-dot">2</div><p>API creates user record and sends OTP</p></div>
-          <div class="flow-step"><div class="step-dot">3</div><p>Customer verifies OTP → JWT issued → logged in</p></div>
+          <div class="flow-step"><div class="step-dot">3</div><p>Customer verifies OTP → session created → logged in</p></div>
           <div class="flow-step"><div class="step-dot">4</div><p>Onboarding screen: complete profile (profession, DOB, city)</p></div>
           <div class="flow-step"><div class="step-dot">5</div><p>Full access to authenticated Customer Application granted</p></div>
         </div>
@@ -1522,7 +1523,7 @@
         <h4>Coupon Creation & Publication</h4>
         <div class="flow-steps">
           <div class="flow-step"><div class="step-dot">1</div><p>Merchant creates coupon with type, value, dates, usage limit</p></div>
-          <div class="flow-step"><div class="step-dot">2</div><p>API creates coupon with <mark>approval_status = pending</mark></p></div>
+          <div class="flow-step"><div class="step-dot">2</div><p>Coupon is created with pending approval status</p></div>
           <div class="flow-step"><div class="step-dot">3</div><p>Admin reviews and approves (or rejects with reason)</p></div>
           <div class="flow-step"><div class="step-dot">4</div><p>Approved coupon becomes publicly visible in home feed and search</p></div>
           <div class="flow-step"><div class="step-dot">5</div><p>Admin-created coupons skip approval and are immediately active</p></div>
@@ -1535,7 +1536,7 @@
         <div class="flow-steps">
           <div class="flow-step"><div class="step-dot">1</div><p>Customer browses home screen, search, or category pages</p></div>
           <div class="flow-step"><div class="step-dot">2</div><p>Views coupon detail — code hidden until login</p></div>
-          <div class="flow-step"><div class="step-dot">3</div><p>Customer taps "Save" → <mark>coupon_subscriptions</mark> record created</p></div>
+          <div class="flow-step"><div class="step-dot">3</div><p>Customer taps "Save" → a saved coupon record is created</p></div>
           <div class="flow-step"><div class="step-dot">4</div><p>Coupon appears in customer's wallet under "Saved"</p></div>
         </div>
       </div>
@@ -1547,7 +1548,7 @@
           <div class="flow-step"><div class="step-dot">1</div><p>Customer opens wallet and selects coupon at merchant's store</p></div>
           <div class="flow-step"><div class="step-dot">2</div><p>Merchant scans customer's QR code in Merchant Application</p></div>
           <div class="flow-step"><div class="step-dot">3</div><p>API validates: ownership, expiry, usage limit, merchant eligibility</p></div>
-          <div class="flow-step"><div class="step-dot">4</div><p><mark>coupon_redemptions</mark> record created; coupon marked used in wallet</p></div>
+          <div class="flow-step"><div class="step-dot">4</div><p>A redemption record is created; coupon marked as used in wallet</p></div>
           <div class="flow-step"><div class="step-dot">5</div><p>Redemption data immediately feeds merchant analytics dashboard</p></div>
         </div>
       </div>
@@ -1557,7 +1558,7 @@
         <h4>Store Coupon Gift & Redemption</h4>
         <div class="flow-steps">
           <div class="flow-step"><div class="step-dot">1</div><p>Merchant creates store coupon and assigns to specific customer</p></div>
-          <div class="flow-step"><div class="step-dot">2</div><p>API creates <mark>store_coupon</mark> record with recipient customer</p></div>
+          <div class="flow-step"><div class="step-dot">2</div><p>A store coupon record is created with the recipient customer linked</p></div>
           <div class="flow-step"><div class="step-dot">3</div><p>Coupon appears in customer's wallet</p></div>
           <div class="flow-step"><div class="step-dot">4</div><p>Merchant redeems via customer identifier lookup; coupon marked used</p></div>
         </div>
@@ -1567,7 +1568,7 @@
         <div class="flow-num-badge">Flow 6.7</div>
         <h4>Merchant Analytics</h4>
         <div class="flow-steps">
-          <div class="flow-step"><div class="step-dot">1</div><p>Every coupon redemption written to <mark>coupon_redemptions</mark> with timestamp</p></div>
+          <div class="flow-step"><div class="step-dot">1</div><p>Every coupon redemption is logged with a timestamp</p></div>
           <div class="flow-step"><div class="step-dot">2</div><p>Merchant opens analytics section; API aggregates data</p></div>
           <div class="flow-step"><div class="step-dot">3</div><p>Dashboard returns KPIs, 7-day chart, top coupons, revenue estimates</p></div>
           <div class="flow-step"><div class="step-dot">4</div><p>Merchants drill into redemptions list with date-range filtering</p></div>
@@ -1624,7 +1625,7 @@
         <div class="flow-steps">
           <div class="flow-step"><div class="step-dot">1</div><p>Admin creates survey with JSON question set and active period</p></div>
           <div class="flow-step"><div class="step-dot">2</div><p>Active surveys shown to authenticated customers</p></div>
-          <div class="flow-step"><div class="step-dot">3</div><p>Customer submits responses → stored in <mark>survey_responses</mark></p></div>
+          <div class="flow-step"><div class="step-dot">3</div><p>Customer submits responses → stored in the survey response log</p></div>
           <div class="flow-step"><div class="step-dot">4</div><p>Survey marked completed; one submission per customer per survey</p></div>
         </div>
       </div>
@@ -1634,7 +1635,7 @@
         <h4>Deal Maker Application</h4>
         <div class="flow-steps">
           <div class="flow-step"><div class="step-dot">1</div><p>Customer submits Deal Maker application with motivation statement</p></div>
-          <div class="flow-step"><div class="step-dot">2</div><p>Admin reviews and approves → customer's <mark>is_dealmaker</mark> flag set true</p></div>
+          <div class="flow-step"><div class="step-dot">2</div><p>Admin reviews and approves → customer's Deal Maker status is activated</p></div>
           <div class="flow-step"><div class="step-dot">3</div><p>Admin assigns tasks; Deal Maker updates progress in Customer App</p></div>
           <div class="flow-step"><div class="step-dot">4</div><p>Admin verifies completion and records reward as paid</p></div>
         </div>
@@ -1667,7 +1668,7 @@
         <h4>Contact & Business Enquiry</h4>
         <div class="flow-steps">
           <div class="flow-step"><div class="step-dot">1</div><p>Visitor submits contact form or business sign-up form</p></div>
-          <div class="flow-step"><div class="step-dot">2</div><p>Enquiry stored in <mark>contact_enquiries</mark> with type flag</p></div>
+          <div class="flow-step"><div class="step-dot">2</div><p>Enquiry is stored with a type flag (general contact or business sign-up)</p></div>
           <div class="flow-step"><div class="step-dot">3</div><p>Admin opens enquiry → auto-marked as read</p></div>
           <div class="flow-step"><div class="step-dot">4</div><p>Sales Admin follows up on business enquiries → creates lead → onboards merchant</p></div>
         </div>
@@ -1680,7 +1681,7 @@
           <div class="flow-step"><div class="step-dot">1</div><p>Merchant creates flash discount with percentage, start/end datetime</p></div>
           <div class="flow-step"><div class="step-dot">2</div><p>If start time passed, flash discount is immediately live</p></div>
           <div class="flow-step"><div class="step-dot">3</div><p>API evaluates current datetime and returns only active discounts</p></div>
-          <div class="flow-step"><div class="step-dot">4</div><p>Auto-expires once <mark>valid_until</mark> passes — no manual action required</p></div>
+          <div class="flow-step"><div class="step-dot">4</div><p>Auto-expires once the expiry time passes — no manual action required</p></div>
         </div>
       </div>
 
@@ -1689,8 +1690,8 @@
         <h4>Coupon Bulk Allotment</h4>
         <div class="flow-steps">
           <div class="flow-step"><div class="step-dot">1</div><p>Admin selects coupon and supplies list of target customer recipients</p></div>
-          <div class="flow-step"><div class="step-dot">2</div><p>System creates <mark>coupon_bulk_allotments</mark> parent record</p></div>
-          <div class="flow-step"><div class="step-dot">3</div><p>Individual <mark>coupon_allotment_items</mark> created per recipient</p></div>
+          <div class="flow-step"><div class="step-dot">2</div><p>System creates a bulk allotment batch record</p></div>
+          <div class="flow-step"><div class="step-dot">3</div><p>Individual allotment records are created per recipient</p></div>
           <div class="flow-step"><div class="step-dot">4</div><p>Coupons appear in each customer's wallet — no discovery required</p></div>
         </div>
       </div>
@@ -1734,8 +1735,8 @@
         <h4>Active Card Requirement Enforcement</h4>
         <div class="flow-steps">
           <div class="flow-step"><div class="step-dot">1</div><p>Customer attempts to save a coupon, subscribe, redeem a coupon, or participate in a contest</p></div>
-          <div class="flow-step"><div class="step-dot">2</div><p>API middleware checks <mark>requireActiveCard</mark>: customer must have a card with <mark>status = active</mark></p></div>
-          <div class="flow-step"><div class="step-dot">3</div><p>If no card or card is inactive/blocked → API returns HTTP 403 with actionable error message</p></div>
+          <div class="flow-step"><div class="step-dot">2</div><p>The platform checks whether the customer holds an active loyalty card</p></div>
+          <div class="flow-step"><div class="step-dot">3</div><p>If no card or card is inactive/blocked → an actionable error message is displayed</p></div>
           <div class="flow-step"><div class="step-dot">4</div><p>Customer directed to Card Selection page to obtain or reactivate a card before proceeding</p></div>
         </div>
       </div>
@@ -1770,11 +1771,11 @@
         </div>
         <div class="entity-item">
           <div class="entity-name">Store</div>
-          <div class="entity-desc">A physical location owned by a Merchant with city/area assignment, operating hours, contact info, and gallery images. Store-category assignments managed through <mark>store_categories</mark> pivot.</div>
+          <div class="entity-desc">A physical location owned by a Merchant with city and area assignment, operating hours, contact info, and gallery images. Stores are assigned to one or more categories for browsing and discovery.</div>
         </div>
         <div class="entity-item">
           <div class="entity-name">Coupon</div>
-          <div class="entity-desc">A promotional offer linked to a Merchant and optionally a Store. Has discount type, value, validity window, usage limit, approval status, and banner image. Linked to categories via <mark>coupon_categories</mark>, cities via <mark>coupon_city_targets</mark>, and tags via <mark>coupon_tags</mark>.</div>
+          <div class="entity-desc">A promotional offer linked to a Merchant and a specific Store. Has discount type, value, validity window, usage limit, approval status, and banner image. Linked to categories, city targets, and tags for filtered discovery. Coupon cards display the store's name and image for clear location context.</div>
         </div>
         <div class="entity-item">
           <div class="entity-name">Store Coupon</div>
@@ -1782,7 +1783,7 @@
         </div>
         <div class="entity-item">
           <div class="entity-name">Flash Discount</div>
-          <div class="entity-desc">A time-sensitive store-level percentage discount that auto-expires once its end datetime passes. Independently browsable on the customer home screen.</div>
+          <div class="entity-desc">A time-sensitive store-level percentage discount that auto-expires once its end datetime passes. Flash deal cards display the store's name and banner image for clear location context. Featured on the customer home screen and accessible through the dedicated Flash Deals page.</div>
         </div>
       </div>
     </div>
@@ -1791,7 +1792,7 @@
       <div class="entity-group-title">Engagement Entities</div>
       <div class="entity-list">
         <div class="entity-item"><div class="entity-name">Review</div><div class="entity-desc">Links a customer to a merchant with rating, text, and merchant reply. Auto-approved on submission.</div></div>
-        <div class="entity-item"><div class="entity-name">Grievance</div><div class="entity-desc">Links a customer to a merchant (optionally referencing a coupon). Has open/resolved status. The <mark>grievance_messages</mark> table stores the threaded correspondence.</div></div>
+        <div class="entity-item"><div class="entity-name">Grievance</div><div class="entity-desc">Links a customer to a merchant (optionally referencing a coupon). Has open/resolved status. A threaded message system stores the back-and-forth correspondence until resolution.</div></div>
         <div class="entity-item"><div class="entity-name">Message / Notification</div><div class="entity-desc">Powers in-app direct messaging between merchants and customers, and the admin notification system. Notification type classification controls display styling.</div></div>
         <div class="entity-item"><div class="entity-name">Contest / Survey / Referral</div><div class="entity-desc">All engagement modules link participation records back to individual customers, allowing customers to track their own activity within each program.</div></div>
       </div>
@@ -1800,8 +1801,8 @@
     <div class="entity-group">
       <div class="entity-group-title">Loyalty & Program Entities</div>
       <div class="entity-list">
-        <div class="entity-item"><div class="entity-name">Card</div><div class="entity-desc">Loyalty card with card number, variant, status (unassigned, activated, blocked), preprinted flag, customer assignment, and an optional link to a <mark>card_configurations</mark> record. When linked, expiry date, days remaining, and expiry status (active / expiring_soon / expired) are computed and stored.</div></div>
-        <div class="entity-item"><div class="entity-name">Card Configuration</div><div class="entity-desc">Admin-defined card plan: name, classification tier (silver / gold / platinum / diamond), price, validity in days, HTML features list, max live coupon slots, coupon authorisation tinyint, card image front/back, and optional city restrictions via <mark>card_config_cities</mark>. Publicly selectable configurations are surfaced via the <mark>/public/card-configurations</mark> API endpoint.</div></div>
+        <div class="entity-item"><div class="entity-name">Card</div><div class="entity-desc">Loyalty card with card number, variant, status (unassigned, activated, blocked), and customer assignment. Linked to a card configuration plan that defines expiry, classification tier, and feature entitlements. Expiry status (active, expiring soon, expired) is tracked and surfaced to customers.</div></div>
+        <div class="entity-item"><div class="entity-name">Card Configuration</div><div class="entity-desc">Admin-defined card plan: name, classification tier (silver / gold / platinum / diamond), price, validity in days, features list, maximum active coupon slots, coupon authorisation mode, front and back card face images, and optional city-based availability restrictions. Customers browse and self-select configurations through the Card Selection screen in the Customer Application.</div></div>
         <div class="entity-item"><div class="entity-name">Card Config Partners</div><div class="entity-desc">Ordered list of partner merchants associated with a card configuration. Each partner has a type (premium / normal), optional image, optional URL, and sort order. Returned as a nested array with the configuration detail.</div></div>
         <div class="entity-item"><div class="entity-name">Card Auth Codes</div><div class="entity-desc">Time-limited 6-digit codes generated for pre-printed card activation. Each code is consumed on successful use.</div></div>
         <div class="entity-item"><div class="entity-name">Dealmaker Application / Tasks</div><div class="entity-desc">Application records and individual tasks assigned to approved Deal Makers, with checklist, progress status, and reward tracking.</div></div>
@@ -1905,27 +1906,27 @@
     <div class="crossapp-grid">
       <div class="crossapp-item">
         <div class="crossapp-path">Customer App ↔ Backend API</div>
-        <div class="crossapp-desc">Every interaction travels as an authenticated HTTP request with JWT access tokens. Browsing uses public endpoints (no auth required). Saving coupons, reviews, contests, and personal actions call authenticated customer endpoints. The API returns location-aware content when a city ID is provided.</div>
+        <div class="crossapp-desc">Browsing the platform — stores, coupons, flash deals, merchants, and blogs — is available without signing in. Personal actions such as saving coupons, writing reviews, and joining contests require a customer account. The platform returns location-relevant content when a customer's city is set.</div>
       </div>
       <div class="crossapp-item">
         <div class="crossapp-path">Merchant App ↔ Backend API</div>
-        <div class="crossapp-desc">All merchant operations — store config, coupon publishing, redemption scanning, analytics — are processed through the Backend API. The merchant JWT carries the subscription plan and store access scope, which the API uses on every request to enforce feature gates and store-level restrictions.</div>
+        <div class="crossapp-desc">All merchant operations — store configuration, coupon publishing, redemption scanning, analytics — are processed securely. The merchant's subscription plan and store access scope are verified on every request, ensuring feature gates and store-level access restrictions are enforced automatically.</div>
       </div>
       <div class="crossapp-item">
         <div class="crossapp-path">Admin App ↔ Database (Direct)</div>
-        <div class="crossapp-desc">The Admin Application operates through server-side rendered PHP controllers that interact with the database directly — it does not call the Backend API. Admin actions (approvals, content creation, user management, configuration) are written directly to the database and immediately affect what the API serves.</div>
+        <div class="crossapp-desc">The Admin Application operates through a secure server-side management panel. Admin actions — approvals, content creation, user management, and configuration — take immediate effect across the platform, with changes reflected for customers and merchants in real time.</div>
       </div>
       <div class="crossapp-item">
         <div class="crossapp-path">Admin App → Merchant App (Indirect)</div>
-        <div class="crossapp-desc">Admin approvals change fields like <mark>profile_status</mark> directly in the database. On the next merchant login or API request, these changes are reflected. Coupon approvals, subscription changes, and notification broadcasts all flow from Admin to end-user applications via the shared database.</div>
+        <div class="crossapp-desc">Admin approvals (profile status, coupon approval, subscription changes) take effect immediately. On the merchant's next login or action, the updated status is reflected. Notification broadcasts also flow from the Admin panel to the relevant application users automatically.</div>
       </div>
       <div class="crossapp-item">
         <div class="crossapp-path">Merchant App → Customer App (Indirect)</div>
-        <div class="crossapp-desc">Merchants publish content (coupons, stores, flash discounts) through the Merchant Application via the Backend API. This content is then served by the same Backend API to customers. The two front-end applications never communicate directly — all interaction is mediated through the API and shared database.</div>
+        <div class="crossapp-desc">Merchants publish content — coupons, stores, and flash discounts — through the Merchant Application. This content is immediately available for customers to browse. The two applications do not communicate directly; all interaction flows through the shared platform backend.</div>
       </div>
       <div class="crossapp-item">
         <div class="crossapp-path">Notifications Flow (Admin → All)</div>
-        <div class="crossapp-desc">When an Admin broadcasts a notification, the Admin Application bulk-inserts notification records into the <mark>notifications</mark> table for each target recipient. The Backend API surfaces unread notifications to customers and merchants when they next check their notifications feed.</div>
+        <div class="crossapp-desc">When an Admin broadcasts a notification, records are created for each target recipient. Customers and merchants see unread notifications when they next check their notifications feed within their respective applications.</div>
       </div>
     </div>
   </section>
@@ -1940,17 +1941,17 @@
       </div>
     </div>
 
-    <p class="prose" style="margin-bottom: 2rem;">All functional capabilities below are confirmed as fully implemented in the current codebase.</p>
+    <p class="prose" style="margin-bottom: 2rem;">All functional capabilities listed below are confirmed as fully implemented in the current platform as of March 2026.</p>
 
     <div class="scope-groups">
       <div class="scope-group">
         <div class="scope-group-title">Authentication</div>
         <div class="scope-item"><span class="scope-check">✓</span> Customer registration with OTP verification</div>
-        <div class="scope-item"><span class="scope-check">✓</span> Customer login with JWT issuance</div>
+        <div class="scope-item"><span class="scope-check">✓</span> Customer login with secure session management</div>
         <div class="scope-item"><span class="scope-check">✓</span> Customer password reset via token</div>
-        <div class="scope-item"><span class="scope-check">✓</span> Merchant login with JWT (subscription plan + store scope in payload)</div>
+        <div class="scope-item"><span class="scope-check">✓</span> Merchant login with subscription plan and store scope enforced</div>
         <div class="scope-item"><span class="scope-check">✓</span> Merchant password reset</div>
-        <div class="scope-item"><span class="scope-check">✓</span> JWT refresh token management</div>
+        <div class="scope-item"><span class="scope-check">✓</span> Secure session refresh token management</div>
         <div class="scope-item"><span class="scope-check">✓</span> Admin session-based authentication</div>
         <div class="scope-item"><span class="scope-check">✓</span> Mandatory first-login password reset</div>
       </div>
@@ -1958,11 +1959,12 @@
       <div class="scope-group">
         <div class="scope-group-title">Platform Discovery</div>
         <div class="scope-item"><span class="scope-check">✓</span> Public home feed (ads, flash discounts, merchants, coupons, tags)</div>
-        <div class="scope-item"><span class="scope-check">✓</span> Public store browsing with city filter</div>
+        <div class="scope-item"><span class="scope-check">✓</span> Dedicated Stores browsing page displaying store image, name, and location</div>
+        <div class="scope-item"><span class="scope-check">✓</span> Coupon cards displaying store name and store image across Deals page and home feed</div>
+        <div class="scope-item"><span class="scope-check">✓</span> Flash deal cards displaying store name and store image across Flash Deals page and home feed</div>
         <div class="scope-item"><span class="scope-check">✓</span> Public merchant browsing with reviews and gallery</div>
-        <div class="scope-item"><span class="scope-check">✓</span> Public coupon and flash discount browsing</div>
         <div class="scope-item"><span class="scope-check">✓</span> Unified search across merchants, stores, coupons, and blog</div>
-        <div class="scope-item"><span class="scope-check">✓</span> Category and sub-category public endpoints</div>
+        <div class="scope-item"><span class="scope-check">✓</span> Category and sub-category browsing</div>
       </div>
 
       <div class="scope-group">
@@ -1981,12 +1983,12 @@
         <div class="scope-group-title">Store & Flash</div>
         <div class="scope-item"><span class="scope-check">✓</span> Store CRUD with city/area/location assignment</div>
         <div class="scope-item"><span class="scope-check">✓</span> Store gallery management (upload, delete, cover, reorder)</div>
-        <div class="scope-item"><span class="scope-check">✓</span> Store categories in pivot table</div>
-        <div class="scope-item"><span class="scope-check">✓</span> Merchant profile multi-select category assignment (category_ids)</div>
+        <div class="scope-item"><span class="scope-check">✓</span> Store categories with multi-category classification</div>
+        <div class="scope-item"><span class="scope-check">✓</span> Merchant profile multi-select category assignment</div>
         <div class="scope-item"><span class="scope-check">✓</span> Store coupon CRUD with individual and bulk assignment</div>
         <div class="scope-item"><span class="scope-check">✓</span> Flash discount merchant creation and management</div>
         <div class="scope-item"><span class="scope-check">✓</span> Flash discount city/area/location targeting</div>
-        <div class="scope-item"><span class="scope-check">✓</span> Auto-expiry on past valid_until datetime</div>
+        <div class="scope-item"><span class="scope-check">✓</span> Auto-expiry when flash discount end time passes</div>
       </div>
 
       <div class="scope-group">
@@ -2007,7 +2009,7 @@
         <div class="scope-item"><span class="scope-check">✓</span> Card classification tiers: silver, gold, platinum, diamond</div>
         <div class="scope-item"><span class="scope-check">✓</span> Card config partner merchants with type, image, URL, and sort order</div>
         <div class="scope-item"><span class="scope-check">✓</span> City-based card configuration availability restrictions</div>
-        <div class="scope-item"><span class="scope-check">✓</span> Public card configurations endpoint with city filtering</div>
+        <div class="scope-item"><span class="scope-check">✓</span> Card Configuration browser with city filtering for customers</div>
         <div class="scope-item"><span class="scope-check">✓</span> Customer self-selection of card configuration (Card Selection page)</div>
         <div class="scope-item"><span class="scope-check">✓</span> Card expiry tracking: active / expiring_soon / expired statuses</div>
         <div class="scope-item"><span class="scope-check">✓</span> Active card enforcement (save, subscribe, redeem, contest participation)</div>
@@ -2044,7 +2046,7 @@
         <div class="scope-item"><span class="scope-check">✓</span> Merchant subscription renewal request</div>
         <div class="scope-item"><span class="scope-check">✓</span> Role-based access control with admin type enforcement</div>
         <div class="scope-item"><span class="scope-check">✓</span> City-scoped access for city admins</div>
-        <div class="scope-item"><span class="scope-check">✓</span> Store-scoped JWT claims for merchant store users</div>
+        <div class="scope-item"><span class="scope-check">✓</span> Store-scoped access control for merchant staff users</div>
       </div>
 
       <div class="scope-group">
@@ -2055,7 +2057,7 @@
         <div class="scope-item"><span class="scope-check">✓</span> Admin gift coupon creation with acceptance requirement</div>
         <div class="scope-item"><span class="scope-check">✓</span> Customer gift inbox with accept and reject</div>
         <div class="scope-item"><span class="scope-check">✓</span> Audit log capture and viewer with filtering</div>
-        <div class="scope-item"><span class="scope-check">✓</span> CSRF protection on all admin form submissions</div>
+        <div class="scope-item"><span class="scope-check">✓</span> Secure form submission protection across all admin actions</div>
       </div>
 
       <div class="scope-group">
@@ -2077,7 +2079,7 @@
       <div style="font-size: 0.7rem; color: var(--faint); margin-top: 0.3rem;">Multi-sided deal, coupon &amp; loyalty platform</div>
     </div>
     <div class="footer-meta">
-      Document v1.1 · March 12, 2026 · Full Codebase Analysis · All Four Applications
+      Document v1.2 · March 14, 2026 · All Four Applications
     </div>
   </footer>
 

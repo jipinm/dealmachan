@@ -35,10 +35,10 @@
         </small>
     </div>
     <div class="d-flex gap-2">
-        <a href="<?= BASE_URL ?>/cards/generate" class="btn btn-primary">
+        <a href="<?= BASE_URL ?>cards/generate" class="btn btn-primary">
             <i class="fas fa-plus me-1"></i> Generate Cards
         </a>
-        <a href="<?= BASE_URL ?>/cards/assign" class="btn btn-outline-success">
+        <a href="<?= BASE_URL ?>cards/assign" class="btn btn-outline-success">
             <i class="fas fa-user-tag me-1"></i> Assign Card
         </a>
     </div>
@@ -47,7 +47,7 @@
 <!-- Filter Bar -->
 <div class="card mb-3 shadow-sm">
     <div class="card-body py-2 px-3">
-        <form method="GET" action="<?= BASE_URL ?>/cards" class="row g-2 align-items-end">
+        <form method="GET" action="<?= BASE_URL ?>cards" class="row g-2 align-items-end">
             <div class="col-12 col-md-3">
                 <label class="form-label form-label-sm mb-1">Search</label>
                 <input type="text" name="search" class="form-control form-control-sm"
@@ -90,7 +90,7 @@
             </div>
             <div class="col-12 col-md-auto ms-md-auto d-flex gap-2">
                 <button type="submit" class="btn btn-sm btn-primary"><i class="fas fa-filter me-1"></i>Filter</button>
-                <a href="<?= BASE_URL ?>/cards" class="btn btn-sm btn-outline-secondary">Clear</a>
+                <a href="<?= BASE_URL ?>cards" class="btn btn-sm btn-outline-secondary">Clear</a>
             </div>
         </form>
     </div>
@@ -129,7 +129,7 @@
                 <tr>
                     <td class="text-muted small"><?= ($currentPage - 1) * $perPage + $i + 1 ?></td>
                     <td>
-                        <a href="<?= BASE_URL ?>/cards/detail?id=<?= $c['id'] ?>"
+                        <a href="<?= BASE_URL ?>cards/detail?id=<?= $c['id'] ?>"
                            class="fw-semibold text-decoration-none font-monospace">
                             <?= escape($c['card_number']) ?>
                         </a>
@@ -165,14 +165,14 @@
                     <td class="small text-muted"><?= $c['activated_at'] ? formatDate($c['activated_at']) : '&mdash;' ?></td>
                     <td class="text-end" style="white-space:nowrap">
                         <?php if ($c['status'] === 'assigned'): ?>
-                        <form method="POST" action="<?= BASE_URL ?>/cards/activate" class="d-inline">
+                        <form method="POST" action="<?= BASE_URL ?>cards/activate" class="d-inline">
                             <input type="hidden" name="csrf_token" value="<?= generateCSRFToken() ?>">
                             <input type="hidden" name="id" value="<?= $c['id'] ?>">
                             <input type="hidden" name="redirect" value="cards">
                             <button class="btn btn-sm btn-outline-warning" title="Activate"><i class="fas fa-bolt"></i></button>
                         </form>
                         <?php endif; ?>
-                        <form method="POST" action="<?= BASE_URL ?>/cards/block" class="d-inline">
+                        <form method="POST" action="<?= BASE_URL ?>cards/block" class="d-inline">
                             <input type="hidden" name="csrf_token" value="<?= generateCSRFToken() ?>">
                             <input type="hidden" name="id" value="<?= $c['id'] ?>">
                             <input type="hidden" name="redirect" value="cards">
@@ -181,7 +181,7 @@
                                 <i class="fas fa-<?= $c['status'] === 'blocked' ? 'lock-open' : 'ban' ?>"></i>
                             </button>
                         </form>
-                        <a href="<?= BASE_URL ?>/cards/detail?id=<?= $c['id'] ?>" class="btn btn-sm btn-outline-info" title="View">
+                        <a href="<?= BASE_URL ?>cards/detail?id=<?= $c['id'] ?>" class="btn btn-sm btn-outline-info" title="View">
                             <i class="fas fa-eye"></i>
                         </a>
                         <?php if ($c['status'] === 'available'): ?>
@@ -234,7 +234,7 @@
 <?php endif; ?>
 
 <!-- Delete form -->
-<form id="deleteForm" method="POST" action="<?= BASE_URL ?>/cards/delete" style="display:none">
+<form id="deleteForm" method="POST" action="<?= BASE_URL ?>cards/delete" style="display:none">
     <input type="hidden" name="csrf_token" value="<?= generateCSRFToken() ?>">
     <input type="hidden" name="id" id="deleteId">
 </form>

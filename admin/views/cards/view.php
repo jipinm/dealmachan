@@ -11,11 +11,11 @@ $st = $card['status'] ?? 'available';
 <div class="d-flex align-items-start justify-content-between mb-4 flex-wrap gap-2">
     <div>
         <h4 class="mb-0 font-monospace"><?= escape($card['card_number']) ?></h4>
-        <small class="text-muted"><a href="<?= BASE_URL ?>/cards">Cards</a> / Detail</small>
+        <small class="text-muted"><a href="<?= BASE_URL ?>cards">Cards</a> / Detail</small>
     </div>
     <div class="d-flex flex-wrap gap-2">
         <?php if ($st === 'assigned'): ?>
-        <form method="POST" action="<?= BASE_URL ?>/cards/activate" class="d-inline">
+        <form method="POST" action="<?= BASE_URL ?>cards/activate" class="d-inline">
             <input type="hidden" name="csrf_token"   value="<?= generateCSRFToken() ?>">
             <input type="hidden" name="id"           value="<?= $card['id'] ?>">
             <input type="hidden" name="redirect"     value="cards/detail?id=<?= $card['id'] ?>">
@@ -23,11 +23,11 @@ $st = $card['status'] ?? 'available';
         </form>
         <?php endif; ?>
         <?php if ($st === 'available'): ?>
-        <a href="<?= BASE_URL ?>/cards/assign" class="btn btn-sm btn-success">
+        <a href="<?= BASE_URL ?>cards/assign" class="btn btn-sm btn-success">
             <i class="fas fa-user-tag me-1"></i> Assign Card
         </a>
         <?php endif; ?>
-        <form method="POST" action="<?= BASE_URL ?>/cards/block" class="d-inline">
+        <form method="POST" action="<?= BASE_URL ?>cards/block" class="d-inline">
             <input type="hidden" name="csrf_token" value="<?= generateCSRFToken() ?>">
             <input type="hidden" name="id"         value="<?= $card['id'] ?>">
             <input type="hidden" name="redirect"   value="cards/detail?id=<?= $card['id'] ?>">
@@ -36,7 +36,7 @@ $st = $card['status'] ?? 'available';
                 <?= $st === 'blocked' ? 'Unblock' : 'Block' ?>
             </button>
         </form>
-        <a href="<?= BASE_URL ?>/cards" class="btn btn-sm btn-outline-secondary"><i class="fas fa-arrow-left me-1"></i> Back</a>
+        <a href="<?= BASE_URL ?>cards" class="btn btn-sm btn-outline-secondary"><i class="fas fa-arrow-left me-1"></i> Back</a>
     </div>
 </div>
 
@@ -103,7 +103,7 @@ $st = $card['status'] ?? 'available';
                         <?php endif; ?>
                     </div>
                     <div class="d-flex gap-2">
-                        <form method="POST" action="<?= BASE_URL ?>/cards/unassign">
+                        <form method="POST" action="<?= BASE_URL ?>cards/unassign">
                             <input type="hidden" name="csrf_token" value="<?= generateCSRFToken() ?>">
                             <input type="hidden" name="id" value="<?= $card['id'] ?>">
                             <button class="btn btn-sm btn-outline-danger" onclick="return confirm('Unassign this card?')">
@@ -118,7 +118,7 @@ $st = $card['status'] ?? 'available';
                         <div class="fw-semibold"><i class="fas fa-store me-2 text-muted"></i><?= escape($card['merchant_name']) ?></div>
                         <div class="small text-muted">Merchant</div>
                     </div>
-                    <form method="POST" action="<?= BASE_URL ?>/cards/unassign">
+                    <form method="POST" action="<?= BASE_URL ?>cards/unassign">
                         <input type="hidden" name="csrf_token" value="<?= generateCSRFToken() ?>">
                         <input type="hidden" name="id" value="<?= $card['id'] ?>">
                         <button class="btn btn-sm btn-outline-danger" onclick="return confirm('Unassign this card?')">
@@ -131,7 +131,7 @@ $st = $card['status'] ?? 'available';
                 <?php else: ?>
                 <div class="text-muted">Not assigned to anyone.</div>
                 <?php if ($st === 'available'): ?>
-                <a href="<?= BASE_URL ?>/cards/assign" class="btn btn-sm btn-outline-success mt-2">
+                <a href="<?= BASE_URL ?>cards/assign" class="btn btn-sm btn-outline-success mt-2">
                     <i class="fas fa-user-tag me-1"></i> Assign Now
                 </a>
                 <?php endif; ?>
@@ -238,7 +238,7 @@ $st = $card['status'] ?? 'available';
 </div>
 
 <!-- Delete form -->
-<form id="deleteForm" method="POST" action="<?= BASE_URL ?>/cards/delete" style="display:none">
+<form id="deleteForm" method="POST" action="<?= BASE_URL ?>cards/delete" style="display:none">
     <input type="hidden" name="csrf_token" value="<?= generateCSRFToken() ?>">
     <input type="hidden" name="id" value="<?= $card['id'] ?>">
 </form>

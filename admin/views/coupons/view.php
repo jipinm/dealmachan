@@ -2,25 +2,25 @@
 <div class="d-flex align-items-start justify-content-between mb-4 flex-wrap gap-2">
     <div>
         <h4 class="mb-0"><?= escape($coupon['title']) ?></h4>
-        <small class="text-muted"><a href="<?= BASE_URL ?>/coupons">Coupons</a> / Detail</small>
+        <small class="text-muted"><a href="<?= BASE_URL ?>coupons">Coupons</a> / Detail</small>
     </div>
     <div class="d-flex flex-wrap gap-2">
-        <a href="<?= BASE_URL ?>/coupons/edit?id=<?= $coupon['id'] ?>" class="btn btn-sm btn-primary">
+        <a href="<?= BASE_URL ?>coupons/edit?id=<?= $coupon['id'] ?>" class="btn btn-sm btn-primary">
             <i class="fas fa-edit me-1"></i> Edit
         </a>
         <?php if ($coupon['approval_status'] === 'pending'): ?>
-        <form method="POST" action="<?= BASE_URL ?>/coupons/approve" class="d-inline">
+        <form method="POST" action="<?= BASE_URL ?>coupons/approve" class="d-inline">
             <input type="hidden" name="csrf_token" value="<?= generateCSRFToken() ?>">
             <input type="hidden" name="id" value="<?= $coupon['id'] ?>">
             <button class="btn btn-sm btn-success"><i class="fas fa-check me-1"></i> Approve</button>
         </form>
-        <form method="POST" action="<?= BASE_URL ?>/coupons/reject" class="d-inline">
+        <form method="POST" action="<?= BASE_URL ?>coupons/reject" class="d-inline">
             <input type="hidden" name="csrf_token" value="<?= generateCSRFToken() ?>">
             <input type="hidden" name="id" value="<?= $coupon['id'] ?>">
             <button class="btn btn-sm btn-danger"><i class="fas fa-times me-1"></i> Reject</button>
         </form>
         <?php endif; ?>
-        <a href="<?= BASE_URL ?>/coupons" class="btn btn-sm btn-outline-secondary"><i class="fas fa-arrow-left me-1"></i> Back</a>
+        <a href="<?= BASE_URL ?>coupons" class="btn btn-sm btn-outline-secondary"><i class="fas fa-arrow-left me-1"></i> Back</a>
     </div>
 </div>
 
@@ -254,7 +254,7 @@
                     <div class="small text-muted">Applies to all stores</div>
                 <?php endif; ?>
                 <?php if (!empty($coupon['merchant_id'])): ?>
-                    <a href="<?= BASE_URL ?>/merchants/profile?id=<?= $coupon['merchant_id'] ?>" class="btn btn-sm btn-outline-secondary mt-2">
+                    <a href="<?= BASE_URL ?>merchants/profile?id=<?= $coupon['merchant_id'] ?>" class="btn btn-sm btn-outline-secondary mt-2">
                         <i class="fas fa-external-link-alt me-1"></i> View Merchant
                     </a>
                 <?php endif; ?>
@@ -276,7 +276,7 @@
         <div class="card shadow-sm mb-4">
             <div class="card-header fw-semibold"><i class="fas fa-bolt me-2 text-warning"></i>Quick Actions</div>
             <div class="card-body d-flex flex-column gap-2">
-                <form method="POST" action="<?= BASE_URL ?>/coupons/toggle">
+                <form method="POST" action="<?= BASE_URL ?>coupons/toggle">
                     <input type="hidden" name="csrf_token" value="<?= generateCSRFToken() ?>">
                     <input type="hidden" name="id" value="<?= $coupon['id'] ?>">
                     <input type="hidden" name="redirect" value="coupons/detail?id=<?= $coupon['id'] ?>">
@@ -310,7 +310,7 @@
 </div>
 
 <!-- Delete form -->
-<form id="deleteForm" method="POST" action="<?= BASE_URL ?>/coupons/delete" style="display:none">
+<form id="deleteForm" method="POST" action="<?= BASE_URL ?>coupons/delete" style="display:none">
     <input type="hidden" name="csrf_token" value="<?= generateCSRFToken() ?>">
     <input type="hidden" name="id" value="<?= $coupon['id'] ?>">
 </form>

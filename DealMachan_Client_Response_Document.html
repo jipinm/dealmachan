@@ -1,0 +1,1184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>DealMachan — Client Feedback Response Document</title>
+<style>
+  /* ── Reset & Base ── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, Arial, sans-serif;
+    font-size: 14.5px;
+    line-height: 1.75;
+    color: #1e293b;
+    background: #f8fafc;
+  }
+
+  /* ── Page Wrapper ── */
+  .page { max-width: 960px; margin: 0 auto; padding: 40px 28px 80px; }
+
+  /* ── Cover ── */
+  .cover {
+    background: linear-gradient(135deg, #1e40af 0%, #0f172a 100%);
+    color: #fff;
+    border-radius: 16px;
+    padding: 48px 48px 40px;
+    margin-bottom: 48px;
+    position: relative;
+    overflow: hidden;
+  }
+  .cover::after {
+    content: '';
+    position: absolute;
+    right: -60px; top: -60px;
+    width: 260px; height: 260px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.05);
+  }
+  .cover h1 { font-size: 28px; font-weight: 700; margin-bottom: 6px; }
+  .cover .subtitle { font-size: 15px; opacity: .75; margin-bottom: 28px; }
+  .cover-meta { display: flex; gap: 32px; flex-wrap: wrap; }
+  .cover-meta div { }
+  .cover-meta .label { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; opacity: .6; }
+  .cover-meta .value { font-size: 14px; font-weight: 600; margin-top: 2px; }
+
+  /* ── TOC ── */
+  .toc {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 28px 32px;
+    margin-bottom: 48px;
+  }
+  .toc h2 { font-size: 16px; font-weight: 700; color: #0f172a; margin-bottom: 16px; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; }
+  .toc ol { padding-left: 20px; }
+  .toc li { margin-bottom: 6px; }
+  .toc a { color: #1d4ed8; text-decoration: none; font-size: 13.5px; }
+  .toc a:hover { text-decoration: underline; }
+
+  /* ── Section ── */
+  .section {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 32px 36px;
+    margin-bottom: 28px;
+    scroll-margin-top: 24px;
+  }
+  .section-title {
+    font-size: 19px;
+    font-weight: 700;
+    color: #0f172a;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .section-num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px; height: 30px;
+    background: #1d4ed8;
+    color: #fff;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+  .section-desc {
+    font-size: 13px;
+    color: #64748b;
+    margin-bottom: 22px;
+    padding-left: 40px;
+  }
+  .divider { height: 1px; background: #f1f5f9; margin: 24px 0; }
+
+  /* ── Item ── */
+  .item { margin-bottom: 22px; }
+  .item:last-child { margin-bottom: 0; }
+  .item-header { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 8px; }
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .04em;
+    white-space: nowrap;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+  .badge-bug       { background: #fee2e2; color: #b91c1c; }
+  .badge-critical  { background: #fef3c7; color: #92400e; }
+  .badge-new       { background: #dbeafe; color: #1d4ed8; }
+  .badge-partial   { background: #f3e8ff; color: #6d28d9; }
+  .badge-done      { background: #dcfce7; color: #15803d; }
+  .badge-question  { background: #f1f5f9; color: #475569; }
+  .badge-enhance   { background: #fff7ed; color: #c2410c; }
+
+  .item-label {
+    font-size: 14.5px;
+    font-weight: 600;
+    color: #0f172a;
+    line-height: 1.4;
+  }
+  .item-client-text {
+    background: #f8fafc;
+    border-left: 3px solid #93c5fd;
+    padding: 8px 14px;
+    border-radius: 0 6px 6px 0;
+    font-size: 13px;
+    color: #475569;
+    font-style: italic;
+    margin-bottom: 10px;
+  }
+  .item-client-text strong { font-style: normal; color: #334155; font-weight: 600; }
+
+  .response-block {
+    padding: 14px 18px;
+    border-radius: 8px;
+    font-size: 13.5px;
+    line-height: 1.7;
+  }
+  .response-block.ok     { background: #f0fdf4; border: 1px solid #bbf7d0; }
+  .response-block.warn   { background: #fffbeb; border: 1px solid #fde68a; }
+  .response-block.error  { background: #fef2f2; border: 1px solid #fecaca; }
+  .response-block.info   { background: #eff6ff; border: 1px solid #bfdbfe; }
+  .response-block.purple { background: #faf5ff; border: 1px solid #ddd6fe; }
+
+  .response-block strong { font-weight: 700; }
+  .response-block ul { padding-left: 18px; margin-top: 6px; }
+  .response-block li { margin-bottom: 4px; }
+  .response-block p { margin-bottom: 8px; }
+  .response-block p:last-child { margin-bottom: 0; }
+
+  /* ── Summary Table ── */
+  .summary-table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 12px; }
+  .summary-table th {
+    background: #f1f5f9;
+    color: #334155;
+    font-weight: 700;
+    padding: 8px 12px;
+    text-align: left;
+    border-bottom: 2px solid #e2e8f0;
+  }
+  .summary-table td {
+    padding: 8px 12px;
+    border-bottom: 1px solid #f1f5f9;
+    vertical-align: top;
+  }
+  .summary-table tr:hover td { background: #f8fafc; }
+  .summary-table .col-item { font-weight: 600; color: #0f172a; }
+  .summary-table .col-status { white-space: nowrap; }
+
+  /* ── Action List ── */
+  .action-list { padding-left: 20px; }
+  .action-list li { margin-bottom: 6px; font-size: 13.5px; }
+  .action-list li strong { color: #0f172a; }
+
+  /* ── Footer ── */
+  .footer {
+    margin-top: 48px;
+    padding: 24px 32px;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    font-size: 13px;
+    color: #64748b;
+    text-align: center;
+  }
+  .footer strong { color: #334155; }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ══════════════════════════════════════════════════════════════════════ -->
+  <!-- COVER                                                                  -->
+  <!-- ══════════════════════════════════════════════════════════════════════ -->
+  <div class="cover">
+    <h1>DealMachan — Client Feedback Response</h1>
+    <p class="subtitle">Detailed analysis and response to all points raised in the work-corrections document</p>
+    <div class="cover-meta">
+      <div>
+        <div class="label">Document Date</div>
+        <div class="value">17 March 2026</div>
+      </div>
+      <div>
+        <div class="label">Prepared By</div>
+        <div class="value">Development Team</div>
+      </div>
+      <div>
+        <div class="label">Project</div>
+        <div class="value">DealMachan Platform</div>
+      </div>
+      <div>
+        <div class="label">Reference</div>
+        <div class="value">Work-Corrections-DealMachan.txt</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════════════ -->
+  <!-- TABLE OF CONTENTS                                                      -->
+  <!-- ══════════════════════════════════════════════════════════════════════ -->
+  <div class="toc">
+    <h2>Table of Contents</h2>
+    <ol>
+      <li><a href="#s1">Confirmed Bugs &amp; Errors (Critical Fixes)</a></li>
+      <li><a href="#s2">Loyalty Card System — Admin Panel</a></li>
+      <li><a href="#s3">Customer Account &amp; Onboarding Flow</a></li>
+      <li><a href="#s4">Referral System</a></li>
+      <li><a href="#s5">Grievance Management</a></li>
+      <li><a href="#s6">Account Manager Hierarchy &amp; Mapping</a></li>
+      <li><a href="#s7">General Items &amp; Merchant / Store Enhancements</a></li>
+      <li><a href="#s8">Summary Table &amp; Action Plan</a></li>
+    </ol>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════════════ -->
+  <!-- SECTION 1 — CONFIRMED BUGS & ERRORS                                   -->
+  <!-- ══════════════════════════════════════════════════════════════════════ -->
+  <div class="section" id="s1">
+    <div class="section-title">
+      <span class="section-num">1</span>
+      Confirmed Bugs &amp; Errors — Critical Fixes
+    </div>
+    <p class="section-desc">These are verified code-level defects found during the codebase analysis. They require immediate attention and will be fixed in the next release.</p>
+
+    <!-- Error 1 -->
+    <div class="item">
+      <div class="item-header">
+        <span class="badge badge-bug">&#9888; BUG</span>
+        <span class="item-label">Error #1 — Review Rating Submission Fails</span>
+      </div>
+      <div class="item-client-text">
+        <strong>Client reported:</strong> "Error is review submission." / "Review rating submission."
+      </div>
+      <div class="response-block error">
+        <p><strong>Root Cause Identified.</strong> There are two distinct defects causing this:</p>
+        <ul>
+          <li><strong>Backend (API bug):</strong> In <code>api/controllers/Public/StoreBrowseController.php</code> → <code>submitReview()</code>, the authenticated user's <em>user-account ID</em> (<code>$auth['id']</code>) is being stored directly as the <code>customer_id</code> in the <code>reviews</code> table. However, <code>reviews.customer_id</code> is a foreign key that references the <code>customers</code> table (which has its own auto-incremented primary key separate from <code>users.id</code>). This causes either a foreign-key constraint violation (review is rejected silently) or stores an incorrect ID, breaking the review linkage permanently. The same wrong ID is also used in the duplicate-review check, meaning a customer can submit the same review multiple times or get blocked when they shouldn't be.</li>
+          <li><strong>Frontend (silent error):</strong> In <code>customer/src/pages/stores/StoreDetailPage.tsx</code>, the <code>reviewMutation</code> has only an <code>onSuccess</code> handler and no <code>onError</code> handler. As a result, when the backend rejects the submission, no error message is shown to the customer — the form appears to do nothing, which is confusing.</li>
+        </ul>
+        <p style="margin-top:10px"><strong>Fix Plan:</strong> (a) Resolve the correct <code>customer.id</code> from the authenticated <code>user.id</code> before inserting the review, matching the pattern used in all other customer controllers. (b) Add an <code>onError</code> callback to the frontend mutation to display a meaningful error toast.</p>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- Error 2 -->
+    <div class="item">
+      <div class="item-header">
+        <span class="badge badge-bug">&#9888; BUG</span>
+        <span class="item-label">Error #2 — Add Coupon (Admin): Error + All Entered Data Is Lost</span>
+      </div>
+      <div class="item-client-text">
+        <strong>Client reported:</strong> "Add coupon from admin account ERROR – Data is also getting flushed."
+      </div>
+      <div class="response-block error">
+        <p><strong>Root Cause Identified.</strong> When the admin coupon creation form fails validation (e.g., missing coupon code, discount value of zero, or a duplicate code), the controller performs a server-side <em>redirect</em> back to the blank <code>/coupons/add</code> page. Because it is a redirect (a new HTTP GET request), all form data typed by the admin is lost. This is a standard redirect-after-POST issue not handled gracefully in the current implementation.</p>
+        <ul>
+          <li>Additionally, if a database exception occurs during the INSERT, there is no catch block in the create path, which may surface a white-screen PHP error rather than a styled error message.</li>
+        </ul>
+        <p style="margin-top:10px"><strong>Fix Plan:</strong> (a) Store all POSTed form data in the PHP session before redirecting on validation failure, and repopulate the form fields from session data on the next GET request (standard flash-input pattern). (b) Wrap the database INSERT in a try/catch block with a clear, user-friendly error message on failure.</p>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- Error 3 — Coupon form merchant/store filtering -->
+    <div class="item">
+      <div class="item-header">
+        <span class="badge badge-enhance">&#9679; ENHANCE</span>
+        <span class="item-label">Error #3 — Add Coupon: Categories Must Filter by Merchant's Registry</span>
+      </div>
+      <div class="item-client-text">
+        <strong>Client requested:</strong> "Add coupon – First select a Merchant &amp; Store so the category and sub category is filtered to their registry – will select from this list. / explain category targeting / location targeting."
+      </div>
+      <div class="response-block warn">
+        <p><strong>Current Behavior:</strong> The Add Coupon form in the admin panel currently loads the entire list of all platform categories globally, regardless of which merchant is selected. The store dropdown only appears when a merchant is selected on the Edit page (not the Add page).</p>
+        <p><strong>What Will Be Changed:</strong></p>
+        <ul>
+          <li>The Merchant dropdown will be the first mandatory selection. Once a merchant is chosen, the Store dropdown will dynamically populate with only that merchant's registered stores (via an AJAX call). This already works on the Edit page and will be ported to the Add page.</li>
+          <li>After selecting a merchant and/or store, the Category and Sub-category selector will reload to show <em>only</em> the categories registered under that merchant in the <code>merchant_categories</code> table. This prevents mismatched targeting.</li>
+        </ul>
+        <p><strong>Category Targeting explained:</strong> Categories on a coupon define the type of offer (e.g., Food &amp; Dining, Electronics). Customers browsing by category will find the coupon. Sub-categories provide finer filtering (e.g., Coffee Shops under Food &amp; Dining).</p>
+        <p><strong>Location Targeting explained:</strong> A coupon can be restricted by city (the "City Targets" section) or further narrowed to specific areas or named locations within a city. Only customers whose selected city/area matches will see the coupon in their feed.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════════════ -->
+  <!-- SECTION 2 — LOYALTY CARD SYSTEM                                        -->
+  <!-- ══════════════════════════════════════════════════════════════════════ -->
+  <div class="section" id="s2">
+    <div class="section-title">
+      <span class="section-num">2</span>
+      Loyalty Card System — Admin Panel
+    </div>
+    <p class="section-desc">The client's feedback covers the full card management lifecycle, including card types, generation, assignment, and physical card tracking.</p>
+
+    <!-- 2.1 View All / Parent View -->
+    <div class="item">
+      <div class="item-header">
+        <span class="badge badge-partial">&#9679; PARTIAL</span>
+        <span class="item-label">Card View — Parent / Child Hierarchy with Stats (Total / Subscribed / Expired / Migrated)</span>
+      </div>
+      <div class="item-client-text">
+        <strong>Client requested:</strong> "Show all > display Parent with status – total / subscribed / expired / migrated &amp; enable disable function for Parent (if card can be further subscribed). Parent > Selection will show individual details as currently deployed."
+      </div>
+      <div class="response-block warn">
+        <p><strong>Current State:</strong> The admin card list displays individual card records with a flat view. A "parent" summary view per card configuration — showing aggregate counts of total issued, subscribed (active), expired, and migrated cards — does not yet exist. The enable/disable toggle applies to a card configuration's <code>is_publicly_selectable</code> flag but is not surfaced as a prominent "enable subscribers" toggle.</p>
+        <p><strong>What Will Be Built:</strong></p>
+        <ul>
+          <li>A new top-level "Card Configurations" view that acts as the parent listing, showing each card type (e.g., Silver, Gold) with real-time counts: Total Generated / Active (Subscribed) / Expired / Migrated to another card.</li>
+          <li>Each parent row will have a toggle to enable or disable new public subscriptions (corresponding to <code>is_publicly_selectable</code>).</li>
+          <li>Clicking a parent will drill down to the current individual card list, filtered to that configuration.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- 2.2 Physical Card Request -->
+    <div class="item">
+      <div class="item-header">
+        <span class="badge badge-new">&#9679; NEW</span>
+        <span class="item-label">Physical Card Request Tracking — Received / Printed / Delivered Workflow</span>
+      </div>
+      <div class="item-client-text">
+        <strong>Client requested:</strong> "Physical Card request &gt;&gt; with action change as – Received / Printed / Delivered. (sort by date) Select and export to excel."
+      </div>
+      <div class="response-block info">
+        <p><strong>Current State:</strong> There is no physical card request module in the system. Currently, the <code>cards</code> table only tracks digital activation status.</p>
+        <p><strong>New Module to Be Built:</strong></p>
+        <ul>
+          <li>A new <code>physical_card_requests</code> table to be created, storing: customer ID, card ID, request date, current status (Requested → Received → Printed → Delivered), timestamps for each status change, and handled-by admin.</li>
+          <li>An admin view (filterable, sortable by request date) to manage all requests and update statuses individually or in bulk.</li>
+          <li>Export to Excel (CSV/XLSX) of filtered request records.</li>
+          <li>Integration with the customer-side profile page so customers can request a physical card.</li>
+        </ul>
+        <p><strong>Clarification Required:</strong> Can a customer request a physical card at any time, or only during initial card activation? Is there a per-request fee?</p>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- 2.3 Card Generation Wizard -->
+    <div class="item">
+      <div class="item-header">
+        <span class="badge badge-partial">&#9679; PARTIAL</span>
+        <span class="item-label">Card Generation Wizard — Full Configuration (Public / Private / Both, Profession, Payment, Benefits, Partner Merchants)</span>
+      </div>
+      <div class="item-client-text">
+        <strong>Client requested:</strong> "Select Card Type: PUBLIC / PRIVATE / BOTH. I am a (dynamic). Select Card Variant: Silver / Gold / Platinum / Diamond. Select Payment - No / Yes (Price if yes). Available cities. Upload images – Front / Back. Manage Benefits: Max Live Coupons / Max coupons per month / Payback points / Life Time Subscription / Gift eligibility / Mystery Shopping / Lucky Draw / Contest participation. Select Partner Merchant (up to 5 with image + link) &amp; (up to 10 – Name &amp; Profile links)."
+      </div>
+      <div class="response-block warn">
+        <p><strong>Current State:</strong> The Card Configuration form already supports: Variant (Silver / Gold / Platinum / Diamond), Price, Max Live Coupons, Monthly Maximum coupons, Front/Back image uploads, City restrictions, Sub-classification (Student/Entrepreneur/etc.), and an <code>is_publicly_selectable</code> flag. Partner merchants up to a configured limit are also stored in <code>card_config_partners</code>.</p>
+        <p><strong>What Is Missing and Will Be Added:</strong></p>
+        <ul>
+          <li><strong>Card Access Type:</strong> The <code>is_publicly_selectable</code> boolean will be extended to a tri-state field: <strong>Public</strong> (listed in customer app for self-subscription), <strong>Private</strong> (not listed; card numbers must be batch-generated and assigned), or <strong>Both</strong> (both modes apply simultaneously). The current boolean only covers Public vs Private.</li>
+          <li><strong>"I Am A" (Profession criteria):</strong> The sub-classification dropdown already links to the <code>card_sub_classifications</code> master table (currently seeded with Gender, Student, Entrepreneur, Club). This table will be managed from the Master Data section so new professions can be added dynamically by admin. The card generation form will offer this multi-select from master data. ✅ <em>Architecture already supports this.</em></li>
+          <li><strong>Benefits Grid:</strong> Additional benefit toggles need to be added to the configuration form and stored in the database: Payback Points (Yes/No + points per ₹100), Lifetime Subscription flag, Gift Eligibility, Mystery Shopping eligibility, Lucky Draw, Contest Participation. Currently only Max Live Coupons and Monthly Maximum are tracked.</li>
+          <li><strong>Partner Merchant slots:</strong> The current form has Basic partner fields. The UI wizard will be enhanced to support up to 5 Premium partners (image upload + URL) and up to 10 Standard partners (name + profile link), matching the client's spec.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- 2.4 Card Number Generation (Private Cards) -->
+    <div class="item">
+      <div class="item-header">
+        <span class="badge badge-partial">&#9679; PARTIAL</span>
+        <span class="item-label">Card Number Batch Generation for Private Cards</span>
+      </div>
+      <div class="item-client-text">
+        <strong>Client requested:</strong> "Generate card Numbers &gt; (display show all filtered to private cards). Select card. Select no of cards. Generate (card batch number to be made)."
+      </div>
+      <div class="response-block warn">
+        <p><strong>Current State:</strong> Bulk card number generation exists in <code>admin/controllers/CardsController.php</code> → <code>generate()</code>. It supports a count up to 200 and assigns a specified config or variant. Batch tracking (a "batch number" grouping a set of generated cards) is not implemented yet.</p>
+        <p><strong>Enhancements Required:</strong></p>
+        <ul>
+          <li>The generation page will be pre-filtered to show only Private-type card configurations in the dropdown.</li>
+          <li>A <strong>batch number</strong> will be auto-generated and stored against all cards in a single generation run (to be added as a new <code>batch_number</code> column in the <code>cards</code> table), enabling later tracking by batch.</li>
+          <li>There is no upper limit increase needed; existing infrastructure handles bulk inserts with auto-increment card numbers.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- 2.5 Card Assignment -->
+    <div class="item">
+      <div class="item-header">
+        <span class="badge badge-partial">&#9679; PARTIAL</span>
+        <span class="item-label">Card Assignment — Assign to Merchant / Admin (Including Deal Maker, Promoter, Institutional)</span>
+      </div>
+      <div class="item-client-text">
+        <strong>Client requested:</strong> "Assign &gt; Select card &gt; Select no. of cards () &gt; select Merchant / admin including deal Maker, promoter &amp; institutional any one applies."
+      </div>
+      <div class="response-block warn">
+        <p><strong>Current State:</strong> The assign workflow allows assigning a single card to a customer or to a merchant. Assignment to admin accounts (Deal Maker, Promoter, Institutional) is technically stored in the <code>assigned_to_admin_id</code> field in the <code>cards</code> table, but the UI for assignment only offers customer and merchant options. Bulk selection (select N cards → assign to one entity) is not yet implemented.</p>
+        <p><strong>Enhancements Required:</strong></p>
+        <ul>
+          <li>The assignment UI will be updated to include a unified search for: Merchant, City Admin, Sales Admin, Deal Maker, Promoter, and Club/Institutional Admin.</li>
+          <li>Bulk assignment: select multiple available cards from a filtered list and assign all to one entity in one action.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- 2.6 Mapping / Account Manager -->
+    <div class="item">
+      <div class="item-header">
+        <span class="badge badge-new">&#9679; NEW</span>
+        <span class="item-label">Card Mapping — Display &amp; Control Customers Under Chosen Account Manager</span>
+      </div>
+      <div class="item-client-text">
+        <strong>Client requested:</strong> "MAPPING will display &amp; control the customers under chosen account manager &gt; Jurisdiction level applies for admin. No customer account deletion. Change assignee option from City admin &amp; Super admin."
+      </div>
+      <div class="response-block info">
+        <p><strong>Current State:</strong> Customer accounts are not currently mapped to account managers in a structured way. There is no dedicated mapping or reassignment interface.</p>
+        <p><strong>New Feature Plan:</strong></p>
+        <ul>
+          <li>A <strong>Mapping Dashboard</strong> will be built under the Admin panel (accessible to Super Admin and City Admin) showing a hierarchical view of account managers → their assigned customers.</li>
+          <li>Super Admin can view and reassign any customer to a new manager across all cities.</li>
+          <li>City Admin can view and reassign customers only within their city jurisdiction.</li>
+          <li>No customer account deletion will be permitted from this view or anywhere else in the platform per client instruction.</li>
+          <li>Initial mapping of a card (and thus its customer) to a manager occurs at the time of card number generation or activation.</li>
+        </ul>
+        <p><strong>Clarification Required:</strong> Should the manager hierarchy (Super Admin → City Admin → Sales Admin → Promoter/Partner/Club) be enforced at the time of assignment, or can a Super Admin assign directly to any level?</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════════════ -->
+  <!-- SECTION 3 — CUSTOMER ACCOUNT & ONBOARDING                             -->
+  <!-- ══════════════════════════════════════════════════════════════════════ -->
+  <div class="section" id="s3">
+    <div class="section-title">
+      <span class="section-num">3</span>
+      Customer Account &amp; Onboarding Flow
+    </div>
+    <p class="section-desc">Covers registration journeys, card selection during onboarding, home page UX, and profile features.</p>
+
+    <!-- 3.1 Self-registration flow -->
+    <div class="item">
+      <div class="item-header">
+        <span class="badge badge-partial">&#9679; PARTIAL</span>
+        <span class="item-label">Self-Registration → Card Selection Wizard (City → DOB → "I Am A" → Compare Cards)</span>
+      </div>
+      <div class="item-client-text">
+        <strong>Client requested:</strong> "If Self Generated → redirect to card selection → Select City → Select DOB → I am a → Display cards on above parameters → can compare selected cards up to three → select desired card &gt;&gt; Maintain the page where he accessed from."
+      </div>
+      <div class="response-block warn">
+        <p><strong>Current State:</strong> A <code>CardSelectionPage</code> exists in the customer app, but the post-registration wizard (City → DOB → "I am a" → card comparison) is not yet fully connected to the registration flow. After registering, a user lands on the dashboard without being directed through the card selection wizard.</p>
+        <p><strong>Plan:</strong></p>
+        <ul>
+          <li>After successful registration (OTP verified), the user will be redirected to the card selection wizard instead of the home/dashboard directly.</li>
+          <li>The wizard will accept: City, Date of Birth, "I am a" (profession from master data), then display matching card configurations from the <code>card_configurations</code> table.</li>
+          <li>A card comparison panel (up to 3 cards side-by-side) will be added.</li>
+          <li>After card selection, the user will be returned to the page they were on <em>before</em> initiating registration (using a <code>redirect</code> query parameter already partially in place in the auth flows).</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- 3.2 With card number signup -->
+    <div class="item">
+      <div class="item-header">
+        <span class="badge badge-partial">&#9679; PARTIAL</span>
+        <span class="item-label">Registration with Pre-Assigned Card Number &amp; Auth Code</span>
+      </div>
+      <div class="item-client-text">
+        <strong>Client requested:</strong> "If Self Generated with a Card number → signup → enter card number → Auth Code → Select City → Select DOB → I am a "
+      </div>
+      <div class="response-block warn">
+        <p><strong>Current State:</strong> The card activation with auth code API is implemented in <code>api/controllers/Customer/CardController.php</code>. The auth code is a 6-digit time-limited code (expires in 30 minutes) that is sent as a notification to the card issuer (merchant/admin) who relays it to the customer. However, this step is not integrated into the signup wizard — a new customer cannot provide a card number <em>during</em> registration. It's currently a post-login action only.</p>
+        <p><strong>Plan:</strong> A dedicated signup journey "I have a card number" will be added to the registration page. The card number will be entered at the start, the auth code requested from the issuer, and the customer completes registration while the system links the card automatically after activation.</p>
+        <p><strong>Security Note:</strong> The current auth code generation uses <code>random_int(0, 999999)</code> padded to 6 digits — this is cryptographically secure. The auth code is verified as an OTP (time-limited, single-use) and sent only to the issuing entity's notification inbox, not directly to the customer. This matches the client's stated requirement of verifying the customer's mobile via the issuer.</p>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- 3.3 Profile completion popup -->
+    <div class="item">
+      <div class="item-header">
+        <span class="badge badge-new">&#9679; NEW</span>
+        <span class="item-label">Profile Completion Popup ("Complete Profile for Exclusive Benefits") with Skip</span>
+      </div>
+      <div class="item-client-text">
+        <strong>Client requested:</strong> "Prompt to complete profile to get exclusive benefits as popup. With skip for all."
+      </div>
+      <div class="response-block info">
+        <p><strong>Current State:</strong> There is a <code>MandatoryPasswordResetGuard</code> for temporary-password accounts, but no general profile-completion prompt exists.</p>
+        <p><strong>Plan:</strong> A dismissible popup will be added that appears on the home page for users who have not completed their profile (missing photo, full name, gender, or date of birth). It will include a "Complete Now" button and a "Skip" option that suppresses the popup for the session (or permanently via a <code>profile_prompt_dismissed</code> flag on the customer record).</p>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- 3.4 Card upgrade — same number -->
+    <div class="item">
+      <div class="item-header">
+        <span class="badge badge-question">&#9679; CLARIFICATION</span>
+        <span class="item-label">Card Upgrade — Card Number Retained; Expiry = 1 Year from Join Date; Rate Rules</span>
+      </div>
+      <div class="item-client-text">
+        <strong>Client stated:</strong> "If a customer is upgrading to a new card, card number remains the same. Expiry to Subscription is one year from the date of joining – if not its disabled automatically. No rate applies if the card is lifetime."
+      </div>
+      <div class="response-block info">
+        <p><strong>Understood and Noted. Implementation Plan:</strong></p>
+        <ul>
+          <li>When a customer upgrades a card, only the <code>card_configuration_id</code> (and thus the tier/variant) will be changed on the existing card record; the <code>card_number</code> will not change.</li>
+          <li>Expiry will be set to 1 year from the original joining (activation) date for paid/standard subscriptions. For <strong>Lifetime</strong> subscriptions, the <code>expiry_date</code> column will be NULL, and the system will never auto-disable such cards.</li>
+          <li>The nightly auto-disable job (or a cron that checks <code>expiry_date &lt; NOW()</code>) will mark expired cards as inactive.</li>
+          <li>When an admin renews or upgrades a customer's card, the system will not allow a price to be applied (the rate field will be disabled/hidden in that admin action per client's instruction).</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- 3.5 Home page priorities -->
+    <div class="item">
+      <div class="item-header">
+        <span class="badge badge-enhance">&#9679; ENHANCE</span>
+        <span class="item-label">Customer Home Page — Single Menu, Location in Header, Tap-to-Flip Card Display, Privilege Partners</span>
+      </div>
+      <div class="item-client-text">
+        <strong>Client requested:</strong> "Make a single menu. Display location &amp; Change option in header. Display card front &gt; tap to see card number &gt; flip card and show number on the reverse. Privilege Partners &gt; Merchant partners below in left-to-right scroll and See all showing all fifteen or selected."
+      </div>
+      <div class="response-block warn">
+        <p><strong>Current State:</strong></p>
+        <ul>
+          <li>Navigation currently uses a bottom tab bar + sidebar combination. Consolidation into a single menu is planned.</li>
+          <li>Location display is in the header partially, but requires a more prominent "Change" option.</li>
+          <li>The card is displayed on the LoyaltyCards page as a static visual — there is no tap-to-flip or card-number reveal animation yet.</li>
+          <li>The API returns partner merchant data per card configuration (<code>card_config_partners</code> table is populated), but the home page does not currently display a "Privilege Partners" horizontal scroll section.</li>
+        </ul>
+        <p><strong>Enhancements to be Implemented:</strong></p>
+        <ul>
+          <li>A CSS/JS flip-card component on the card display: front shows the card design; tapping reveals a flip animation showing the card number on the reverse side.</li>
+          <li>A "Privilege Partners" row on the home page with horizontal scrolling, showing the first 5 partners inline + "See All" button that expands to all 15.</li>
+          <li>Navigation simplification to a single bottom navigation or hamburger menu.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- 3.6 Friend & Family tab -->
+    <div class="item">
+      <div class="item-header">
+        <span class="badge badge-new">&#9679; NEW</span>
+        <span class="item-label">Profile — Friend &amp; Family Tab (Name / Relation / DOB)</span>
+      </div>
+      <div class="item-client-text">
+        <strong>Client requested:</strong> "In profile add a tab for FRIEND &amp; FAMILY – NAME / RELATION (ADD FROM MASTER DATA) / DOB."
+      </div>
+      <div class="response-block info">
+        <p><strong>Current State:</strong> No Friend &amp; Family feature exists in the customer profile.</p>
+        <p><strong>Plan:</strong></p>
+        <ul>
+          <li>A new <code>customer_contacts</code> table to be created: <code>customer_id</code>, <code>name</code>, <code>relation_id</code> (FK to a new Relations master table), <code>date_of_birth</code>.</li>
+          <li>Relations (e.g., Spouse, Parent, Sibling, Friend) will be managed from Admin → Master Data so they can be updated without a deployment.</li>
+          <li>A new "Friends &amp; Family" tab will be added to the customer profile page with add/edit/delete (soft-delete) actions.</li>
+          <li>This data can later power personalized celebration deals (e.g., birthday reminders for family is already planned under Important Days, which exists as <code>ImportantDaysPage</code>).</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════════════ -->
+  <!-- SECTION 4 — REFERRAL SYSTEM                                            -->
+  <!-- ══════════════════════════════════════════════════════════════════════ -->
+  <div class="section" id="s4">
+    <div class="section-title">
+      <span class="section-num">4</span>
+      Referral System
+    </div>
+    <p class="section-desc">The client has outlined a detailed reward-calculation model, redemption mechanism, and referral history notification format.</p>
+
+    <div class="item">
+      <div class="item-header">
+        <span class="badge badge-partial">&#9679; PARTIAL</span>
+        <span class="item-label">Referral Reward Calculation — Paid Cards vs Free Cards, Upgrade &amp; Renewal Points</span>
+      </div>
+      <div class="item-client-text">
+        <strong>Client stated:</strong> "Referral benefit maintained as Payback Points. Paid cards → calculated against cost of card. Free card → points per card / renewal &amp; upgradation. Redemption of reward = select listed product/service OR free upgradation (calculated: Free card = 10 points, every 100 thereafter = 10; upon reaching upgradation level, variant is upgraded or get a lifetime)."
+      </div>
+      <div class="response-block warn">
+        <p><strong>Current State:</strong> The referral system records basic data (referral code, referrer/referee mapping, <code>reward_amount</code>, <code>reward_given</code> flag). However, the point-calculation formula, the redemption page, and the upgrade-threshold logic are <em>not yet implemented</em>.</p>
+        <p><strong>Plan:</strong></p>
+        <ul>
+          <li><strong>Reward Calculation:</strong> When a referred customer successfully subscribes to a card:
+            <ul>
+              <li>Free card → Referrer earns 10 points.</li>
+              <li>Paid card → Referrer earns points proportional to the card price (formula to be confirmed with client: e.g., 10 points per ₹100 spent by the referee).</li>
+              <li>Renewal or upgrade by the referee also generates points for the referrer on the same scale.</li>
+            </ul>
+          </li>
+          <li><strong>Redemption Page:</strong> A new <code>/referrals/redeem</code> page will be created listing: (a) redeemable products/services configured by admin, and (b) a free card upgrade option displayed when the customer's points hit the required upgrade threshold.</li>
+          <li><strong>Point Wallet:</strong> A <code>customer_points</code> ledger table will track earned, redeemed, and balance points. The referrals table <code>reward_amount</code> column will feed this ledger.</li>
+          <li><strong>Clarification Required:</strong> What is the specific points-to-money conversion rate for paid cards? What is the exact threshold of points for each tier upgrade (e.g., Silver → Gold)?</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="item">
+      <div class="item-header">
+        <span class="badge badge-partial">&#9679; PARTIAL</span>
+        <span class="item-label">Referral Share (Signup with Pre-fixed Code), Completed View, Referral History Notifications</span>
+      </div>
+      <div class="item-client-text">
+        <strong>Client requested:</strong> "Share referral = signup page with prefixed referral code. Completed = Signups vs Cards. Referral history = Congrats.. Name of person, a referral from you have successfully onboarded / upgraded – on DDMMYYYY and your wallet is credited with 0000 points."
+      </div>
+      <div class="response-block warn">
+        <p><strong>Current State:</strong> A referral code is generated and stored per customer (<code>customers.referral_code</code>). The GET API returns the code and basic stats. However:</p>
+        <ul>
+          <li>The share link does not pre-fill the referral code on the signup page.</li>
+          <li>The "Completed" view shows counts but not a Signups vs Cards breakdown.</li>
+          <li>The referral history notification message ("Congrats…") is not generated.</li>
+        </ul>
+        <p><strong>Plan:</strong></p>
+        <ul>
+          <li>The share link will be <code>/register?ref=CODE</code>; the registration form will auto-populate the referral code field and lock it from editing.</li>
+          <li>The referral page stats section will display: Total Signups generated vs Total Cards subscribed (since signup alone does not trigger the reward — only card subscription does).</li>
+          <li>A personalised in-app notification will be triggered when a referee completes card subscription: <em>"Congratulations! [Referee Name], a referral from you, has successfully onboarded on [DD/MM/YYYY]. Your wallet has been credited with [X] points."</em></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════════════ -->
+  <!-- SECTION 5 — GRIEVANCE MANAGEMENT                                       -->
+  <!-- ══════════════════════════════════════════════════════════════════════ -->
+  <div class="section" id="s5">
+    <div class="section-title">
+      <span class="section-num">5</span>
+      Grievance Management
+    </div>
+    <p class="section-desc">The client has clarified a two-tier escalation model and additional form fields that differ from the current simple implementation.</p>
+
+    <div class="item">
+      <div class="item-header">
+        <span class="badge badge-new">&#9679; NEW</span>
+        <span class="item-label">Two-Tier Escalation: Store First → Admin After 24 Hours or Customer Dissatisfaction</span>
+      </div>
+      <div class="item-client-text">
+        <strong>Client requested:</strong> "Customer registers a grievance as Report only / need resolution, share my contact-yes/no, I am at the store (disabled for now) — is directly sent to store. If no action in 24 hrs or if customer not satisfied with store reply, only then reported to Admin. The customer can like or dislike the decision."
+      </div>
+      <div class="response-block info">
+        <p><strong>Current State:</strong> Grievances are submitted directly and visible to the admin panel immediately. There is no two-tier system, no store-first notification, and no escalation timer. The grievance form also does not capture the type (Report only / Need resolution) or the contact sharing preference.</p>
+        <p><strong>New Workflow to be Built:</strong></p>
+        <ul>
+          <li><strong>Grievance Type (new field):</strong> "Report Only" or "Need Resolution" — stored in a new <code>grievance_type</code> column.</li>
+          <li><strong>Contact Sharing (new field):</strong> "Share My Contact with Store" — Yes/No toggle stored in <code>share_contact</code> column.</li>
+          <li><strong>"I Am At The Store" (disabled for now):</strong> Field will be added to the schema but hidden/disabled in the UI per client, for future activation.</li>
+          <li><strong>Store-First Delivery:</strong> On submission, the grievance will trigger an in-app notification to the relevant store admin (accessible in the merchant panel). Admins will see it only after escalation.</li>
+          <li><strong>24-Hour Escalation Timer:</strong> A background job (or lazy evaluation on next view) will check if the store has responded within 24 hours. If not, the grievance is automatically escalated to the admin queue and marked "Escalated".</li>
+          <li><strong>Escalation on Customer Dissatisfaction:</strong> If the store responds but the customer marks it as "Not Satisfied," a button will appear allowing manual escalation to admin.</li>
+          <li><strong>Customer Like/Dislike on Decision:</strong> When a resolution is marked (by store or admin), the customer will see a thumbs-up/thumbs-down prompt to rate the resolution. This data will feed the admin's grievance statistics view.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="item">
+      <div class="item-header">
+        <span class="badge badge-new">&#9679; NEW</span>
+        <span class="item-label">Admin Grievance Statistics — Avg Response Time, Total, Up/Down Votes by Merchant/Store</span>
+      </div>
+      <div class="item-client-text">
+        <strong>Client requested:</strong> "Admin – to have an option to view Grievance transaction by selecting the merchant/store with statistics – avg response time vs total vs up/down and view all."
+      </div>
+      <div class="response-block info">
+        <p><strong>Current State:</strong> The admin grievance list can be filtered by merchant, but no dedicated statistics view exists.</p>
+        <p><strong>Plan:</strong> A new statistics panel will be added to the admin grievance section. When a merchant or store is selected, it will show:</p>
+        <ul>
+          <li>Total grievances submitted</li>
+          <li>Average response time (time from submission to first store reply)</li>
+          <li>Escalation rate (% escalated to admin)</li>
+          <li>Satisfaction votes: thumbs-up vs thumbs-down count (from the customer decision-rating feature above)</li>
+          <li>Trend graph over the last 30/60/90 days</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════════════ -->
+  <!-- SECTION 6 — ACCOUNT MANAGER HIERARCHY & MAPPING                       -->
+  <!-- ══════════════════════════════════════════════════════════════════════ -->
+  <div class="section" id="s6">
+    <div class="section-title">
+      <span class="section-num">6</span>
+      Account Manager Hierarchy &amp; Mapping
+    </div>
+    <p class="section-desc">The client has defined a reporting chain and wants dedicated mapping and reassignment tools.</p>
+
+    <div class="item">
+      <div class="item-header">
+        <span class="badge badge-partial">&#9679; PARTIAL</span>
+        <span class="item-label">Admin Hierarchy — Super Admin → City Admin → Sales Admin → Promoter / Partner / Club</span>
+      </div>
+      <div class="item-client-text">
+        <strong>Client stated:</strong> "Who is an Account Manager? Account manager management to reallocate / map new assignee must be there within the Super admin / City admin dashboard. Wherever a mapping is required a reporting to admin must be made order – Super Admin &gt; City Admin &gt; Sales admin &gt; promoter / partner / club. Super admin has complete access and option to reassign selected accounts to a new manager. City admins have this feature restricted to their jurisdiction."
+      </div>
+      <div class="response-block warn">
+        <p><strong>Current State:</strong> Admin types in the system are: <code>super_admin</code>, <code>city_admin</code>, <code>sales_admin</code>, <code>deal_maker</code>, <code>club_admin</code>. The hierarchy is partially enforced (super_admin has full access; city_admin is restricted by city). However:</p>
+        <ul>
+          <li>There is no dedicated "Account Manager" mapping view or reassignment interface.</li>
+          <li>The "Promoter" and "Institutional/Partner" admin types are mapped to <code>deal_maker</code> and <code>club_admin</code> respectively in the database, but the terminology in the UI does not fully match the client's language.</li>
+          <li>Mapping of merchant accounts to managers is mentioned but not systematically tracked with a <code>managed_by_admin_id</code> field on the merchants table.</li>
+        </ul>
+        <p><strong>Plan:</strong></p>
+        <ul>
+          <li>A dedicated <strong>Account Manager</strong> view in the admin dashboard showing a tree or table of managers → their accounts (merchants, customers, loyalty cards).</li>
+          <li>Reassignment: Super Admin can drag-drop or bulk-reassign. City Admin sees only their city's accounts.</li>
+          <li>Admin type labels will be updated in the UI for clarity: Deal Maker → Promoter (or both shown).</li>
+          <li>A <code>managed_by_admin_id</code> field will be added to <code>merchants</code> to track the assigned account manager (similar to how it already exists in <code>admins</code> table).</li>
+          <li><strong>Clarification Requested:</strong> Should Promoters manage merchants only, customers only, or both?</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════════════ -->
+  <!-- SECTION 7 — GENERAL ITEMS & MERCHANT / STORE ENHANCEMENTS              -->
+  <!-- ══════════════════════════════════════════════════════════════════════ -->
+  <div class="section" id="s7">
+    <div class="section-title">
+      <span class="section-num">7</span>
+      General Items &amp; Merchant / Store Enhancements
+    </div>
+    <p class="section-desc">Miscellaneous items covering deletion policy, merchant registration, image sizes, store features, and admin review control.</p>
+
+    <!-- G1 -->
+    <div class="item">
+      <div class="item-header">
+        <span class="badge badge-done">&#10003; CONFIRMED</span>
+        <span class="item-label">G1 — No Delete Permission for Now</span>
+      </div>
+      <div class="response-block ok">
+        <p><strong>Already Enforced.</strong> The codebase does not expose delete actions for customers, merchants, or cards through the standard admin UI. The only deletions available are for configuration-level items (such as deleting an unused card configuration) and are protected by a "linked records" check. This policy will be maintained throughout all new feature additions.</p>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- G2 -->
+    <div class="item">
+      <div class="item-header">
+        <span class="badge badge-question">&#9679; CLARIFICATION</span>
+        <span class="item-label">G2 — Merchant Registration: Label &amp; Priority / Premium Partner Logic</span>
+      </div>
+      <div class="item-client-text">
+        <strong>Client asked:</strong> "While registering a merchant there is an option Label &amp; Priority / premium partner – how is the logic?"
+      </div>
+      <div class="response-block info">
+        <p><strong>Current Behavior Explained:</strong></p>
+        <ul>
+          <li><strong>Label:</strong> A merchant can be assigned a display label (e.g., "Featured", "New", "Verified") from the Labels master list. This label appears as a badge on the merchant's listing card in the customer app. It is purely cosmetic/marketing — it does not restrict any functionality.</li>
+          <li><strong>Priority Weight:</strong> An integer value (e.g., 0–100) stored as <code>priority_weight</code> on the merchant record. When merchants are listed in search results or on the home page, those with higher priority weights are sorted first. This allows giving certain merchants greater visibility without affecting other settings.</li>
+          <li><strong>Premium Partner flag (<code>is_premium</code>):</strong> A boolean that marks a merchant as a "Premium Partner." Premium Partners receive a distinct visual treatment in listings (e.g., a gold badge, featured placement). In the public store browse API, premium merchants are ordered before non-premium ones alongside priority weight.</li>
+        </ul>
+        <p><strong>Summary:</strong> Label = display badge; Priority Weight = sort order in listings; Premium Partner = featured tier with special UI treatment. All three are independent and can be used in combination.</p>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- G3 -->
+    <div class="item">
+      <div class="item-header">
+        <span class="badge badge-question">&#9679; CLARIFICATION</span>
+        <span class="item-label">G3 — Image Upload Preferred Sizes for All Entities</span>
+      </div>
+      <div class="item-client-text">
+        <strong>Client asked:</strong> "Image uploads pls give preferred sizes for all."
+      </div>
+      <div class="response-block info">
+        <p>The following recommended image dimensions and file size limits are now documented for reference and will be displayed as helper text in all upload fields:</p>
+        <table class="summary-table" style="margin-top:10px">
+          <thead><tr><th>Entity</th><th>Image Type</th><th>Recommended Size (px)</th><th>Max File Size</th><th>Format</th></tr></thead>
+          <tbody>
+            <tr><td class="col-item">Merchant</td><td>Logo</td><td>400 × 400</td><td>2 MB</td><td>JPG, PNG, WebP</td></tr>
+            <tr><td class="col-item">Merchant</td><td>Banner</td><td>1200 × 400</td><td>3 MB</td><td>JPG, PNG, WebP</td></tr>
+            <tr><td class="col-item">Store</td><td>Store Image</td><td>800 × 600</td><td>2 MB</td><td>JPG, PNG, WebP</td></tr>
+            <tr><td class="col-item">Store</td><td>Gallery Images</td><td>1200 × 900</td><td>3 MB each</td><td>JPG, PNG, WebP</td></tr>
+            <tr><td class="col-item">Coupon</td><td>Banner</td><td>1200 × 628</td><td>2 MB</td><td>JPG, PNG, WebP</td></tr>
+            <tr><td class="col-item">Flash Discount</td><td>Banner</td><td>1200 × 628</td><td>2 MB</td><td>JPG, PNG, WebP</td></tr>
+            <tr><td class="col-item">Blog Post</td><td>Featured Image</td><td>1200 × 630</td><td>2 MB</td><td>JPG, PNG, WebP</td></tr>
+            <tr><td class="col-item">Advertisement</td><td>Ad Media</td><td>1080 × 1080</td><td>5 MB</td><td>JPG, PNG, WebP, MP4</td></tr>
+            <tr><td class="col-item">Card Configuration</td><td>Card Front/Back</td><td>856 × 540 (CR80 3:2)</td><td>2 MB</td><td>JPG, PNG, WebP</td></tr>
+            <tr><td class="col-item">Card Config Partner</td><td>Partner Logo</td><td>300 × 300</td><td>1 MB</td><td>JPG, PNG, WebP</td></tr>
+            <tr><td class="col-item">Profile</td><td>Customer Avatar</td><td>400 × 400</td><td>1 MB</td><td>JPG, PNG, WebP</td></tr>
+          </tbody>
+        </table>
+        <p style="margin-top:10px"><em>All uploaded images are validated on the server side for extension and MIME type. These are recommended dimensions for optimal display quality.</em></p>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- G4 -->
+    <div class="item">
+      <div class="item-header">
+        <span class="badge badge-partial">&#9679; PARTIAL</span>
+        <span class="item-label">G4 — Add Store: Latitude &amp; Longitude (Map Picker)</span>
+      </div>
+      <div class="item-client-text">
+        <strong>Client requested:</strong> "ADD store – LAT &amp; LONG."
+      </div>
+      <div class="response-block warn">
+        <p><strong>Current State:</strong> The <code>stores</code> table has <code>latitude</code> and <code>longitude</code> columns, and the merchant StoreFormPage has input fields for them. However, manual entry of coordinates is impractical for non-technical users.</p>
+        <p><strong>Enhancement:</strong> A Google Maps / Leaflet.js map picker will be embedded in the store form. A store admin can search for the address and drop a pin — the lat/long values will be auto-filled. This makes location data accurate and easy to add. The map widget requires a Google Maps API key or an OpenStreetMap/Nominatim integration (Open-Source, no key required). <strong>Client to advise on preferred mapping provider.</strong></p>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- G5 -->
+    <div class="item">
+      <div class="item-header">
+        <span class="badge badge-done">&#10003; IMPLEMENTED</span>
+        <span class="item-label">G5 — Merchant Account = Super Account for All Stores; Multiple Store Admins per Store</span>
+      </div>
+      <div class="item-client-text">
+        <strong>Client stated:</strong> "Merchant account is the super account for all stores under. Store admins will have control to that store only. Multiple store account admins needed for every store."
+      </div>
+      <div class="response-block ok">
+        <p><strong>Already Implemented.</strong> The merchant portal has a <code>StoreAdminGuard</code> and a <code>StoreAdmins</code> module (<code>StoreAdminListPage</code>, <code>StoreAdminFormPage</code>). A merchant can create multiple store admin accounts, each scoped to a single store. The merchant's own login has visibility across all their stores. This hierarchy is enforced in the API via <code>access_scope: 'merchant' | 'store'</code> on the user token.</p>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- G6 -->
+    <div class="item">
+      <div class="item-header">
+        <span class="badge badge-new">&#9679; NEW</span>
+        <span class="item-label">G6 — Merchant Store Page: QR Code, Website, Navigate, CALL &amp; BOOK NOW Buttons</span>
+      </div>
+      <div class="item-client-text">
+        <strong>Client requested:</strong> "Merchant Store Page – should have QR / Add website / Navigate / Action Buttons – CALL &amp; BOOKNOW (BOOKNOW will have two options with confirmation &amp; without confirmation – need to create a form – TYPE / Total Customers / Timeslot ddmmyyyy (HHMM) to (HHMM) ddmmyyyy). BOOKNOW option to be enabled from concerned store admin only."
+      </div>
+      <div class="response-block info">
+        <p><strong>Current State:</strong> The store detail page shows phone, address, and a link to navigate (using lat/long with Google Maps). CALL button (tel: link) is partial. QR code for the store, a dedicated Website button, and the BOOK NOW feature do not exist.</p>
+        <p><strong>Plan:</strong></p>
+        <ul>
+          <li><strong>QR Code:</strong> Each store's public URL will be converted to a QR code (generated server-side or client-side using a JS library) and displayed on the store detail page and in the merchant admin panel for download/printing.</li>
+          <li><strong>Website Link:</strong> A <code>website_url</code> field will be added to the stores table (if not present). The store page will show an "Open Website" button that opens the URL in a new tab.</li>
+          <li><strong>Navigate Button:</strong> Already partial — will be polished to open Google Maps / Apple Maps via deeplink using stored lat/long.</li>
+          <li><strong>CALL Button:</strong> Will use the store's phone number as a <code>tel:</code> link.</li>
+          <li><strong>BOOK NOW Feature (New Module):</strong>
+            <ul>
+              <li>Store admin enables booking from their store settings — a toggle in the merchant portal.</li>
+              <li>Booking form fields: Type of booking, Total Customers (number), Timeslot (date + time range in DD/MM/YYYY HH:MM format).</li>
+              <li>Two booking modes: "With Confirmation" (store admin must approve before booking is confirmed) and "Without Confirmation" (instant booking).</li>
+              <li>Customer receives a confirmation notification; store admin receives a booking notification.</li>
+              <li>A new <code>store_bookings</code> table will be created to store all bookings.</li>
+            </ul>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- G8 -->
+    <div class="item">
+      <div class="item-header">
+        <span class="badge badge-partial">&#9679; PARTIAL</span>
+        <span class="item-label">G8 — Gallery in Store Page (Customer View &amp; Store Admin View)</span>
+      </div>
+      <div class="item-client-text">
+        <strong>Client requested:</strong> "Add gallery – in Store Page – CUST / STORE."
+      </div>
+      <div class="response-block warn">
+        <p><strong>Current State:</strong> The admin and merchant panels have gallery management (images can be uploaded to a store). The <code>store_gallery</code> table and API endpoints for gallery images exist. However, the customer-facing store detail page does not yet render the gallery section.</p>
+        <p><strong>Fix:</strong> A "Gallery" tab or section will be added to the customer-facing store detail page, displaying all approved gallery images in a grid with lightbox tap-to-expand functionality. The store admin already has a <code>GalleryPage</code> in the merchant portal to manage uploads.</p>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- G10 -->
+    <div class="item">
+      <div class="item-header">
+        <span class="badge badge-new">&#9679; NEW</span>
+        <span class="item-label">G10 — Super Admin: Separate Passcode for Review Tab; Modify Rating %; Add Fictitious Review</span>
+      </div>
+      <div class="item-client-text">
+        <strong>Client requested:</strong> "Super admin to have a separate passcode for Review Tab. From here a store's rating can be modified + or – in percentage. Add a review &amp; Rate in false account. (NAME) (EMAIL: MASKED)."
+      </div>
+      <div class="response-block purple">
+        <p><strong>Current State:</strong> The admin review section only allows approving, flagging, or restoring customer-submitted reviews. No rating override or synthetic review capability exists.</p>
+        <p><strong>Plan:</strong></p>
+        <ul>
+          <li><strong>Separate Passcode:</strong> A special passcode (secondary authentication, in addition to the main admin login) will be required to access the protected review management actions. This will be stored as a hashed secondary PIN on the super admin's record and verified before sensitive actions.</li>
+          <li><strong>Rating Modifier:</strong> An internal adjustment mechanism will allow the super admin to apply a positive or negative percentage modifier to a store's displayed average rating (e.g., "Adjust displayed rating by −5%"). The raw reviews remain unchanged; only the displayed aggregate is adjusted. The modifier is stored transparently in the system log.</li>
+          <li><strong>Synthetic Review Entry:</strong> A form to add a manually authored review under a fictional display name. The NAME will be displayed; the EMAIL will be stored internally but masked on the public-facing display (e.g., j***@gmail.com). This capability will be access-controlled exclusively by the super admin passcode.</li>
+        </ul>
+        <p><strong>Important Note:</strong> Synthetic reviews and rating modifications are powerful tools that affect customer trust. We strongly recommend that these actions are always recorded in the Audit Log with the super admin's identity, timestamp, and reason (an optional notes field). This protects the platform from legal or reputational risk by maintaining an internal record of changes.</p>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- Loyalty Card as Mandatory -->
+    <div class="item">
+      <div class="item-header">
+        <span class="badge badge-new">&#9679; NEW</span>
+        <span class="item-label">Loyalty Card Mandatory for All Customer Activities (Except Reviews &amp; Grievances)</span>
+      </div>
+      <div class="item-client-text">
+        <strong>Client stated:</strong> "Loyalty Card – mandatory for all customer activities excluding review rating and grievances (should prompt to acquire a card from the list)."
+      </div>
+      <div class="response-block info">
+        <p><strong>Current State:</strong> Customer activities (coupon saving, contests, surveys, referrals, etc.) do not currently enforce loyalty card ownership.</p>
+        <p><strong>Plan:</strong> A loyalty card guard will be added in the customer app. Whenever a logged-in customer (who has no active loyalty card) attempts to perform any activity other than submitting a review or a grievance, they will see a prompt: <em>"You need a DealMachan Card to do this. Get your card now!"</em> with a button linking to the card selection wizard. This will be handled at the API level as well (a 403 response with code <code>CARD_REQUIRED</code>) and at the frontend routing/action level.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════════════ -->
+  <!-- SECTION 8 — SUMMARY TABLE & ACTION PLAN                                -->
+  <!-- ══════════════════════════════════════════════════════════════════════ -->
+  <div class="section" id="s8">
+    <div class="section-title">
+      <span class="section-num">8</span>
+      Summary Table &amp; Action Plan
+    </div>
+    <p class="section-desc">A consolidated view of all client-raised points, their current status, and the recommended action.</p>
+
+    <table class="summary-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Item</th>
+          <th class="col-status">Status</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>1</td>
+          <td class="col-item">Review Rating Submission Bug</td>
+          <td class="col-status"><span class="badge badge-bug">BUG</span></td>
+          <td>Fix customer_id resolution in API; add onError in frontend</td>
+        </tr>
+        <tr>
+          <td>2</td>
+          <td class="col-item">Add Coupon – Error + Data Flushed</td>
+          <td class="col-status"><span class="badge badge-bug">BUG</span></td>
+          <td>Flash-input session on validation failure; catch DB errors</td>
+        </tr>
+        <tr>
+          <td>3</td>
+          <td class="col-item">Admin Coupon: Merchant → Store → Category Filter</td>
+          <td class="col-status"><span class="badge badge-enhance">ENHANCE</span></td>
+          <td>AJAX store load on merchant select; filtered category list</td>
+        </tr>
+        <tr>
+          <td>4</td>
+          <td class="col-item">Card Type: Public / Private / Both</td>
+          <td class="col-status"><span class="badge badge-partial">PARTIAL</span></td>
+          <td>Extend is_publicly_selectable to tri-state field</td>
+        </tr>
+        <tr>
+          <td>5</td>
+          <td class="col-item">Card Generation Full Wizard (benefits, partners, profession)</td>
+          <td class="col-status"><span class="badge badge-partial">PARTIAL</span></td>
+          <td>Add benefit toggles, 5+10 partner slots, dynamic profession filter</td>
+        </tr>
+        <tr>
+          <td>6</td>
+          <td class="col-item">Card Parent View with Stats (Total/Subscribed/Expired/Migrated)</td>
+          <td class="col-status"><span class="badge badge-new">NEW</span></td>
+          <td>Build configuration-level aggregate view with enable/disable toggle</td>
+        </tr>
+        <tr>
+          <td>7</td>
+          <td class="col-item">Batch Generation with Batch Number</td>
+          <td class="col-status"><span class="badge badge-partial">PARTIAL</span></td>
+          <td>Add batch_number column; filter generation page to Private cards only</td>
+        </tr>
+        <tr>
+          <td>8</td>
+          <td class="col-item">Physical Card Request Tracking</td>
+          <td class="col-status"><span class="badge badge-new">NEW</span></td>
+          <td>New table + admin view + export; customer-side request option</td>
+        </tr>
+        <tr>
+          <td>9</td>
+          <td class="col-item">Card Assignment to All Admin Roles (Bulk)</td>
+          <td class="col-status"><span class="badge badge-partial">PARTIAL</span></td>
+          <td>Add Promoter/Institutional to assign dropdown; bulk selection UI</td>
+        </tr>
+        <tr>
+          <td>10</td>
+          <td class="col-item">Card Mapping Dashboard (Account Manager)</td>
+          <td class="col-status"><span class="badge badge-new">NEW</span></td>
+          <td>Build hierarchy view; reassignment by Super Admin / City Admin</td>
+        </tr>
+        <tr>
+          <td>11</td>
+          <td class="col-item">Customer Registration → Card Selection Wizard</td>
+          <td class="col-status"><span class="badge badge-partial">PARTIAL</span></td>
+          <td>Connect post-registration redirect to wizard; add comparison panel</td>
+        </tr>
+        <tr>
+          <td>12</td>
+          <td class="col-item">Registration with Pre-Assigned Card Number</td>
+          <td class="col-status"><span class="badge badge-partial">PARTIAL</span></td>
+          <td>Integrate card number + auth code into signup flow</td>
+        </tr>
+        <tr>
+          <td>13</td>
+          <td class="col-item">Profile Completion Popup</td>
+          <td class="col-status"><span class="badge badge-new">NEW</span></td>
+          <td>Dismissible popup on home page for incomplete profiles</td>
+        </tr>
+        <tr>
+          <td>14</td>
+          <td class="col-item">Card Upgrade Rules (same number, expiry, no rate on admin renewal)</td>
+          <td class="col-status"><span class="badge badge-partial">PARTIAL</span></td>
+          <td>Enforce number retention; implement 1-year expiry timer; block rate field on admin renewal</td>
+        </tr>
+        <tr>
+          <td>15</td>
+          <td class="col-item">Customer Home: Single Menu, Location, Flip Card, Privilege Partners</td>
+          <td class="col-status"><span class="badge badge-enhance">ENHANCE</span></td>
+          <td>Flip-card animation; Privilege Partners scroll; menu simplification</td>
+        </tr>
+        <tr>
+          <td>16</td>
+          <td class="col-item">Profile – Friend &amp; Family Tab</td>
+          <td class="col-status"><span class="badge badge-new">NEW</span></td>
+          <td>New table + API + UI tab (Name / Relation from master / DOB)</td>
+        </tr>
+        <tr>
+          <td>17</td>
+          <td class="col-item">Loyalty Card Mandatory for Activities</td>
+          <td class="col-status"><span class="badge badge-new">NEW</span></td>
+          <td>Add card check guard in API and frontend; prompt to acquire card</td>
+        </tr>
+        <tr>
+          <td>18</td>
+          <td class="col-item">Referral Reward Calculation (Paid vs Free, Formula)</td>
+          <td class="col-status"><span class="badge badge-partial">PARTIAL</span></td>
+          <td>Implement points logic; ledger table; redemption page; upgrade threshold</td>
+        </tr>
+        <tr>
+          <td>19</td>
+          <td class="col-item">Referral Share (Pre-filled Code), Signups vs Cards, History Notification</td>
+          <td class="col-status"><span class="badge badge-partial">PARTIAL</span></td>
+          <td>Pre-fill ref code in register URL; stats split; "Congrats" notification</td>
+        </tr>
+        <tr>
+          <td>20</td>
+          <td class="col-item">Grievance Two-Tier Escalation (Store first → Admin)</td>
+          <td class="col-status"><span class="badge badge-new">NEW</span></td>
+          <td>Add grievance_type, share_contact, 24-hr escalation timer, like/dislike</td>
+        </tr>
+        <tr>
+          <td>21</td>
+          <td class="col-item">Admin Grievance Statistics by Merchant</td>
+          <td class="col-status"><span class="badge badge-new">NEW</span></td>
+          <td>Stats panel: avg response time, total, up/down votes, trend</td>
+        </tr>
+        <tr>
+          <td>22</td>
+          <td class="col-item">No Delete Permission</td>
+          <td class="col-status"><span class="badge badge-done">DONE</span></td>
+          <td>Already enforced — no changes needed</td>
+        </tr>
+        <tr>
+          <td>23</td>
+          <td class="col-item">Merchant Label / Priority / Premium Logic (Explanation)</td>
+          <td class="col-status"><span class="badge badge-done">DONE</span></td>
+          <td>Explained in this document; UI help text to be added</td>
+        </tr>
+        <tr>
+          <td>24</td>
+          <td class="col-item">Image Upload Preferred Sizes</td>
+          <td class="col-status"><span class="badge badge-done">DONE</span></td>
+          <td>Documented above; helper text to be added to all upload fields</td>
+        </tr>
+        <tr>
+          <td>25</td>
+          <td class="col-item">Store LAT / LONG Map Picker</td>
+          <td class="col-status"><span class="badge badge-partial">PARTIAL</span></td>
+          <td>Add embedded map picker; fields exist — awaiting client go-ahead on mapping provider</td>
+        </tr>
+        <tr>
+          <td>26</td>
+          <td class="col-item">Multiple Store Admins per Store</td>
+          <td class="col-status"><span class="badge badge-done">DONE</span></td>
+          <td>Already implemented in merchant portal</td>
+        </tr>
+        <tr>
+          <td>27</td>
+          <td class="col-item">Store Page: QR / Website / Navigate / CALL / BOOK NOW</td>
+          <td class="col-status"><span class="badge badge-new">NEW</span></td>
+          <td>QR gen; website_url field; booking table + form; store-admin toggle</td>
+        </tr>
+        <tr>
+          <td>28</td>
+          <td class="col-item">Gallery in Customer-Facing Store Page</td>
+          <td class="col-status"><span class="badge badge-partial">PARTIAL</span></td>
+          <td>Data exists; add gallery section/tab to customer store page</td>
+        </tr>
+        <tr>
+          <td>29</td>
+          <td class="col-item">Super Admin Review Tab: Passcode + Rating Modifier + Synthetic Review</td>
+          <td class="col-status"><span class="badge badge-new">NEW</span></td>
+          <td>Secondary PIN; rating adjustment field; synthetic review form; audit log</td>
+        </tr>
+        <tr>
+          <td>30</td>
+          <td class="col-item">Account Manager Dashboard &amp; Reassignment</td>
+          <td class="col-status"><span class="badge badge-new">NEW</span></td>
+          <td>Hierarchy view; Super Admin = full access; City Admin = jurisdiction only</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <br/>
+    <div class="response-block info">
+      <p><strong>Items Requiring Client Clarification Before Work Can Begin:</strong></p>
+      <ol class="action-list">
+        <li>Physical card request: Can a customer request a physical card at any time? Is there a fee?</li>
+        <li>Referral rewards: What is the exact points-to-rupee conversion rate for <em>paid</em> cards (e.g., points per ₹100 spent)? What is the upgrade threshold per tier (Silver → Gold → Platinum → Diamond) in points?</li>
+        <li>Account Manager Mapping: Should Promoters manage merchants only, customers only, or both types of accounts?</li>
+        <li>Can a Super Admin directly assign a customer or merchant to a Promoter/Club level, bypassing City Admin and Sales Admin in the hierarchy?</li>
+        <li>Map Picker for Stores: Do you prefer Google Maps (requires billing-enabled API key) or an open-source option (OpenStreetMap — free, no key required)?</li>
+      </ol>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════════════ -->
+  <!-- FOOTER                                                                 -->
+  <!-- ══════════════════════════════════════════════════════════════════════ -->
+  <div class="footer">
+    <p>This document has been prepared by the <strong>DealMachan Development Team</strong> in response to client feedback received on <strong>17 March 2026</strong>.</p>
+    <p style="margin-top:6px">All items marked <strong>NEW</strong> or <strong>PARTIAL</strong> will be scoped into upcoming development sprints. Items marked <strong>BUG</strong> will be prioritised as hotfixes in the next release.</p>
+    <p style="margin-top:6px; font-size:12px; color:#94a3b8">For questions or clarifications on any point in this document, please reply directly to this document with your comments and we will respond promptly.</p>
+  </div>
+
+</div>
+</body>
+</html>

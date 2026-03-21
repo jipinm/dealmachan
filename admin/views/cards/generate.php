@@ -1,9 +1,9 @@
 <div class="d-flex align-items-center justify-content-between mb-4">
     <div>
         <h4 class="mb-0">Generate Cards</h4>
-        <small class="text-muted"><a href="<?= BASE_URL ?>/cards">Cards</a> / Generate</small>
+        <small class="text-muted"><a href="<?= BASE_URL ?>cards">Cards</a> / Generate</small>
     </div>
-    <a href="<?= BASE_URL ?>/cards" class="btn btn-outline-secondary btn-sm"><i class="fas fa-arrow-left me-1"></i> Back</a>
+    <a href="<?= BASE_URL ?>cards" class="btn btn-outline-secondary btn-sm"><i class="fas fa-arrow-left me-1"></i> Back</a>
 </div>
 
 <!-- Tabs -->
@@ -28,7 +28,7 @@
                 <div class="card shadow-sm">
                     <div class="card-header fw-semibold"><i class="fas fa-credit-card me-2 text-primary"></i>Single Card</div>
                     <div class="card-body">
-                        <form method="POST" action="<?= BASE_URL ?>/cards/generate" enctype="multipart/form-data">
+                        <form method="POST" action="<?= BASE_URL ?>cards/generate" enctype="multipart/form-data">
                             <input type="hidden" name="csrf_token" value="<?= generateCSRFToken() ?>">
                             <input type="hidden" name="generate_type" value="single">
 
@@ -151,7 +151,7 @@
                             Card numbers will be auto-generated in the format <code>DM[VAR][8 chars]</code>.
                             Maximum 200 cards per batch.
                         </div>
-                        <form method="POST" action="<?= BASE_URL ?>/cards/generate">
+                        <form method="POST" action="<?= BASE_URL ?>cards/generate">
                             <input type="hidden" name="csrf_token" value="<?= generateCSRFToken() ?>">
                             <input type="hidden" name="generate_type" value="bulk">
 

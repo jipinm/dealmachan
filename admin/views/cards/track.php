@@ -1,9 +1,9 @@
 <div class="d-flex align-items-center justify-content-between mb-4">
     <div>
         <h4 class="mb-0">Track Card</h4>
-        <small class="text-muted"><a href="<?= BASE_URL ?>/cards">Cards</a> / Track</small>
+        <small class="text-muted"><a href="<?= BASE_URL ?>cards">Cards</a> / Track</small>
     </div>
-    <a href="<?= BASE_URL ?>/cards" class="btn btn-outline-secondary btn-sm"><i class="fas fa-arrow-left me-1"></i> Back</a>
+    <a href="<?= BASE_URL ?>cards" class="btn btn-outline-secondary btn-sm"><i class="fas fa-arrow-left me-1"></i> Back</a>
 </div>
 
 <div class="row justify-content-center">
@@ -11,7 +11,7 @@
         <div class="card shadow-sm">
             <div class="card-header fw-semibold"><i class="fas fa-search me-2 text-primary"></i>Find Card by Number</div>
             <div class="card-body">
-                <form method="GET" action="<?= BASE_URL ?>/cards/track">
+                <form method="GET" action="<?= BASE_URL ?>cards/track">
                     <div class="input-group input-group-lg">
                         <input type="text" name="card_number" class="form-control text-uppercase font-monospace"
                                placeholder="Enter card number…"
@@ -34,7 +34,7 @@
         </div>
 
         <div class="text-center mt-4 text-muted small">
-            <p>You can also search cards from the <a href="<?= BASE_URL ?>/cards">card listing page</a> using the search bar.</p>
+            <p>You can also search cards from the <a href="<?= BASE_URL ?>cards">card listing page</a> using the search bar.</p>
         </div>
     </div>
 </div>

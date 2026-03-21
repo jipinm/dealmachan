@@ -1,12 +1,12 @@
 <div class="d-flex align-items-center justify-content-between mb-4">
     <div>
         <h4 class="mb-0">Create Coupon</h4>
-        <small class="text-muted"><a href="<?= BASE_URL ?>/coupons">Coupons</a> / New</small>
+        <small class="text-muted"><a href="<?= BASE_URL ?>coupons">Coupons</a> / New</small>
     </div>
-    <a href="<?= BASE_URL ?>/coupons" class="btn btn-outline-secondary btn-sm"><i class="fas fa-arrow-left me-1"></i> Back</a>
+    <a href="<?= BASE_URL ?>coupons" class="btn btn-outline-secondary btn-sm"><i class="fas fa-arrow-left me-1"></i> Back</a>
 </div>
 
-<form method="POST" action="<?= BASE_URL ?>/coupons/add" id="couponForm" enctype="multipart/form-data">
+<form method="POST" action="<?= BASE_URL ?>coupons/add" id="couponForm" enctype="multipart/form-data">
     <input type="hidden" name="csrf_token" value="<?= generateCSRFToken() ?>">
 
     <div class="row g-4">
@@ -250,7 +250,7 @@
             <!-- Submit -->
             <div class="d-grid gap-2">
                 <button type="submit" class="btn btn-primary"><i class="fas fa-save me-2"></i>Create Coupon</button>
-                <a href="<?= BASE_URL ?>/coupons" class="btn btn-outline-secondary">Cancel</a>
+                <a href="<?= BASE_URL ?>coupons" class="btn btn-outline-secondary">Cancel</a>
             </div>
         </div>
     </div>

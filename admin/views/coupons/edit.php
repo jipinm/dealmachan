@@ -2,18 +2,18 @@
     <div>
         <h4 class="mb-0">Edit Coupon</h4>
         <small class="text-muted">
-            <a href="<?= BASE_URL ?>/coupons">Coupons</a> /
-            <a href="<?= BASE_URL ?>/coupons/detail?id=<?= $coupon['id'] ?>"><?= escape($coupon['title']) ?></a> / Edit
+            <a href="<?= BASE_URL ?>coupons">Coupons</a> /
+            <a href="<?= BASE_URL ?>coupons/detail?id=<?= $coupon['id'] ?>"><?= escape($coupon['title']) ?></a> / Edit
         </small>
     </div>
     <div class="d-flex gap-2">
-        <a href="<?= BASE_URL ?>/coupons/detail?id=<?= $coupon['id'] ?>" class="btn btn-outline-secondary btn-sm">
+        <a href="<?= BASE_URL ?>coupons/detail?id=<?= $coupon['id'] ?>" class="btn btn-outline-secondary btn-sm">
             <i class="fas fa-arrow-left me-1"></i> Back
         </a>
     </div>
 </div>
 
-<form method="POST" action="<?= BASE_URL ?>/coupons/edit?id=<?= $coupon['id'] ?>" id="couponForm" enctype="multipart/form-data">
+<form method="POST" action="<?= BASE_URL ?>coupons/edit?id=<?= $coupon['id'] ?>" id="couponForm" enctype="multipart/form-data">
     <input type="hidden" name="csrf_token" value="<?= generateCSRFToken() ?>">
 
     <div class="row g-4">
@@ -337,7 +337,7 @@
             <!-- Submit -->
             <div class="d-grid gap-2">
                 <button type="submit" class="btn btn-primary"><i class="fas fa-save me-2"></i>Save Changes</button>
-                <a href="<?= BASE_URL ?>/coupons/detail?id=<?= $coupon['id'] ?>" class="btn btn-outline-secondary">Cancel</a>
+                <a href="<?= BASE_URL ?>coupons/detail?id=<?= $coupon['id'] ?>" class="btn btn-outline-secondary">Cancel</a>
             </div>
         </div>
     </div>
