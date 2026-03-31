@@ -296,39 +296,11 @@
             </div>
         </div>
 
-        <!-- Danger Zone -->
-        <div class="card border-danger shadow-sm">
-            <div class="card-header text-danger fw-semibold"><i class="fas fa-exclamation-triangle me-2"></i>Danger Zone</div>
-            <div class="card-body">
-                <p class="small text-muted mb-2">Permanently delete this coupon and all its redemption records.</p>
-                <button class="btn btn-sm btn-danger w-100" onclick="confirmDelete(<?= $coupon['id'] ?>, '<?= escape(addslashes($coupon['title'])) ?>')">
-                    <i class="fas fa-trash me-1"></i> Delete Coupon
-                </button>
-            </div>
-        </div>
+
     </div>
 </div>
 
-<!-- Delete form -->
-<form id="deleteForm" method="POST" action="<?= BASE_URL ?>coupons/delete" style="display:none">
-    <input type="hidden" name="csrf_token" value="<?= generateCSRFToken() ?>">
-    <input type="hidden" name="id" value="<?= $coupon['id'] ?>">
-</form>
-
 <script>
-function confirmDelete(id, name) {
-    Swal.fire({
-        title: 'Delete Coupon?',
-        html: `This will permanently delete <strong>${name}</strong> and all its redemption data.`,
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#dc3545',
-        confirmButtonText: 'Yes, delete it',
-    }).then(r => {
-        if (r.isConfirmed) document.getElementById('deleteForm').submit();
-    });
-}
-
 function copyCode(code) {
     navigator.clipboard.writeText(code).then(() => {
         Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Code copied!', showConfirmButton: false, timer: 1500 });

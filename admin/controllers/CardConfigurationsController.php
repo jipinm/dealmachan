@@ -87,12 +87,15 @@ class CardConfigurationsController extends Controller {
         }
 
         require_once MODEL_PATH . '/City.php';
-        $cityModel = new City();
+        require_once MODEL_PATH . '/Profession.php';
+        $cityModel       = new City();
+        $professionModel = new Profession();
 
         $this->loadView('card-configurations/add', [
             'title'              => 'Create Card Configuration',
             'subClassifications' => $this->configModel->getAllSubClassifications(),
             'cities'             => $cityModel->getActive(),
+            'professions'        => $professionModel->getActive(),
             'current_user'       => $this->auth->getCurrentUser(),
         ]);
     }
@@ -112,35 +115,35 @@ class CardConfigurationsController extends Controller {
         }
 
         require_once MODEL_PATH . '/City.php';
-        $cityModel = new City();
+        require_once MODEL_PATH . '/Profession.php';
+        $cityModel       = new City();
+        $professionModel = new Profession();
 
         $this->loadView('card-configurations/edit', [
             'title'              => 'Edit Card Config &mdash; ' . escape($config['name']),
             'config'             => $config,
             'subClassifications' => $this->configModel->getAllSubClassifications(),
             'cities'             => $cityModel->getActive(),
+            'professions'        => $professionModel->getActive(),
             'current_user'       => $this->auth->getCurrentUser(),
         ]);
     }
 
-    // ─── DELETE ───────────────────────────────────────────────────────────────
+    // ─── TOGGLE STATUS ────────────────────────────────────────────────────────
 
-    public function delete() {
+    public function toggleStatus() {
         $this->requireCSRF();
         $id = (int)($_POST['id'] ?? 0);
         if (!$id) { $this->redirectWithError('card-configurations', 'Invalid configuration ID.'); return; }
 
-        if ($this->configModel->isLinkedToCards($id)) {
-            $_SESSION['error'] = 'Cannot delete: cards are already linked to this configuration.';
-            $this->redirect("card-configurations/detail?id={$id}");
-            return;
-        }
+        $config = $this->configModel->findWithDetails($id);
+        if (!$config) { $this->redirectWithError('card-configurations', 'Configuration not found.'); return; }
 
-        $this->db()->prepare("DELETE FROM card_configurations WHERE id = ?")->execute([$id]);
-        $cu = $this->auth->getCurrentUser();
-        logAudit('card_config_deleted', 'card_configurations', $id);
-        $_SESSION['success'] = 'Card configuration deleted.';
-        $this->redirect('card-configurations');
+        $newStatus = $config['status'] === 'active' ? 'inactive' : 'active';
+        $this->db()->prepare("UPDATE card_configurations SET status = ? WHERE id = ?")->execute([$newStatus, $id]);
+        logAudit('card_config_status_toggled', 'card_configurations', $id);
+        $_SESSION['success'] = "Configuration status set to '{$newStatus}'.";
+        $this->redirect("card-configurations/detail?id={$id}");
     }
 
     // ─── SAVE HANDLER ─────────────────────────────────────────────────────────
@@ -174,6 +177,14 @@ class CardConfigurationsController extends Controller {
             'is_publicly_selectable' => isset($_POST['is_publicly_selectable']) ? 1 : 0,
             'validity_days'          => $validityDays,
             'status'                 => in_array($_POST['status'] ?? '', ['active', 'inactive']) ? $_POST['status'] : 'active',
+            'pay_back_points_enabled' => isset($_POST['pay_back_points_enabled']) ? 1 : 0,
+            'pay_back_points_value'   => isset($_POST['pay_back_points_enabled']) && $_POST['pay_back_points_value'] !== ''
+                                          ? (float)$_POST['pay_back_points_value']
+                                          : null,
+            'lifetime_subscription'   => isset($_POST['lifetime_subscription']) ? 1 : 0,
+            'gift_coupon_eligibility' => isset($_POST['gift_coupon_eligibility']) ? 1 : 0,
+            'lucky_draw_eligible'     => isset($_POST['lucky_draw_eligible']) ? 1 : 0,
+            'contest_eligible'        => isset($_POST['contest_eligible']) ? 1 : 0,
         ];
 
         if (!$configId) {
@@ -215,8 +226,27 @@ class CardConfigurationsController extends Controller {
         }
 
         // Sub-classifications
-        $subClassIds = array_filter(array_map('intval', (array)($_POST['sub_class_ids'] ?? [])));
-        $this->configModel->syncSubClasses($targetId, $subClassIds);
+        $subClassIds   = array_filter(array_map('intval', (array)($_POST['sub_class_ids'] ?? [])));
+        $rawGender     = (array)($_POST['gender_filter'] ?? []);
+        $genderFilters = [];
+        foreach ($rawGender as $scId => $val) {
+            $scId = (int)$scId;
+            if ($scId > 0 && in_array($val, ['male', 'female', 'both'])) {
+                $genderFilters[$scId] = $val;
+            }
+        }
+        // Profession IDs per sub-classification (keyed by sub_class_id)
+        $rawProf        = (array)($_POST['profession_ids'] ?? []);
+        $professionIdsMap = [];
+        foreach ($rawProf as $scId => $ids) {
+            $scId = (int)$scId;
+            if ($scId <= 0) continue;
+            $clean = array_filter(array_map('intval', (array)$ids));
+            if (!empty($clean)) {
+                $professionIdsMap[$scId] = implode(',', $clean);
+            }
+        }
+        $this->configModel->syncSubClasses($targetId, $subClassIds, $genderFilters, $professionIdsMap);
 
         // Cities (empty = all cities)
         $cityIds = array_filter(array_map('intval', (array)($_POST['city_ids'] ?? [])));

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { CreditCard, Star, Loader2, CheckCircle, Users, ChevronLeft } from 'lucide-react'
+import { CreditCard, Star, Loader2, CheckCircle, Users, ChevronLeft, Tag } from 'lucide-react'
 import { publicApi, type CardConfiguration } from '@/api/endpoints/public'
 import { profileApi } from '@/api/endpoints/profile'
 import { useLocationStore } from '@/store/locationStore'
@@ -219,6 +219,19 @@ export default function CardSelectionPage() {
           ))}
         </div>
       )}
+
+      {/* Option A: pre-printed card */}
+      <div className="mt-10 pt-8 border-t border-slate-100 text-center">
+        <p className="text-sm text-slate-500 mb-3">Already have a pre-printed card from a merchant?</p>
+        <button
+          type="button"
+          onClick={() => navigate('/loyalty/claim-card')}
+          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl border-2 border-brand-200 text-brand-600 font-semibold text-sm hover:bg-brand-50 transition-colors"
+        >
+          <Tag size={15} />
+          Enter Card Number
+        </button>
+      </div>
     </div>
   )
 }

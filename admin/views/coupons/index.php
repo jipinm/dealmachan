@@ -71,9 +71,35 @@
 <div class="card mb-3 shadow-sm">
     <div class="card-body py-2 px-3">
         <form method="GET" action="<?= BASE_URL ?>coupons" class="row g-2 align-items-end">
-            <div class="col-12 col-md-3">
+            <div class="col-12 col-md-2">
                 <label class="form-label form-label-sm mb-1">Search</label>
-                <input type="text" name="search" class="form-control form-control-sm" placeholder="Title or code…" value="<?= escape($filters['search']) ?>">
+                <input type="text" name="search" class="form-control form-control-sm" placeholder="Title, code…" value="<?= escape($filters['search']) ?>">
+            </div>
+            <div class="col-12 col-md-2">
+                <label class="form-label form-label-sm mb-1">Merchant Name</label>
+                <input type="text" name="merchant_name" class="form-control form-control-sm" placeholder="Merchant name…" value="<?= escape($filters['merchant_name'] ?? '') ?>">
+            </div>
+            <div class="col-6 col-md-2">
+                <label class="form-label form-label-sm mb-1">Category</label>
+                <select name="category_id" class="form-select form-select-sm">
+                    <option value="">All Categories</option>
+                    <?php foreach (($categories ?? []) as $cat): ?>
+                        <option value="<?= (int)$cat['id'] ?>" <?= (string)($filters['category_id'] ?? '') === (string)$cat['id'] ? 'selected' : '' ?>>
+                            <?= escape($cat['name']) ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+            <div class="col-6 col-md-2">
+                <label class="form-label form-label-sm mb-1">City</label>
+                <select name="city_id" class="form-select form-select-sm">
+                    <option value="">All Cities</option>
+                    <?php foreach (($cities ?? []) as $city): ?>
+                        <option value="<?= (int)$city['id'] ?>" <?= (string)($filters['city_id'] ?? '') === (string)$city['id'] ? 'selected' : '' ?>>
+                            <?= escape($city['city_name']) ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
             </div>
             <div class="col-6 col-md-2">
                 <label class="form-label form-label-sm mb-1">Status</label>
@@ -214,10 +240,6 @@
                         <?php endif; ?>
                         <a href="<?= BASE_URL ?>coupons/detail?id=<?= $c['id'] ?>" class="btn btn-sm btn-outline-info" title="View"><i class="fas fa-eye"></i></a>
                         <a href="<?= BASE_URL ?>coupons/edit?id=<?= $c['id'] ?>" class="btn btn-sm btn-outline-primary" title="Edit"><i class="fas fa-edit"></i></a>
-                        <button class="btn btn-sm btn-outline-danger" title="Delete"
-                            onclick="confirmDelete(<?= $c['id'] ?>, '<?= escape(addslashes($c['title'])) ?>')">
-                            <i class="fas fa-trash"></i>
-                        </button>
                     </td>
                 </tr>
             <?php endforeach; ?>
@@ -261,26 +283,4 @@
 <?php endif; ?>
 <?php endif; ?>
 
-<!-- Hidden delete form -->
-<form id="deleteForm" method="POST" action="<?= BASE_URL ?>coupons/delete" style="display:none">
-    <input type="hidden" name="csrf_token" value="<?= generateCSRFToken() ?>">
-    <input type="hidden" name="id" id="deleteId">
-</form>
 
-<script>
-function confirmDelete(id, name) {
-    Swal.fire({
-        title: 'Delete Coupon?',
-        html: `Are you sure you want to delete <strong>${name}</strong>?<br>All redemptions and tags will also be removed.`,
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#dc3545',
-        confirmButtonText: 'Yes, delete it',
-    }).then(r => {
-        if (r.isConfirmed) {
-            document.getElementById('deleteId').value = id;
-            document.getElementById('deleteForm').submit();
-        }
-    });
-}
-</script>

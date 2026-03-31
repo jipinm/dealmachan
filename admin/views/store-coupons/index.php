@@ -62,6 +62,14 @@
             ?>
         </small>
     </div>
+    <div class="d-flex gap-2">
+        <a href="<?= BASE_URL ?>store-coupons/allotment-requests" class="btn btn-outline-warning btn-sm">
+            <i class="fas fa-list-check me-1"></i> Allotment Requests
+        </a>
+        <a href="<?= BASE_URL ?>store-coupons/add" class="btn btn-primary btn-sm">
+            <i class="fas fa-plus me-1"></i> Create Store Coupon
+        </a>
+    </div>
 </div>
 
 <!-- Filter bar -->
@@ -204,9 +212,6 @@
                             <a href="<?= BASE_URL ?>store-coupons/detail?id=<?= $sc['id'] ?>" class="btn btn-sm btn-outline-primary me-1" title="View">
                                 <i class="fas fa-eye"></i>
                             </a>
-                            <button class="btn btn-sm btn-outline-danger" onclick="confirmDelete(<?= $sc['id'] ?>, '<?= escape($sc['coupon_code']) ?>')" title="Delete">
-                                <i class="fas fa-trash"></i>
-                            </button>
                         </td>
                     </tr>
                     <?php endforeach; ?>
@@ -246,26 +251,4 @@
 </nav>
 <?php endif; ?>
 
-<!-- Delete Form -->
-<form method="POST" action="<?= BASE_URL ?>store-coupons/delete" id="deleteForm">
-    <input type="hidden" name="csrf_token" value="<?= generateCSRFToken() ?>">
-    <input type="hidden" name="id" id="deleteId">
-</form>
 
-<script>
-function confirmDelete(id, code) {
-    Swal.fire({
-        title: 'Delete Store Coupon?',
-        html: `Permanently delete coupon <b>${code}</b>?`,
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#dc3545',
-        confirmButtonText: 'Delete'
-    }).then(r => {
-        if (r.isConfirmed) {
-            document.getElementById('deleteId').value = id;
-            document.getElementById('deleteForm').submit();
-        }
-    });
-}
-</script>

@@ -95,13 +95,14 @@ function ParticipateButton({ contest }: { contest: ContestDetail }) {
     )
   }
 
-  const hasActiveCard = (cardData as any)?.status === 'active'
+  const cardStatus = (cardData as any)?.status
+  const hasActiveCard = cardStatus === 'active' || cardStatus === 'activated'
   if (isAuthenticated && cardLoaded && !hasActiveCard) {
     return (
       <div className="rounded-xl bg-amber-50 border border-amber-200 p-4 space-y-2">
         <p className="text-sm font-semibold text-amber-800">Active card required</p>
         <p className="text-xs text-amber-600">You need an active Deal Machan card to participate in contests.</p>
-        <Link to="/loyalty/cards" className="inline-block text-xs font-semibold text-brand-600 hover:underline">
+        <Link to="/loyalty-cards" className="inline-block text-xs font-semibold text-brand-600 hover:underline">
           Get a card →
         </Link>
       </div>

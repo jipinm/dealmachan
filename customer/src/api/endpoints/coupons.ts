@@ -114,4 +114,10 @@ export const couponsApi = {
   /** Get store coupons gifted by a merchant directly to this customer */
   getStoreCoupons: () =>
     apiClient.get<{ data: StoreCoupon[] }>('/customers/store-coupons').then(r => r.data.data ?? []),
+
+  /** Grab a store coupon that requires acceptance */
+  grabStoreCoupon: (couponId: number) =>
+    apiClient.post<{ data: { id: number; coupon_code: string; gifted_at: string; assigned_count: number } }>(
+      `/customers/store-coupons/${couponId}/grab`,
+    ),
 }

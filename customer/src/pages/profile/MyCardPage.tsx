@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { ChevronLeft, CreditCard, CheckCircle, Loader2, Info, Mail, KeyRound, Star, Users, ArrowUpRight } from 'lucide-react'
+import { ChevronLeft, CreditCard, CheckCircle, Loader2, Info, Mail, KeyRound, Star, Users, ArrowUpRight, Coins } from 'lucide-react'
 import { profileApi } from '@/api/endpoints/profile'
 import { useAuthStore } from '@/store/authStore'
 import { getApiError } from '@/api/client'
@@ -189,6 +189,23 @@ export default function MyCardPage() {
               </div>
             )}
           </div>
+
+          {Number(card.pay_back_points_enabled) === 1 && (
+            <div className="card p-5 mb-5">
+              <h3 className="font-semibold text-sm text-gray-800 mb-2 flex items-center gap-2">
+                <Coins size={14} className="text-emerald-600" />
+                Pay Back Points
+              </h3>
+              <p className="text-sm text-gray-600">
+                Earn {Number(card.pay_back_points_value ?? 0).toFixed(2)}% on every purchase at participating merchants.
+              </p>
+              {card.points_balance !== null && card.points_balance !== undefined && (
+                <p className="text-xs text-emerald-700 font-semibold mt-2">
+                  Current Balance: {Number(card.points_balance).toFixed(2)} points
+                </p>
+              )}
+            </div>
+          )}
 
           {/* Select new card CTA if expired */}
           {card.expiry_status === 'expired' && (

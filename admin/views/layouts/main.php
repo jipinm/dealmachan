@@ -73,6 +73,28 @@ $current_user = $auth->getCurrentUser();
                         </div>
                     </div>
                     <?php endif; ?>
+
+                    <!-- Store Management - Super Admin, City Admin, Sales Admin -->
+                    <?php if (in_array($current_user['admin_type'], ['super_admin', 'city_admin', 'sales_admin'])): ?>
+                    <div class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="collapse" data-bs-target="#storesMenu" aria-expanded="false">
+                            <i class="fas fa-shop me-2"></i> Stores
+                        </a>
+                        <div class="collapse" id="storesMenu">
+                            <div class="nav flex-column ps-3">
+                                <a class="nav-link small" href="<?= BASE_URL ?>stores">
+                                    <i class="fas fa-list me-2"></i> View All
+                                </a>
+                                <a class="nav-link small" href="<?= BASE_URL ?>stores?status=active">
+                                    <i class="fas fa-check-circle me-2"></i> Active
+                                </a>
+                                <a class="nav-link small" href="<?= BASE_URL ?>stores?status=inactive">
+                                    <i class="fas fa-ban me-2"></i> Inactive
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    <?php endif; ?>
                     
                     <!-- Coupon Management - All Admin Types -->
                     <div class="nav-item dropdown">

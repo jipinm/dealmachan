@@ -67,7 +67,7 @@ class CardConfiguration extends Model {
 
     public function getSubClassifications(int $configId): array {
         $stmt = $this->db->prepare(
-            "SELECT sc.id, sc.name
+            "SELECT sc.id, sc.name, m.gender_filter, m.profession_ids
              FROM card_config_sub_class_map m
              JOIN card_sub_classifications sc ON sc.id = m.sub_class_id
              WHERE m.config_id = ?"
@@ -191,12 +191,19 @@ class CardConfiguration extends Model {
 
     // ─── SYNC HELPERS ─────────────────────────────────────────────────────────
 
-    public function syncSubClasses(int $configId, array $subClassIds): void {
+    public function syncSubClasses(int $configId, array $subClassIds, array $genderFilters = [], array $professionIdsMap = []): void {
         $this->db->prepare("DELETE FROM card_config_sub_class_map WHERE config_id = ?")->execute([$configId]);
         if (empty($subClassIds)) return;
-        $ins = $this->db->prepare("INSERT IGNORE INTO card_config_sub_class_map (config_id, sub_class_id) VALUES (?, ?)");
+        $ins = $this->db->prepare(
+            "INSERT IGNORE INTO card_config_sub_class_map (config_id, sub_class_id, gender_filter, profession_ids) VALUES (?, ?, ?, ?)"
+        );
         foreach ($subClassIds as $scId) {
-            $ins->execute([$configId, (int)$scId]);
+            $scId    = (int)$scId;
+            $gender  = in_array($genderFilters[$scId] ?? '', ['male', 'female', 'both'])
+                       ? $genderFilters[$scId]
+                       : null;
+            $profIds = !empty($professionIdsMap[$scId]) ? $professionIdsMap[$scId] : null;
+            $ins->execute([$configId, $scId, $gender, $profIds]);
         }
     }
 

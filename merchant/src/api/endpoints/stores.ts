@@ -41,6 +41,12 @@ export interface Store {
   active_coupons: number
   gallery_count: number
   cover_image: string | null
+  coupon_usage?: {
+    this_month: number
+    monthly_limit: number | null
+    total_limit: number | null
+    total_used: number
+  }
   gallery?: GalleryImage[]
   categories?: StoreCategory[]
 }

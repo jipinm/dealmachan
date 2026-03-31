@@ -37,7 +37,7 @@
                     <!-- Assign To -->
                     <div class="mb-3">
                         <label class="form-label fw-semibold">Assign To <span class="text-danger">*</span></label>
-                        <div class="d-flex gap-3 mb-3">
+                        <div class="d-flex flex-wrap gap-3 mb-3">
                             <div class="form-check">
                                 <input class="form-check-input" type="radio" name="assign_type" id="typeCustomer" value="customer" checked onchange="toggleAssignType()">
                                 <label class="form-check-label" for="typeCustomer"><i class="fas fa-user me-1"></i> Customer</label>
@@ -45,6 +45,14 @@
                             <div class="form-check">
                                 <input class="form-check-input" type="radio" name="assign_type" id="typeMerchant" value="merchant" onchange="toggleAssignType()">
                                 <label class="form-check-label" for="typeMerchant"><i class="fas fa-store me-1"></i> Merchant</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="assign_type" id="typeStore" value="store" onchange="toggleAssignType()">
+                                <label class="form-check-label" for="typeStore"><i class="fas fa-building me-1"></i> Store</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="assign_type" id="typeAdmin" value="admin" onchange="toggleAssignType()">
+                                <label class="form-check-label" for="typeAdmin"><i class="fas fa-user-shield me-1"></i> Admin</label>
                             </div>
                         </div>
                     </div>
@@ -74,6 +82,28 @@
                         </select>
                     </div>
 
+                    <!-- Store Dropdown -->
+                    <div id="storeSection" class="mb-4" style="display:none">
+                        <label class="form-label">Store <span class="text-danger">*</span></label>
+                        <select name="store_id" id="store_id" class="form-select select2-single" data-placeholder="Select store…">
+                            <option value="">&mdash; Select Store &mdash;</option>
+                            <?php foreach ($stores as $s): ?>
+                                <option value="<?= $s['id'] ?>"><?= escape($s['business_name']) ?> &mdash; <?= escape($s['store_name']) ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+
+                    <!-- Admin Dropdown -->
+                    <div id="adminSection" class="mb-4" style="display:none">
+                        <label class="form-label">Admin <span class="text-danger">*</span></label>
+                        <select name="admin_id" id="admin_id" class="form-select select2-single" data-placeholder="Select admin…">
+                            <option value="">&mdash; Select Admin &mdash;</option>
+                            <?php foreach ($admins as $adm): ?>
+                                <option value="<?= $adm['id'] ?>"><?= escape($adm['name']) ?> (<?= escape($adm['admin_type']) ?>)</option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+
                     <button type="submit" class="btn btn-success w-100" id="submitBtn">
                         <i class="fas fa-check me-2"></i> Assign Card
                     </button>
@@ -91,6 +121,8 @@ function toggleAssignType() {
     const type = document.querySelector('input[name="assign_type"]:checked').value;
     document.getElementById('customerSection').style.display = type === 'customer' ? '' : 'none';
     document.getElementById('merchantSection').style.display = type === 'merchant' ? '' : 'none';
+    document.getElementById('storeSection').style.display   = type === 'store'    ? '' : 'none';
+    document.getElementById('adminSection').style.display   = type === 'admin'    ? '' : 'none';
 }
 
 let searchTimeout;
@@ -152,6 +184,14 @@ document.getElementById('assignForm')?.addEventListener('submit', function(e) {
     if (type === 'customer' && !document.getElementById('customerId').value) {
         e.preventDefault();
         Swal.fire({ icon: 'warning', title: 'Select Customer', text: 'Please search and select a customer.' });
+    }
+    if (type === 'store' && !document.getElementById('store_id').value) {
+        e.preventDefault();
+        Swal.fire({ icon: 'warning', title: 'Select Store', text: 'Please select a store.' });
+    }
+    if (type === 'admin' && !document.getElementById('admin_id').value) {
+        e.preventDefault();
+        Swal.fire({ icon: 'warning', title: 'Select Admin', text: 'Please select an admin.' });
     }
 });
 

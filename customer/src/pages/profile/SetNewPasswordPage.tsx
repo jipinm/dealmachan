@@ -83,7 +83,7 @@ export default function SetNewPasswordPage() {
       // Clear temp_password flag locally so the guard stops redirecting
       if (customer) setCustomer({ ...customer, temp_password: 0 })
       setDone(true)
-      toast.success('Password set! Welcome aboard.')
+      toast.success('Password set! Let\'s finish setting up your account.')
     },
     onError: (err) => toast.error(getApiError(err)),
   })
@@ -112,13 +112,13 @@ export default function SetNewPasswordPage() {
           </div>
           <h2 className="font-heading font-bold text-xl text-slate-800 mb-2">Password Set!</h2>
           <p className="text-sm text-slate-500 mb-6">
-            Your new password is active. You can now use the app normally.
+            Your new password is active. Now let's pick your city and assign your card.
           </p>
           <button
-            onClick={() => navigate('/dashboard', { replace: true })}
+            onClick={() => navigate('/onboarding', { replace: true })}
             className="btn-primary w-full"
           >
-            Go to Dashboard
+            Continue Setup
           </button>
         </div>
       </div>

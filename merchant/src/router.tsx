@@ -39,11 +39,11 @@ const LabelsPage        = lazy(() => import('@/pages/more/LabelsPage'))
 const CustomersPage     = lazy(() => import('@/pages/more/CustomersPage'))
 const StoreCouponListPage   = lazy(() => import('@/pages/storeCoupons/StoreCouponListPage'))
 const StoreCouponDetailPage = lazy(() => import('@/pages/storeCoupons/StoreCouponDetailPage'))
-const StoreCouponFormPage   = lazy(() => import('@/pages/storeCoupons/StoreCouponFormPage'))
 const StoreCouponAssignPage = lazy(() => import('@/pages/storeCoupons/StoreCouponAssignPage'))
 const CustomerDetailPage    = lazy(() => import('@/pages/more/CustomerDetailPage'))
 const StoreAdminListPage    = lazy(() => import('@/pages/storeAdmins/StoreAdminListPage'))
 const StoreAdminFormPage    = lazy(() => import('@/pages/storeAdmins/StoreAdminFormPage'))
+const BookingListPage       = lazy(() => import('@/pages/bookings/BookingListPage'))
 
 const wrap = (el: JSX.Element) => <Suspense fallback={<PageLoader />}>{el}</Suspense>
 
@@ -113,15 +113,16 @@ const router = createBrowserRouter([
 
       // Store Coupons
       { path: '/store-coupons',               element: wrap(<StoreCouponListPage />) },
-      { path: '/store-coupons/new',            element: wrap(<StoreCouponFormPage />) },
       { path: '/store-coupons/:id',            element: wrap(<StoreCouponDetailPage />) },
-      { path: '/store-coupons/:id/edit',       element: wrap(<StoreCouponFormPage />) },
       { path: '/store-coupons/:id/assign',     element: wrap(<StoreCouponAssignPage />) },
 
       // Store Admins (merchant-only)
       { path: '/store-admins',                 element: wrap(<StoreAdminGuard fallback="/more"><StoreAdminListPage /></StoreAdminGuard>) },
       { path: '/store-admins/new',             element: wrap(<StoreAdminGuard fallback="/more"><StoreAdminFormPage /></StoreAdminGuard>) },
       { path: '/store-admins/:id/edit',        element: wrap(<StoreAdminGuard fallback="/more"><StoreAdminFormPage /></StoreAdminGuard>) },
+
+      // Bookings
+      { path: '/bookings',                     element: wrap(<BookingListPage />) },
 
       // Legacy / convenience redirects
       { path: '/sales',                       element: <Navigate to="/analytics/sales" replace /> },

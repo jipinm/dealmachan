@@ -35,6 +35,16 @@ class AnalyticsController {
         $reviewBinds  = $storeScope ? [$merchantId, $storeId] : [$merchantId];
         $grievBinds   = $storeScope ? [$merchantId, $storeId] : [$merchantId];
         $grievFilter  = $storeScope ? ' AND store_id = ?' : '';
+        $usageFilter  = $storeScope ? ' AND cba.store_id = ?' : '';
+        $usageBinds   = $storeScope ? [$merchantId, $storeId] : [$merchantId];
+
+        $merchantLimits = $this->db->queryOne(
+            "SELECT monthly_assignment_limit, coupon_limit
+             FROM merchants
+             WHERE id = ?
+             LIMIT 1",
+            [$merchantId]
+        ) ?: ['monthly_assignment_limit' => null, 'coupon_limit' => null];
 
         // ── KPI counters ─────────────────────────────────────────────────────
 
@@ -98,6 +108,28 @@ class AnalyticsController {
             $grievBinds
         )['cnt'] ?? 0);
 
+        $couponThisMonth = (int)($this->db->queryOne(
+            "SELECT COALESCE(SUM(cba.quantity), 0) AS used_qty
+             FROM coupon_bulk_allotments cba
+             JOIN stores s ON s.id = cba.store_id
+             WHERE s.merchant_id = ?
+               AND cba.status = 'approved'
+               {$usageFilter}
+               AND YEAR(cba.created_at) = YEAR(CURDATE())
+               AND MONTH(cba.created_at) = MONTH(CURDATE())",
+            $usageBinds
+        )['used_qty'] ?? 0);
+
+        $couponTotalUsed = (int)($this->db->queryOne(
+            "SELECT COALESCE(SUM(cba.quantity), 0) AS used_qty
+             FROM coupon_bulk_allotments cba
+             JOIN stores s ON s.id = cba.store_id
+             WHERE s.merchant_id = ?
+               AND cba.status = 'approved'
+               {$usageFilter}",
+            $usageBinds
+        )['used_qty'] ?? 0);
+
         // ── Charts ───────────────────────────────────────────────────────────
 
         // 7-day chart for HomePage
@@ -155,6 +187,13 @@ class AnalyticsController {
             'avg_rating'             => $avgRating,
             'pending_grievances'     => $pendingGrievances,
             'weekly_redemptions'     => $weeklyRedemptions,
+            // D4 coupon usage indicator
+            'coupon_usage'           => [
+                'this_month'    => $couponThisMonth,
+                'monthly_limit' => $merchantLimits['monthly_assignment_limit'] !== null ? (int)$merchantLimits['monthly_assignment_limit'] : null,
+                'total_limit'   => $merchantLimits['coupon_limit'] !== null ? (int)$merchantLimits['coupon_limit'] : null,
+                'total_used'    => $couponTotalUsed,
+            ],
         ]);
     }
 

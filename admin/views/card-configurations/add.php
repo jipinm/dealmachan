@@ -73,7 +73,9 @@
                         </div>
                         <div class="col-sm-4">
                             <label class="form-label">Validity (days) <span class="text-danger">*</span></label>
+                            <div id="validityDaysWrap">
                             <input type="number" name="validity_days" class="form-control" required min="1" value="360">
+                            </div>
                         </div>
                         <div class="col-sm-4">
                             <label class="form-label">Monthly Maximum</label>
@@ -185,10 +187,47 @@
                 </div>
                 <div class="card-body">
                     <?php foreach ($subClassifications as $sc): ?>
-                    <div class="form-check">
-                        <input type="checkbox" name="sub_class_ids[]" value="<?= $sc['id'] ?>"
-                               class="form-check-input" id="sc<?= $sc['id'] ?>">
-                        <label class="form-check-label" for="sc<?= $sc['id'] ?>"><?= escape($sc['name']) ?></label>
+                    <?php
+                        $isGender     = stripos($sc['name'], 'gender') !== false;
+                        $isProfession = stripos($sc['name'], 'profession') !== false;
+                    ?>
+                    <div class="mb-1">
+                        <div class="form-check">
+                            <input type="checkbox" name="sub_class_ids[]" value="<?= $sc['id'] ?>"
+                                   class="form-check-input" id="sc<?= $sc['id'] ?>"
+                                   <?php if ($isGender): ?>
+                                   onchange="toggleGenderFilter(<?= $sc['id'] ?>, this.checked)"
+                                   <?php elseif ($isProfession): ?>
+                                   onchange="toggleProfessionFilter(<?= $sc['id'] ?>, this.checked)"
+                                   <?php endif; ?>>
+                            <label class="form-check-label" for="sc<?= $sc['id'] ?>"><?= escape($sc['name']) ?></label>
+                        </div>
+                        <?php if ($isGender): ?>
+                        <div id="genderFilterWrap_<?= $sc['id'] ?>" class="ms-4 mt-1 p-2 bg-light rounded" style="display:none;">
+                            <small class="text-muted d-block mb-1">Gender filter:</small>
+                            <?php foreach (['both' => 'All Genders', 'male' => 'Male Only', 'female' => 'Female Only'] as $val => $label): ?>
+                            <div class="form-check form-check-inline">
+                                <input type="radio" name="gender_filter[<?= $sc['id'] ?>]"
+                                       value="<?= $val ?>" class="form-check-input"
+                                       id="gf_<?= $sc['id'] ?>_<?= $val ?>"
+                                       <?= $val === 'both' ? 'checked' : '' ?>>
+                                <label class="form-check-label" for="gf_<?= $sc['id'] ?>_<?= $val ?>"><?= $label ?></label>
+                            </div>
+                            <?php endforeach; ?>
+                        </div>
+                        <?php elseif ($isProfession): ?>
+                        <div id="professionFilterWrap_<?= $sc['id'] ?>" class="ms-4 mt-1 p-2 bg-light rounded" style="display:none;">
+                            <small class="text-muted d-block mb-1">Allowed professions (leave empty for all):</small>
+                            <select name="profession_ids[<?= $sc['id'] ?>][]"
+                                    id="profSelect_<?= $sc['id'] ?>"
+                                    class="form-select form-select-sm select2"
+                                    multiple data-placeholder="All Professions">
+                                <?php foreach ($professions as $prof): ?>
+                                <option value="<?= $prof['id'] ?>"><?= escape($prof['profession_name']) ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                        <?php endif; ?>
                     </div>
                     <?php endforeach; ?>
                 </div>
@@ -207,6 +246,54 @@
                             <option value="<?= $city['id'] ?>"><?= escape($city['city_name']) ?></option>
                         <?php endforeach; ?>
                     </select>
+                </div>
+            </div>
+
+            <!-- Feature Toggles -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header fw-semibold">
+                    <i class="fas fa-sliders-h me-2 text-purple"></i> Feature Toggles
+                </div>
+                <div class="card-body">
+                    <!-- Pay Back Points -->
+                    <div class="mb-3">
+                        <div class="form-check form-switch mb-1">
+                            <input type="checkbox" name="pay_back_points_enabled" class="form-check-input"
+                                   id="payBackEnabled" role="switch"
+                                   onchange="document.getElementById('payBackValueWrap').style.display=this.checked?'block':'none'">
+                            <label class="form-check-label fw-semibold" for="payBackEnabled">Pay Back Points</label>
+                        </div>
+                        <div id="payBackValueWrap" style="display:none;" class="ms-4">
+                            <label class="form-label form-label-sm">Points Rate (%)</label>
+                            <input type="number" name="pay_back_points_value" class="form-control form-control-sm"
+                                   min="0" max="100" step="0.01" placeholder="e.g. 2.5">
+                        </div>
+                    </div>
+                    <!-- Lifetime Subscription -->
+                    <div class="form-check form-switch mb-2">
+                        <input type="checkbox" name="lifetime_subscription" class="form-check-input"
+                               id="lifetimeSub" role="switch"
+                               onchange="document.getElementById('validityDaysWrap').style.opacity=this.checked?'0.4':'1'">
+                        <label class="form-check-label" for="lifetimeSub">Lifetime Subscription (no expiry)</label>
+                    </div>
+                    <!-- Gift Coupon Eligibility -->
+                    <div class="form-check form-switch mb-2">
+                        <input type="checkbox" name="gift_coupon_eligibility" class="form-check-input"
+                               id="giftCoupon" role="switch">
+                        <label class="form-check-label" for="giftCoupon">Gift Coupon Eligibility</label>
+                    </div>
+                    <!-- Lucky Draw -->
+                    <div class="form-check form-switch mb-2">
+                        <input type="checkbox" name="lucky_draw_eligible" class="form-check-input"
+                               id="luckyDraw" role="switch">
+                        <label class="form-check-label" for="luckyDraw">Lucky Draw Eligible</label>
+                    </div>
+                    <!-- Contest -->
+                    <div class="form-check form-switch mb-0">
+                        <input type="checkbox" name="contest_eligible" class="form-check-input"
+                               id="contestElig" role="switch">
+                        <label class="form-check-label" for="contestElig">Contest Eligible</label>
+                    </div>
                 </div>
             </div>
 
@@ -231,6 +318,16 @@ function previewImg(input, targetId) {
     } else {
         el.innerHTML = '';
     }
+}
+
+function toggleGenderFilter(scId, show) {
+    const wrap = document.getElementById('genderFilterWrap_' + scId);
+    if (wrap) wrap.style.display = show ? 'block' : 'none';
+}
+
+function toggleProfessionFilter(scId, show) {
+    const wrap = document.getElementById('professionFilterWrap_' + scId);
+    if (wrap) wrap.style.display = show ? 'block' : 'none';
 }
 
 var partnerFileIdx = 0;

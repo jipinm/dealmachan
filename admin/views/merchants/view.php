@@ -175,7 +175,6 @@ $statusColors  = ['active'=>'success','inactive'=>'secondary','blocked'=>'danger
                                 </td>
                                 <td class="text-center text-nowrap">
                                     <a href="<?= BASE_URL ?>merchants/edit-store?id=<?= $store['id'] ?>" class="btn btn-sm btn-outline-primary me-1" title="Edit"><i class="fas fa-edit"></i></a>
-                                    <button class="btn btn-sm btn-outline-danger" onclick="confirmDeleteStore(<?= $store['id'] ?>, <?= $merchant['id'] ?>, '<?= escape($store['store_name']) ?>')" title="Delete"><i class="fas fa-trash"></i></button>
                                 </td>
                             </tr>
                             <?php
@@ -398,56 +397,8 @@ $statusColors  = ['active'=>'success','inactive'=>'secondary','blocked'=>'danger
             </div>
         </div>
 
-        <!-- Danger Zone -->
-        <div class="card border-danger border-opacity-25 shadow-sm mb-4">
-            <div class="card-header bg-danger-subtle text-danger fw-semibold border-bottom border-danger border-opacity-25">
-                <i class="fas fa-exclamation-triangle me-2"></i> Danger Zone
-            </div>
-            <div class="card-body">
-                <p class="text-muted small mb-3">Permanently delete this merchant, all stores and associated records. This cannot be undone.</p>
-                <button class="btn btn-danger btn-sm w-100"
-                        onclick="confirmDeleteMerchant(<?= $merchant['id'] ?>, '<?= escape($merchant['business_name']) ?>')">
-                    <i class="fas fa-trash me-2"></i> Delete Merchant
-                </button>
-            </div>
-        </div>
+
 
     </div>
 </div>
 
-<!-- Delete Merchant Form -->
-<form method="POST" action="<?= BASE_URL ?>merchants/delete" id="deleteMerchantForm">
-    <input type="hidden" name="csrf_token" value="<?= generateCSRFToken() ?>">
-    <input type="hidden" name="id" value="<?= $merchant['id'] ?>">
-</form>
-
-<!-- Delete Store Form -->
-<form method="POST" action="<?= BASE_URL ?>merchants/delete-store" id="deleteStoreForm">
-    <input type="hidden" name="csrf_token" value="<?= generateCSRFToken() ?>">
-    <input type="hidden" name="id" id="deleteStoreId">
-    <input type="hidden" name="merchant_id" value="<?= $merchant['id'] ?>">
-</form>
-
-<script>
-function confirmDeleteMerchant(id, name) {
-    Swal.fire({
-        title: 'Delete Merchant?',
-        html: `Permanently delete <b>${name}</b> and all associated stores?`,
-        icon: 'warning', showCancelButton: true,
-        confirmButtonColor: '#dc3545', confirmButtonText: 'Delete'
-    }).then(r => { if (r.isConfirmed) document.getElementById('deleteMerchantForm').submit(); });
-}
-function confirmDeleteStore(storeId, merchantId, name) {
-    Swal.fire({
-        title: 'Delete Store?',
-        html: `Permanently delete store <b>${name}</b>?`,
-        icon: 'warning', showCancelButton: true,
-        confirmButtonColor: '#dc3545', confirmButtonText: 'Delete'
-    }).then(r => {
-        if (r.isConfirmed) {
-            document.getElementById('deleteStoreId').value = storeId;
-            document.getElementById('deleteStoreForm').submit();
-        }
-    });
-}
-</script>

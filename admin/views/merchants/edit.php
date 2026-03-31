@@ -130,11 +130,20 @@
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Subscription Status</label>
-                        <select name="subscription_status" class="form-select">
+                        <select name="subscription_status" id="subsStatusEdit" class="form-select" onchange="toggleSubsPeriod(this.value)">
                             <?php foreach (['trial','active','expired'] as $s): ?>
                             <option value="<?= $s ?>" <?= ($merchant['subscription_status'] === $s) ? 'selected' : '' ?>><?= ucfirst($s) ?></option>
                             <?php endforeach; ?>
                         </select>
+                    </div>
+                    <div class="mb-3" id="subsPeriodWrap" style="<?= ($merchant['subscription_status'] === 'active') ? '' : 'display:none' ?>">
+                        <label class="form-label">Subscription Period</label>
+                        <select name="subscription_period" class="form-select">
+                            <?php foreach (['1M' => '1 Month', '3M' => '3 Months', '6M' => '6 Months', '1Y' => '1 Year'] as $val => $lbl): ?>
+                            <option value="<?= $val ?>" <?= (($merchant['subscription_period'] ?? '1Y') === $val) ? 'selected' : '' ?>><?= $lbl ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                        <div class="form-text">Expiry is auto-calculated from today when saved.</div>
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Subscription Plan</label>
@@ -144,7 +153,7 @@
                             <?php endforeach; ?>
                         </select>
                     </div>
-                    <div class="mb-3">
+                    <div class="mb-3" id="subsExpiryWrap" style="<?= ($merchant['subscription_status'] === 'active') ? 'display:none' : '' ?>">
                         <label class="form-label">Subscription Expiry</label>
                         <input type="date" name="subscription_expiry" class="form-control"
                                value="<?= escape($merchant['subscription_expiry'] ?? '') ?>">
@@ -174,10 +183,36 @@
                         <input type="number" name="priority_weight" class="form-control" min="0" max="9999"
                                value="<?= (int)$merchant['priority_weight'] ?>">
                     </div>
-                    <div class="form-check form-switch">
+                    <div class="form-check form-switch mb-2">
                         <input class="form-check-input" type="checkbox" name="is_premium" id="isPremium" value="1"
                                <?= $merchant['is_premium'] ? 'checked' : '' ?>>
                         <label class="form-check-label" for="isPremium">Premium Partner</label>
+                    </div>
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" name="is_verified" id="isVerified" value="1"
+                               <?= $merchant['is_verified'] ? 'checked' : '' ?>>
+                        <label class="form-check-label" for="isVerified">Verified Merchant</label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Assignment Limits -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white fw-semibold border-bottom">
+                    <i class="fas fa-ticket-alt me-2 text-primary"></i> Assignment Limits
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="form-label">Coupon Limit</label>
+                        <input type="number" name="coupon_limit" class="form-control" min="0"
+                               value="<?= escape($merchant['coupon_limit'] ?? '') ?>" placeholder="Unlimited">
+                        <div class="form-text">Max total coupons assignable to this merchant. Leave blank for unlimited.</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Monthly Assignment Limit</label>
+                        <input type="number" name="monthly_assignment_limit" class="form-control" min="0"
+                               value="<?= escape($merchant['monthly_assignment_limit'] ?? '') ?>" placeholder="Unlimited">
+                        <div class="form-text">Max coupons assignable per calendar month. Leave blank for unlimited.</div>
                     </div>
                 </div>
             </div>
@@ -296,6 +331,18 @@
 </form>
 
 <script>
+function toggleSubsPeriod(status) {
+    var periodWrap = document.getElementById('subsPeriodWrap');
+    var expiryWrap = document.getElementById('subsExpiryWrap');
+    if (status === 'active') {
+        periodWrap.style.display = '';
+        if (expiryWrap) expiryWrap.style.display = 'none';
+    } else {
+        periodWrap.style.display = 'none';
+        if (expiryWrap) expiryWrap.style.display = '';
+    }
+}
+
 function togglePwd(id, iconId) {
     const input = document.getElementById(id);
     const icon  = document.getElementById(iconId);

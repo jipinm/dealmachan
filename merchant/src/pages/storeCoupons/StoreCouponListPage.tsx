@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query'
-import { ChevronLeft, Plus, Ticket, Gift, CheckCircle, Clock, XCircle } from 'lucide-react'
+import { ChevronLeft, Ticket, Gift, CheckCircle, Clock, XCircle } from 'lucide-react'
 import toast from 'react-hot-toast'
 import {
   storeCouponApi,
@@ -77,7 +77,15 @@ function CouponCard({ coupon }: { coupon: StoreCoupon }) {
           >
             View
           </button>
-          {coupon.status === 'active' && !coupon.is_gifted && (
+          {coupon.status === 'active' && coupon.assignment_type === 'merchant_request' && (
+            <button
+              onClick={() => navigate(`/store-coupons/${coupon.id}`)}
+              className="flex-1 py-2 bg-amber-50 border border-amber-200 rounded-xl text-xs font-medium text-amber-700 hover:bg-amber-100 text-center flex items-center justify-center gap-1"
+            >
+              <Gift size={12} /> Request Assignment
+            </button>
+          )}
+          {coupon.status === 'active' && coupon.assignment_type !== 'merchant_request' && !coupon.is_gifted && (
             <button
               onClick={() => navigate(`/store-coupons/${coupon.id}/assign`)}
               className="flex-1 py-2 bg-purple-50 border border-purple-200 rounded-xl text-xs font-medium text-purple-600 hover:bg-purple-100 text-center flex items-center justify-center gap-1"
@@ -128,9 +136,7 @@ export default function StoreCouponListPage() {
             <h1 className="text-white font-bold text-xl">Store Coupons</h1>
             <p className="text-white/70 text-xs mt-0.5">{meta.total} coupon{meta.total !== 1 ? 's' : ''}</p>
           </div>
-          <button onClick={() => navigate('/store-coupons/new')} className="w-9 h-9 bg-white/20 rounded-full flex items-center justify-center hover:bg-white/30">
-            <Plus size={20} className="text-white" />
-          </button>
+
         </div>
 
         {/* Tabs */}
@@ -158,10 +164,7 @@ export default function StoreCouponListPage() {
           <div className="py-20 text-center">
             <Ticket size={40} className="text-gray-300 mx-auto mb-3" />
             <p className="text-gray-500 font-medium">No store coupons yet</p>
-            <p className="text-gray-400 text-sm mt-1">Create store-specific coupons to gift to customers</p>
-            <button onClick={() => navigate('/store-coupons/new')} className="btn-primary mt-4 inline-flex items-center gap-2">
-              <Plus size={14} /> Create Store Coupon
-            </button>
+            <p className="text-gray-400 text-sm mt-1">Store coupons are created by admin and will appear here</p>
           </div>
         ) : (
           <>

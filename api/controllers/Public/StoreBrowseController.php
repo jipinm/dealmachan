@@ -120,6 +120,20 @@ class StoreBrowseController {
     // ── GET /api/public/stores/:id ────────────────────────────────────────────
     public function show(int $id): never {
         $isAuth = AuthMiddleware::optional();
+        $customerId = 0;
+
+        if ($isAuth) {
+            $authUser = AuthMiddleware::user();
+            if (!empty($authUser['sub'])) {
+                $customer = $this->db->queryOne(
+                    "SELECT id FROM customers WHERE user_id = ? LIMIT 1",
+                    [(int)$authUser['sub']]
+                );
+                if ($customer) {
+                    $customerId = (int)$customer['id'];
+                }
+            }
+        }
 
         $store = $this->db->queryOne(
             "SELECT s.id, s.store_name, s.address, s.phone, s.email,
@@ -199,10 +213,41 @@ class StoreBrowseController {
             [$id]
         );
 
+        // Store-level coupons shown on profile page (Grab Now + wallet state)
+        $storeCoupons = $this->db->query(
+            "SELECT sc.id,
+                    sc.title,
+                    sc.description,
+                    sc.terms_conditions,
+                    sc.coupon_code,
+                    sc.discount_type,
+                    sc.discount_value,
+                    sc.valid_from,
+                    sc.valid_until,
+                    sc.requires_acceptance,
+                    sc.assignment_type,
+                    sc.total_quantity,
+                    sc.assigned_count,
+                    sc.status,
+                    sc.gifted_at,
+                    CASE
+                        WHEN ? > 0 AND sc.is_gifted = 1 AND sc.gifted_to_customer_id = ? THEN 1
+                        ELSE 0
+                    END AS in_wallet
+             FROM store_coupons sc
+             WHERE sc.store_id = ?
+               AND sc.status = 'active'
+               AND (sc.valid_from IS NULL OR sc.valid_from <= NOW())
+               AND (sc.valid_until IS NULL OR sc.valid_until >= NOW())
+             ORDER BY sc.created_at DESC",
+            [$customerId, $customerId, $id]
+        );
+
         Response::success([
             'store'   => $store,
             'coupons' => $coupons,
             'reviews' => $reviews,
+            'store_coupons' => $storeCoupons,
         ]);
     }
 

@@ -82,8 +82,42 @@
                         </div>
                     </div>
                     <div class="mb-3">
+                        <label class="form-label">Website</label>
+                        <input type="url" name="website_link" class="form-control" maxlength="255"
+                               placeholder="https://" value="<?= escape($_POST['website_link'] ?? '') ?>">
+                        <div class="form-text">Public website URL for this store (optional).</div>
+                    </div>
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Latitude</label>
+                            <input type="number" name="latitude" class="form-control" step="0.00000001" min="-90" max="90"
+                                   placeholder="e.g. 10.85052" value="<?= escape($_POST['latitude'] ?? '') ?>">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Longitude</label>
+                            <input type="number" name="longitude" class="form-control" step="0.00000001" min="-180" max="180"
+                                   placeholder="e.g. 76.27108" value="<?= escape($_POST['longitude'] ?? '') ?>">
+                        </div>
+                    </div>
+                    <div class="mb-3">
                         <label class="form-label">Description</label>
                         <textarea name="description" class="form-control" rows="2"><?= escape($_POST['description'] ?? '') ?></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check form-switch mb-2">
+                            <input class="form-check-input" type="checkbox" name="booking_enabled" id="bookingEnabled" value="1"
+                                   onchange="toggleBookingConfirm(this.checked)"
+                                   <?= !empty($_POST['booking_enabled']) ? 'checked' : '' ?>>
+                            <label class="form-check-label" for="bookingEnabled">Enable Book Now button on customer app</label>
+                        </div>
+                        <div id="bookingConfirmWrap" style="<?= !empty($_POST['booking_enabled']) ? '' : 'display:none' ?>">
+                            <div class="form-check form-switch ms-3">
+                                <input class="form-check-input" type="checkbox" name="booking_confirmation_required" id="bookingConfirmRequired" value="1"
+                                       <?= !empty($_POST['booking_confirmation_required']) ? 'checked' : '' ?>>
+                                <label class="form-check-label" for="bookingConfirmRequired">Require merchant confirmation for bookings</label>
+                                <div class="form-text">If checked, bookings start as &lsquo;pending&rsquo; until you confirm.</div>
+                            </div>
+                        </div>
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Status</label>
@@ -226,6 +260,10 @@
 </div>
 
 <script>
+function toggleBookingConfirm(enabled) {
+    document.getElementById('bookingConfirmWrap').style.display = enabled ? '' : 'none';
+}
+
 function toggleDay(dayKey, isClosed) {
     const openInput  = document.querySelector(`input[name="hours[${dayKey}][open]"]`);
     const closeInput = document.querySelector(`input[name="hours[${dayKey}][close]"]`);

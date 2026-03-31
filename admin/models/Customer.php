@@ -34,6 +34,30 @@ class Customer extends Model {
             $sql .= " AND c.registration_type = ?";
             $params[] = $filters['registration_type'];
         }
+        if (!empty($filters['city_id'])) {
+            $sql .= " AND c.city_id = ?";
+            $params[] = (int)$filters['city_id'];
+        }
+        if (!empty($filters['gender'])) {
+            $sql .= " AND c.gender = ?";
+            $params[] = $filters['gender'];
+        }
+        if (!empty($filters['profession_id'])) {
+            $sql .= " AND c.profession_id = ?";
+            $params[] = (int)$filters['profession_id'];
+        }
+        if (!empty($filters['city_id'])) {
+            $sql .= " AND c.city_id = ?";
+            $params[] = (int)$filters['city_id'];
+        }
+        if (!empty($filters['gender'])) {
+            $sql .= " AND c.gender = ?";
+            $params[] = $filters['gender'];
+        }
+        if (!empty($filters['profession_id'])) {
+            $sql .= " AND c.profession_id = ?";
+            $params[] = (int)$filters['profession_id'];
+        }
         if (!empty($filters['search'])) {
             $like = '%' . $filters['search'] . '%';
             $sql .= " AND (c.name LIKE ? OR u.email LIKE ? OR u.phone LIKE ? OR c.referral_code LIKE ?)";
@@ -78,6 +102,18 @@ class Customer extends Model {
             $sql .= " AND c.registration_type = ?";
             $params[] = $filters['registration_type'];
         }
+        if (!empty($filters['city_id'])) {
+            $sql .= " AND c.city_id = ?";
+            $params[] = (int)$filters['city_id'];
+        }
+        if (!empty($filters['gender'])) {
+            $sql .= " AND c.gender = ?";
+            $params[] = $filters['gender'];
+        }
+        if (!empty($filters['profession_id'])) {
+            $sql .= " AND c.profession_id = ?";
+            $params[] = (int)$filters['profession_id'];
+        }
         if (!empty($filters['search'])) {
             $like = '%' . $filters['search'] . '%';
             $sql .= " AND (c.name LIKE ? OR u.email LIKE ? OR u.phone LIKE ? OR c.referral_code LIKE ?)";
@@ -101,11 +137,17 @@ class Customer extends Model {
                        u.created_at AS registered_at,
                        p.profession_name,
                        ref.name AS referrer_name,
-                       ref.referral_code AS referrer_code
+                       ref.referral_code AS referrer_code,
+                       ca.card_number, ca.status AS card_status,
+                       ci.city_name,
+                       ar.area_name
                 FROM {$this->table} c
                 JOIN  users u  ON c.user_id  = u.id
                 LEFT JOIN professions p   ON c.profession_id  = p.id
                 LEFT JOIN customers   ref ON c.referred_by    = ref.id
+                LEFT JOIN cards       ca  ON ca.id            = c.card_id
+                LEFT JOIN cities      ci  ON ci.id            = c.city_id
+                LEFT JOIN areas       ar  ON ar.id            = c.area_id
                 WHERE c.id = ?";
 
         $stmt = $this->db->prepare($sql);

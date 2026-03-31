@@ -75,21 +75,6 @@
                             <input type="text" name="phone" class="form-control" placeholder="+91 98765 43210" value="<?= escape($_POST['phone'] ?? '') ?>">
                             <div class="form-text">Required if email is not provided.</div>
                         </div>
-                        <div class="col-md-6">
-                            <label class="form-label fw-semibold">Password <span class="text-danger">*</span></label>
-                            <div class="input-group">
-                                <input type="password" name="password" id="password" class="form-control" required minlength="8" placeholder="Min 8 characters">
-                                <button type="button" class="btn btn-outline-secondary" onclick="togglePw('password')"><i class="fas fa-eye"></i></button>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label fw-semibold">Confirm Password <span class="text-danger">*</span></label>
-                            <div class="input-group">
-                                <input type="password" id="confirmPassword" class="form-control" required placeholder="Re-enter password">
-                                <button type="button" class="btn btn-outline-secondary" onclick="togglePw('confirmPassword')"><i class="fas fa-eye"></i></button>
-                            </div>
-                            <div id="pwMismatch" class="text-danger small mt-1 d-none">Passwords do not match.</div>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -101,14 +86,6 @@
                 </div>
                 <div class="card-body">
                     <div class="row g-3">
-                        <div class="col-md-4">
-                            <label class="form-label fw-semibold">Customer Type</label>
-                            <select name="customer_type" class="form-select">
-                                <option value="standard"  <?= ($_POST['customer_type'] ?? 'standard') === 'standard'  ? 'selected' : '' ?>>Standard</option>
-                                <option value="premium"   <?= ($_POST['customer_type'] ?? '') === 'premium'   ? 'selected' : '' ?>>Premium</option>
-                                <option value="dealmaker" <?= ($_POST['customer_type'] ?? '') === 'dealmaker' ? 'selected' : '' ?>>DealMaker</option>
-                            </select>
-                        </div>
                         <div class="col-md-4">
                             <label class="form-label fw-semibold">Registration Type</label>
                             <select name="registration_type" class="form-select">
@@ -153,31 +130,15 @@
                 <i class="fas fa-lightbulb me-1"></i>
                 A <strong>referral code</strong> will be automatically generated for this customer after creation.
             </div>
-            <div class="alert alert-warning border-0 small">
+            <div class="alert alert-info border-0 small">
                 <i class="fas fa-lock me-1"></i>
-                Password must be at least <strong>8 characters</strong>. Share credentials securely.
+                No password required. The customer will log in via OTP and set their own password.
             </div>
         </div>
     </div>
 </form>
 
 <script>
-function togglePw(id) {
-    const f = document.getElementById(id);
-    f.type = f.type === 'password' ? 'text' : 'password';
-}
-document.getElementById('addCustomerForm').addEventListener('submit', function(e) {
-    const p = document.getElementById('password').value;
-    const c = document.getElementById('confirmPassword').value;
-    if (p !== c) {
-        document.getElementById('pwMismatch').classList.remove('d-none');
-        e.preventDefault();
-    }
-});
-document.getElementById('confirmPassword').addEventListener('input', function() {
-    const match = this.value === document.getElementById('password').value;
-    document.getElementById('pwMismatch').classList.toggle('d-none', match);
-});
 document.addEventListener('DOMContentLoaded', function() {
     if (typeof $.fn.select2 !== 'undefined') {
         $('.select2').select2({ theme: 'bootstrap-5' });

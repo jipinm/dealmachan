@@ -50,6 +50,17 @@ export const authApi = {
   login: (body: LoginRequest) =>
     apiClient.post<AuthResponse>('/auth/customer/login', body),
 
+  /**
+   * Step 1 of the 2-step login flow.
+   * Returns {has_password: true} → show password field.
+   * Returns {has_password: false, phone} → OTP already sent, show OTP panel.
+   */
+  checkLogin: (login: string) =>
+    apiClient.post<{ data: { has_password: boolean; phone?: string; expires_in?: number; otp?: string } }>(
+      '/auth/customer/check-login',
+      { login },
+    ),
+
   /** Verify OTP sent to phone (first-time or phone-login) */
   verifyOtp: (body: OtpVerifyRequest) =>
     apiClient.post<AuthResponse>('/auth/customer/verify-otp', body),
@@ -61,6 +72,14 @@ export const authApi = {
   /** Request a password-reset link (sent to email) */
   forgotPassword: (email: string) =>
     apiClient.post('/auth/customer/forgot-password', { email }),
+
+  /** Step 1: Request an OTP for a temp_password (admin-created) account */
+  loginOtpRequest: (phone: string) =>
+    apiClient.post('/auth/customer/login-otp', { phone }),
+
+  /** Step 2: Verify OTP and log in a temp_password account */
+  verifyLoginOtp: (body: OtpVerifyRequest) =>
+    apiClient.post<AuthResponse>('/auth/customer/verify-login-otp', body),
 
   /** Reset password using the JWT token from the reset email link */
   resetPassword: (body: { token: string; password: string }) =>

@@ -114,7 +114,21 @@ class CustomerAuthController {
             [$loginVal]
         );
 
-        if (!$row || !password_verify($password, $row['password_hash'])) {
+        // Don't reveal whether the account exists if login is completely wrong
+        if (!$row) {
+            Response::error('Invalid credentials.', 401, 'INVALID_CREDENTIALS');
+        }
+
+        // Accounts created without a password (admin-created) must use OTP
+        if ((int)$row['temp_password'] === 1) {
+            Response::error(
+                'This account requires OTP verification. Please sign in using OTP.',
+                403,
+                'OTP_REQUIRED'
+            );
+        }
+
+        if (!password_verify($password, $row['password_hash'])) {
             Response::error('Invalid credentials.', 401, 'INVALID_CREDENTIALS');
         }
 
@@ -375,6 +389,174 @@ class CustomerAuthController {
             'refresh_token' => $newRefreshToken,
             'expires_in'    => JWT_ACCESS_EXPIRY,
         ], 'Token refreshed');
+    }
+
+    // ── POST /api/auth/customer/check-login ──────────────────────────────────
+    /**
+     * Step 1 of the two-step login flow.
+     * Accepts {login} (email or phone).
+     * - If account has a password  → returns {has_password: true}
+     * - If account has temp_password → sends OTP and returns {has_password: false, phone}
+     * - If account not found        → returns {has_password: true} (graceful; real error at login step)
+     */
+    public function checkLogin(array $body): never {
+        $v = new Validator($body);
+        $v->required('login', 'Email or phone');
+        if ($v->fails()) Response::validationError($v->errors());
+
+        $login    = trim($body['login']);
+        $isPhone  = strlen(preg_replace('/\D/', '', $login)) >= 10;
+        $loginCol = $isPhone ? 'u.phone' : 'u.email';
+        $loginVal = $isPhone ? preg_replace('/\D/', '', $login) : strtolower($login);
+
+        $row = $this->db->queryOne(
+            "SELECT u.id, u.phone, u.status, COALESCE(c.temp_password, 0) AS temp_password
+             FROM users u
+             JOIN customers c ON c.user_id = u.id
+             WHERE {$loginCol} = ? AND u.user_type = 'customer'
+             LIMIT 1",
+            [$loginVal]
+        );
+
+        // Account not found or disabled — fall through to password step (will fail at /login with INVALID_CREDENTIALS)
+        if (!$row || $row['status'] === 'blocked' || $row['status'] === 'disabled') {
+            Response::success(['has_password' => true]);
+        }
+
+        // Account needs OTP — send it and let frontend show OTP panel
+        if ((int)$row['temp_password'] === 1) {
+            $otp       = '1234'; // DEV ONLY — replace with SMS gateway in production
+            $otpExpiry = date('Y-m-d H:i:s', time() + 600);
+
+            $this->db->execute(
+                "UPDATE users SET otp_code = ?, otp_expiry = ? WHERE id = ?",
+                [$otp, $otpExpiry, $row['id']]
+            );
+
+            $response = [
+                'has_password' => false,
+                'phone'        => $row['phone'],
+                'expires_in'   => 600,
+            ];
+            if (API_ENV === 'development') {
+                $response['otp']  = $otp;
+                $response['note'] = 'OTP returned in development mode only';
+            }
+
+            Response::success($response, 'OTP sent to your registered phone.');
+        }
+
+        // Normal account with password
+        Response::success(['has_password' => true]);
+    }
+
+    // ── POST /api/auth/customer/login-otp ─────────────────────────────────────
+    /**
+     * Step 1: Send an OTP to the phone of a temp_password customer.
+     * Only works for active customers that have temp_password = 1.
+     */
+    public function loginOtp(array $body): never {
+        $v = new Validator($body);
+        $v->required('phone', 'Phone');
+
+        if ($v->fails()) Response::validationError($v->errors());
+
+        $phone = preg_replace('/\D/', '', $body['phone']);
+
+        $row = $this->db->queryOne(
+            "SELECT u.id, u.status, c.temp_password
+             FROM users u
+             JOIN customers c ON c.user_id = u.id
+             WHERE u.phone = ? AND u.user_type = 'customer'
+             LIMIT 1",
+            [$phone]
+        );
+
+        // Generic response to prevent enumeration — always return 200
+        if (!$row || $row['status'] !== 'active' || (int)$row['temp_password'] !== 1) {
+            Response::success(['expires_in' => 600], 'If a matching account exists, an OTP has been sent.');
+        }
+
+        // DEV ONLY: hardcoded OTP for testing
+        $otp       = '1234';
+        $otpExpiry = date('Y-m-d H:i:s', time() + 600);
+
+        $this->db->execute(
+            "UPDATE users SET otp_code = ?, otp_expiry = ? WHERE id = ?",
+            [$otp, $otpExpiry, $row['id']]
+        );
+
+        // In production: send SMS.
+        $response = ['expires_in' => 600];
+        if (API_ENV === 'development') {
+            $response['otp']  = $otp;
+            $response['note'] = 'OTP returned in development mode only';
+        }
+
+        Response::success($response, 'If a matching account exists, an OTP has been sent.');
+    }
+
+    // ── POST /api/auth/customer/verify-login-otp ──────────────────────────────
+    /**
+     * Step 2: Verify OTP for an already-active temp_password customer and log them in.
+     */
+    public function verifyLoginOtp(array $body): never {
+        $v = new Validator($body);
+        $v->required('phone', 'Phone')
+          ->required('otp',   'OTP');
+
+        if ($v->fails()) Response::validationError($v->errors());
+
+        $phone = preg_replace('/\D/', '', $body['phone']);
+        $otp   = trim($body['otp']);
+
+        $row = $this->db->queryOne(
+            "SELECT u.id AS user_id, u.email, u.phone, u.otp_code, u.otp_expiry, u.status,
+                    c.id AS customer_id, c.name, c.profile_image, c.city_id, c.area_id,
+                    c.customer_type, c.subscription_status, c.subscription_expiry,
+                    c.is_dealmaker, c.referral_code,
+                    COALESCE(c.temp_password, 0) AS temp_password
+             FROM users u
+             JOIN customers c ON c.user_id = u.id
+             WHERE u.phone = ? AND u.user_type = 'customer' AND u.status = 'active'
+             LIMIT 1",
+            [$phone]
+        );
+
+        if (!$row) {
+            Response::error('Invalid OTP or account not found.', 401, 'INVALID_OTP');
+        }
+
+        if ((int)$row['temp_password'] !== 1) {
+            Response::error('OTP login is not available for this account.', 403, 'OTP_LOGIN_NOT_ALLOWED');
+        }
+
+        if ($row['otp_code'] !== $otp) {
+            Response::error('Incorrect OTP.', 401, 'INVALID_OTP');
+        }
+
+        if (empty($row['otp_expiry']) || strtotime($row['otp_expiry']) < time()) {
+            Response::error('OTP has expired. Please request a new one.', 401, 'OTP_EXPIRED');
+        }
+
+        // Clear OTP so it cannot be replayed
+        $this->db->execute(
+            "UPDATE users SET otp_code = NULL, otp_expiry = NULL, last_login = NOW() WHERE id = ?",
+            [$row['user_id']]
+        );
+
+        $accessToken  = JWT::createAccessToken($row['user_id'], $row['email'] ?? $row['phone']);
+        $refreshToken = JWT::createRefreshToken($row['user_id']);
+        $this->storeRefreshToken($row['user_id'], $refreshToken);
+
+        $isNewUser = empty($row['city_id']);
+
+        Response::success([
+            'customer'      => $this->formatCustomer($row, $isNewUser),
+            'access_token'  => $accessToken,
+            'refresh_token' => $refreshToken,
+            'expires_in'    => JWT_ACCESS_EXPIRY,
+        ], 'Login successful');
     }
 
     // ── POST /api/auth/customer/logout ────────────────────────────────────────

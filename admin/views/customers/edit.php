@@ -58,6 +58,28 @@
                                 <?php endforeach; ?>
                             </select>
                         </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">City</label>
+                            <select name="city_id" id="editCityId" class="form-select select2">
+                                <option value="">&mdash; None &mdash;</option>
+                                <?php foreach ($cities as $city): ?>
+                                <option value="<?= $city['id'] ?>"
+                                    <?= (($_POST['city_id'] ?? $customer['city_id']) == $city['id']) ? 'selected' : '' ?>>
+                                    <?= escape($city['city_name']) ?>
+                                </option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Area</label>
+                            <select name="area_id" id="editAreaId" class="form-select">
+                                <option value="">&mdash; None &mdash;</option>
+                            </select>
+                        </div>
+                        <?php
+                        $areasJson      = json_encode(array_map(fn($a) => ['id' => (int)$a['id'], 'city_id' => (int)$a['city_id'], 'name' => $a['area_name']], $areas), JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT);
+                        $selectedAreaId = (int)(($_POST['area_id'] ?? $customer['area_id']) ?: 0);
+                        ?>
                     </div>
                 </div>
             </div>
@@ -117,14 +139,6 @@
                 </div>
                 <div class="card-body">
                     <div class="row g-3">
-                        <div class="col-md-4">
-                            <label class="form-label fw-semibold">Customer Type</label>
-                            <select name="customer_type" class="form-select">
-                                <?php foreach (['standard', 'premium', 'dealmaker'] as $t): ?>
-                                <option value="<?= $t ?>" <?= (($_POST['customer_type'] ?? $customer['customer_type']) === $t) ? 'selected' : '' ?>><?= ucfirst($t) ?></option>
-                                <?php endforeach; ?>
-                            </select>
-                        </div>
                         <div class="col-md-4">
                             <label class="form-label fw-semibold">Registration Type</label>
                             <select name="registration_type" class="form-select">
@@ -199,9 +213,46 @@ document.getElementById('confirmPassword').addEventListener('input', function() 
     const match = !p || this.value === p;
     document.getElementById('pwMismatch').classList.toggle('d-none', match);
 });
+const ALL_AREAS    = <?= $areasJson ?>;
+const INIT_AREA_ID = <?= $selectedAreaId ?>;
+
+function buildAreaSelect(cityId, selectedId) {
+    const areaSelect = document.getElementById('editAreaId');
+    const filtered   = cityId ? ALL_AREAS.filter(a => a.city_id === parseInt(cityId)) : [];
+
+    // Only destroy if Select2 has already been initialised on this element
+    if (typeof $.fn.select2 !== 'undefined' && $(areaSelect).data('select2')) {
+        $(areaSelect).select2('destroy');
+    }
+
+    // Rebuild options
+    areaSelect.innerHTML = '<option value="">&mdash; None &mdash;</option>';
+    filtered.forEach(function(a) {
+        const opt       = document.createElement('option');
+        opt.value       = a.id;
+        opt.textContent = a.name;
+        if (a.id === selectedId) opt.selected = true;
+        areaSelect.appendChild(opt);
+    });
+
+    // Re-init Select2 on the area select
+    if (typeof $.fn.select2 !== 'undefined') {
+        $(areaSelect).select2({ theme: 'bootstrap-5', placeholder: '\u2014 None \u2014', allowClear: true });
+    }
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     if (typeof $.fn.select2 !== 'undefined') {
-        $('.select2').select2({ theme: 'bootstrap-5' });
+        // Init all select2 fields except #editAreaId (managed by buildAreaSelect)
+        $('select.select2').not('#editAreaId').select2({ theme: 'bootstrap-5' });
+        $('#editCityId').on('change', function() { buildAreaSelect(this.value, 0); });
+    } else {
+        document.getElementById('editCityId').addEventListener('change', function() {
+            buildAreaSelect(this.value, 0);
+        });
     }
+    // Populate area dropdown on page load with saved city + area
+    const cityId = document.getElementById('editCityId').value;
+    buildAreaSelect(cityId, INIT_AREA_ID);
 });
 </script>

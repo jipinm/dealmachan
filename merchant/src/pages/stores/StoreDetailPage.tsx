@@ -97,6 +97,16 @@ export default function StoreDetailPage() {
                 }`}>{store.status === 'active' ? 'Active' : 'Inactive'}</span>
               </div>
               {store.description && <p className="text-sm text-gray-500 mt-2 leading-relaxed">{store.description}</p>}
+
+              <div className="mt-3 rounded-xl bg-gray-50 p-3">
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wide mb-1">Store Coupon Limits</p>
+                <p className="text-sm font-semibold text-gray-800">
+                  Store Coupons This Month: {store.coupon_usage?.this_month ?? 0} / {store.coupon_usage?.monthly_limit ?? 'Unlimited'}
+                </p>
+                <p className="text-xs text-gray-500 mt-1">
+                  Total Used: {store.coupon_usage?.total_used ?? 0} / {store.coupon_usage?.total_limit ?? 'Unlimited'}
+                </p>
+              </div>
             </div>
 
             {/* Contact & Location */}

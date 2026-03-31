@@ -40,6 +40,10 @@ class Merchant extends Model {
             $sql .= " AND m.is_premium = ?";
             $params[] = (int)$filters['is_premium'];
         }
+        if (!empty($filters['city_id'])) {
+            $sql .= " AND EXISTS (SELECT 1 FROM stores sc WHERE sc.merchant_id = m.id AND sc.city_id = ?)";
+            $params[] = (int)$filters['city_id'];
+        }
         if (!empty($filters['search'])) {
             $like = '%' . $filters['search'] . '%';
             $sql .= " AND (m.business_name LIKE ? OR u.email LIKE ? OR u.phone LIKE ? OR m.registration_number LIKE ? OR m.gst_number LIKE ?)";
@@ -85,6 +89,10 @@ class Merchant extends Model {
         if (isset($filters['is_premium']) && $filters['is_premium'] !== '') {
             $sql .= " AND m.is_premium = ?";
             $params[] = (int)$filters['is_premium'];
+        }
+        if (!empty($filters['city_id'])) {
+            $sql .= " AND EXISTS (SELECT 1 FROM stores sc WHERE sc.merchant_id = m.id AND sc.city_id = ?)";
+            $params[] = (int)$filters['city_id'];
         }
         if (!empty($filters['search'])) {
             $like = '%' . $filters['search'] . '%';

@@ -3,6 +3,7 @@ require_once CORE_PATH . '/Auth.php';
 require_once MODEL_PATH . '/Customer.php';
 require_once MODEL_PATH . '/User.php';
 require_once MODEL_PATH . '/City.php';
+require_once MODEL_PATH . '/Area.php';
 require_once MODEL_PATH . '/Profession.php';
 
 class CustomersController extends Controller {
@@ -42,6 +43,9 @@ class CustomersController extends Controller {
             'customer_type'     => $_GET['customer_type']     ?? '',
             'registration_type' => $_GET['registration_type'] ?? '',
             'search'            => trim($_GET['search']       ?? ''),
+            'city_id'           => $_GET['city_id']           ?? '',
+            'gender'            => $_GET['gender']            ?? '',
+            'profession_id'     => $_GET['profession_id']     ?? '',
         ];
 
         $perPage     = self::PER_PAGE;
@@ -54,11 +58,16 @@ class CustomersController extends Controller {
         $customers    = $this->customerModel->getAllWithDetails($fetchFilters);
         $stats        = $this->customerModel->getStats();
 
+        $cityModel       = new City();
+        $professionModel = new Profession();
+
         $this->loadView('customers/index', [
             'title'         => 'Customer Management',
             'customers'     => $customers,
             'stats'         => $stats,
             'filters'       => $filters,
+            'cities'        => $cityModel->getActive(),
+            'professions'   => $professionModel->getActive(),
             'currentPage'   => $currentPage,
             'totalPages'    => $totalPages,
             'totalCount'    => $totalCount,
@@ -142,10 +151,14 @@ class CustomersController extends Controller {
         }
 
         $professionModel = new Profession();
+        $cityModel       = new City();
+        $areaModel       = new Area();
         $this->loadView('customers/edit', [
             'title'        => 'Edit Customer &mdash; ' . escape($customer['name']),
             'customer'     => $customer,
             'professions'  => $professionModel->getActive(),
+            'cities'       => $cityModel->getActive(),
+            'areas'        => $areaModel->getAllWithCity(),
             'current_user' => $this->auth->getCurrentUser(),
             'flash_error'  => $_SESSION['error'] ?? null,
         ]);
@@ -163,6 +176,8 @@ class CustomersController extends Controller {
         $dob              = sanitize($_POST['date_of_birth'] ?? '');
         $gender           = sanitize($_POST['gender'] ?? '');
         $professionId     = !empty($_POST['profession_id']) ? (int)$_POST['profession_id'] : null;
+        $cityId           = !empty($_POST['city_id'])       ? (int)$_POST['city_id']       : null;
+        $areaId           = !empty($_POST['area_id'])       ? (int)$_POST['area_id']       : null;
         $customerType     = sanitize($_POST['customer_type'] ?? 'standard');
         $registrationType = sanitize($_POST['registration_type'] ?? 'admin_registration');
         $status           = sanitize($_POST['status'] ?? 'active');
@@ -182,11 +197,6 @@ class CustomersController extends Controller {
         }
         if ($email && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
             $_SESSION['error'] = 'Invalid email address.';
-            $this->redirect($redirect);
-            return;
-        }
-        if (!$customerId && strlen($password) < 8) {
-            $_SESSION['error'] = 'Password must be at least 8 characters.';
             $this->redirect($redirect);
             return;
         }
@@ -228,6 +238,8 @@ class CustomersController extends Controller {
                 'date_of_birth'     => $dob     ?: null,
                 'gender'            => $gender  ?: null,
                 'profession_id'     => $professionId,
+                'city_id'           => $cityId,
+                'area_id'           => $areaId,
                 'customer_type'     => $customerType,
                 'registration_type' => $registrationType,
             ];
@@ -238,6 +250,10 @@ class CustomersController extends Controller {
             $this->redirect('customers/profile?id=' . $customerId);
         } else {
             // ── CREATE ──
+            $isTemp = empty($password);
+            if ($isTemp) {
+                $password = bin2hex(random_bytes(8)); // unguessable temp password
+            }
             $userData = [
                 'email'    => $email ?: null,
                 'phone'    => $phone ?: null,
@@ -248,11 +264,14 @@ class CustomersController extends Controller {
             $customerData = [
                 'name'                  => $name,
                 'date_of_birth'         => $dob ?: null,
-                'gender'                => $gender ?: null,
+                'gender'                => $gender  ?: null,
                 'profession_id'         => $professionId,
-                'customer_type'         => $customerType,
+                'city_id'               => $cityId,
+                'area_id'               => $areaId,
+                'customer_type'         => 'standard',
                 'registration_type'     => $registrationType,
                 'created_by_admin_id'   => $cu['admin_id'],
+                'temp_password'         => $isTemp ? 1 : 0,
             ];
 
             $newId = $this->customerModel->createWithUser($userData, $customerData);
@@ -262,24 +281,12 @@ class CustomersController extends Controller {
         }
     }
 
-    // ─── DELETE ───────────────────────────────────────────────────────────────
+    // ─── DELETE (DISABLED) ───────────────────────────────────────────────────
 
     public function delete() {
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') { $this->redirect('customers'); return; }
         $this->requireCSRF();
-
-        $id = (int)($_POST['id'] ?? 0);
-        $customer = $this->customerModel->findWithDetails($id);
-        if (!$customer) {
-            $_SESSION['error'] = 'Customer not found.';
-            $this->redirect('customers');
-            return;
-        }
-
-        $name = $customer['name'];
-        $this->customerModel->deleteWithUser($id);
-        $_SESSION['success'] = "Customer '{$name}' deleted successfully.";
-        logAudit('delete', 'customer', $id, ['name' => $name]);
+        $_SESSION['error'] = 'Delete is disabled. Use block/activate status controls instead.';
         $this->redirect('customers');
     }
 

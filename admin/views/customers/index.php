@@ -102,11 +102,31 @@ $regTypeLabels = [
                 </select>
             </div>
             <div class="col-auto">
-                <select name="customer_type" class="form-select form-select-sm">
-                    <option value="">All Types</option>
-                    <option value="standard"  <?= $filters['customer_type'] === 'standard'  ? 'selected' : '' ?>>Standard</option>
-                    <option value="premium"   <?= $filters['customer_type'] === 'premium'   ? 'selected' : '' ?>>Premium</option>
-                    <option value="dealmaker" <?= $filters['customer_type'] === 'dealmaker' ? 'selected' : '' ?>>DealMaker</option>
+                <select name="city_id" class="form-select form-select-sm">
+                    <option value="">All Cities</option>
+                    <?php foreach ($cities as $city): ?>
+                    <option value="<?= $city['id'] ?>" <?= (string)$filters['city_id'] === (string)$city['id'] ? 'selected' : '' ?>>
+                        <?= escape($city['city_name']) ?>
+                    </option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+            <div class="col-auto">
+                <select name="gender" class="form-select form-select-sm">
+                    <option value="">All Genders</option>
+                    <option value="male"   <?= $filters['gender'] === 'male'   ? 'selected' : '' ?>>Male</option>
+                    <option value="female" <?= $filters['gender'] === 'female' ? 'selected' : '' ?>>Female</option>
+                    <option value="other"  <?= $filters['gender'] === 'other'  ? 'selected' : '' ?>>Other</option>
+                </select>
+            </div>
+            <div class="col-auto">
+                <select name="profession_id" class="form-select form-select-sm">
+                    <option value="">All Professions</option>
+                    <?php foreach ($professions as $prof): ?>
+                    <option value="<?= $prof['id'] ?>" <?= (string)$filters['profession_id'] === (string)$prof['id'] ? 'selected' : '' ?>>
+                        <?= escape($prof['profession_name']) ?>
+                    </option>
+                    <?php endforeach; ?>
                 </select>
             </div>
             <div class="col-auto">
@@ -137,7 +157,6 @@ $regTypeLabels = [
                         <th>#</th>
                         <th>Customer</th>
                         <th>Contact</th>
-                        <th>Type</th>
                         <th>Reg. Via</th>
                         <th class="text-center">Status</th>
                         <th>Referral Code</th>
@@ -147,7 +166,7 @@ $regTypeLabels = [
                 </thead>
                 <tbody>
                     <?php if (empty($customers)): ?>
-                    <tr><td colspan="9" class="text-center text-muted py-5"><i class="fas fa-users fa-2x mb-2 d-block opacity-25"></i>No customers found.</td></tr>
+                    <tr><td colspan="8" class="text-center text-muted py-5"><i class="fas fa-users fa-2x mb-2 d-block opacity-25"></i>No customers found.</td></tr>
                     <?php else: ?>
                     <?php foreach ($customers as $i => $c): ?>
                     <tr>
@@ -173,11 +192,6 @@ $regTypeLabels = [
                             <?php if ($c['phone']): ?><div class="text-muted small"><?= escape($c['phone']) ?></div><?php endif; ?>
                         </td>
                         <td>
-                            <span class="badge bg-<?= $typeColors[$c['customer_type']] ?? 'secondary' ?> rounded-pill">
-                                <?= ucfirst($c['customer_type']) ?>
-                            </span>
-                        </td>
-                        <td>
                             <span class="badge bg-light text-dark border small">
                                 <?= $regTypeLabels[$c['registration_type']] ?? escape($c['registration_type']) ?>
                             </span>
@@ -197,8 +211,7 @@ $regTypeLabels = [
                         <td class="text-muted small"><?= isset($c['registered_at']) ? formatDate($c['registered_at']) : '&mdash;' ?></td>
                         <td class="text-center text-nowrap">
                             <a href="<?= BASE_URL ?>customers/profile?id=<?= $c['id'] ?>" class="btn btn-sm btn-outline-info me-1" title="View Profile"><i class="fas fa-eye"></i></a>
-                            <a href="<?= BASE_URL ?>customers/edit?id=<?= $c['id'] ?>" class="btn btn-sm btn-outline-primary me-1" title="Edit"><i class="fas fa-edit"></i></a>
-                            <button class="btn btn-sm btn-outline-danger" onclick="confirmDelete(<?= $c['id'] ?>, '<?= escape($c['name']) ?>')" title="Delete"><i class="fas fa-trash"></i></button>
+                            <a href="<?= BASE_URL ?>customers/edit?id=<?= $c['id'] ?>" class="btn btn-sm btn-outline-primary" title="Edit"><i class="fas fa-edit"></i></a>
                         </td>
                     </tr>
                     <?php endforeach; ?>
@@ -227,7 +240,9 @@ $regTypeLabels = [
                 $qp = array_filter([
                     'search'            => $filters['search'],
                     'status'            => $filters['status'],
-                    'customer_type'     => $filters['customer_type'],
+                    'city_id'           => $filters['city_id'],
+                    'gender'            => $filters['gender'],
+                    'profession_id'     => $filters['profession_id'],
                     'registration_type' => $filters['registration_type'],
                 ]);
                 $base = BASE_URL . 'customers?' . ($qp ? http_build_query($qp) . '&' : '');
@@ -265,27 +280,6 @@ $regTypeLabels = [
 </div>
 <?php endif; ?>
 
-<!-- Delete Form -->
-<form method="POST" action="<?= BASE_URL ?>customers/delete" id="deleteForm">
-    <input type="hidden" name="csrf_token" value="<?= generateCSRFToken() ?>">
-    <input type="hidden" name="id" id="deleteId">
-</form>
-
 <script>
-function confirmDelete(id, name) {
-    Swal.fire({
-        title: 'Delete Customer?',
-        html: `Permanently delete <b>${name}</b>? All associated data will be removed.`,
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#dc3545',
-        confirmButtonText: 'Delete'
-    }).then(r => {
-        if (r.isConfirmed) {
-            document.getElementById('deleteId').value = id;
-            document.getElementById('deleteForm').submit();
-        }
-    });
-}
 // Server-side pagination active &mdash; DataTable not used on this listing.
 </script>

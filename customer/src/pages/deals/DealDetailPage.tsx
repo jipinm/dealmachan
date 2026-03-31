@@ -7,6 +7,7 @@ import {
 } from 'lucide-react'
 import { publicApi } from '@/api/endpoints/public'
 import { couponsApi } from '@/api/endpoints/coupons'
+import { profileApi } from '@/api/endpoints/profile'
 import { useAuthStore } from '@/store/authStore'
 import { getApiError } from '@/api/client'
 import AuthModal from '@/components/ui/AuthModal'
@@ -59,6 +60,13 @@ export default function DealDetailPage() {
   const [saved, setSaved] = useState(false)
   const [codeCopied, setCodeCopied] = useState(false)
   const [showAuthModal, setShowAuthModal] = useState(false)
+
+  const { data: cardData } = useQuery({
+    queryKey: ['deal-detail-active-card-check'],
+    queryFn: () => profileApi.getCard().then((r) => r.data.data),
+    enabled: isAuthenticated,
+    staleTime: 120_000,
+  })
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['deal-detail', couponId],
@@ -135,6 +143,14 @@ export default function DealDetailPage() {
       setShowAuthModal(true)
       return
     }
+
+    const cardStatus = (cardData as any)?.status
+    const hasActiveCard = cardStatus === 'active' || cardStatus === 'activated'
+    if (!hasActiveCard) {
+      toast.error('You need an activated DealMachan card to save coupons.')
+      return
+    }
+
     saveMutation.mutate()
   }
 

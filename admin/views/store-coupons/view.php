@@ -107,6 +107,12 @@ $statusColors = ['active' => 'success', 'inactive' => 'secondary', 'expired' => 
                         <div class="text-muted small mb-1">Valid Until</div>
                         <div><?= $storeCoupon['valid_until'] ? formatDateTime($storeCoupon['valid_until']) : '<span class="text-muted">&mdash;</span>' ?></div>
                     </div>
+                    <?php if (!empty($storeCoupon['terms_conditions'])): ?>
+                    <div class="col-12">
+                        <div class="text-muted small mb-1">Terms &amp; Conditions</div>
+                        <div class="p-3 bg-light rounded-2 small"><?= nl2br(escape($storeCoupon['terms_conditions'])) ?></div>
+                    </div>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>
@@ -177,44 +183,12 @@ $statusColors = ['active' => 'success', 'inactive' => 'secondary', 'expired' => 
             </div>
         </div>
 
-        <!-- Danger Zone -->
-        <div class="card border-danger border-opacity-25 shadow-sm mb-4">
-            <div class="card-header bg-danger-subtle text-danger fw-semibold border-bottom border-danger border-opacity-25">
-                <i class="fas fa-exclamation-triangle me-2"></i> Danger Zone
-            </div>
-            <div class="card-body">
-                <p class="text-muted small mb-3">Permanently delete this store coupon. This cannot be undone.</p>
-                <button class="btn btn-danger btn-sm w-100"
-                        onclick="confirmDelete(<?= $storeCoupon['id'] ?>, '<?= escape($storeCoupon['coupon_code']) ?>')">
-                    <i class="fas fa-trash me-2"></i> Delete Store Coupon
-                </button>
-            </div>
-        </div>
+
 
     </div>
 </div>
 
-<!-- Delete Form -->
-<form method="POST" action="<?= BASE_URL ?>store-coupons/delete" id="deleteForm">
-    <input type="hidden" name="csrf_token" value="<?= generateCSRFToken() ?>">
-    <input type="hidden" name="id" value="<?= $storeCoupon['id'] ?>">
-</form>
-
 <script>
-function confirmDelete(id, code) {
-    Swal.fire({
-        title: 'Delete Store Coupon?',
-        html: `Permanently delete coupon <b>${code}</b>?`,
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#dc3545',
-        confirmButtonText: 'Delete'
-    }).then(r => {
-        if (r.isConfirmed) {
-            document.getElementById('deleteForm').submit();
-        }
-    });
-}
 function revokeGift(id) {
     Swal.fire({
         title: 'Revoke Gift?',

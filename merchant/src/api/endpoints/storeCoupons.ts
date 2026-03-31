@@ -25,6 +25,16 @@ export interface StoreCoupon {
   gifted_at: string | null
   is_redeemed: number
   redeemed_at: string | null
+  assignment_type: 'auto_assign' | 'merchant_request'
+  requires_acceptance: number
+  total_quantity: number | null
+  assigned_count: number
+  coupon_usage?: {
+    this_month: number
+    monthly_limit: number | null
+    total_limit: number | null
+    total_used: number
+  }
   created_at: string
   updated_at: string | null
 }
@@ -68,6 +78,23 @@ export interface StoreCouponRedeemResult {
   transaction_amount: number | null
 }
 
+export interface StoreCouponRequestAssignmentPayload {
+  quantity: number
+}
+
+export interface StoreCouponRequestAssignmentResult {
+  request_id: number
+  store_coupon_id: number
+  quantity: number
+  status: 'pending'
+  coupon_usage: {
+    this_month: number
+    monthly_limit: number | null
+    total_limit: number | null
+    total_used: number
+  }
+}
+
 export interface StoreCouponListMeta {
   total: number
   page: number
@@ -104,4 +131,7 @@ export const storeCouponApi = {
 
   redeem: (id: number, data: RedeemStoreCouponPayload) =>
     apiClient.post<R<StoreCouponRedeemResult>>(`/merchants/store-coupons/${id}/redeem`, data),
+
+  requestAssignment: (id: number, data: StoreCouponRequestAssignmentPayload) =>
+    apiClient.post<R<StoreCouponRequestAssignmentResult>>(`/merchants/store-coupons/${id}/request-assignment`, data),
 }

@@ -6,6 +6,7 @@
  * GET  /api/customers/coupons/history
  * POST /api/customers/coupons/:id/save
  * DELETE /api/customers/coupons/:id/save
+ * POST /api/customers/store-coupons/:id/grab
  */
 class CustomerCouponController {
 
@@ -415,5 +416,113 @@ class CustomerCouponController {
         );
 
         Response::success($coupons);
+    }
+
+    // ── POST /api/customers/store-coupons/:id/grab ─────────────────────────
+    public function grabStoreCoupon(array $user, int $couponId): never {
+        // Enforce active card on grab flow.
+        AuthMiddleware::requireActiveCard($user);
+
+        $customerId = (int)($user['customer_id'] ?? 0);
+        if ($customerId <= 0) {
+            Response::notFound('Customer profile not found.');
+        }
+
+        try {
+            $this->db->beginTransaction();
+
+            $coupon = $this->db->queryOne(
+                "SELECT id, title, coupon_code, status, valid_from, valid_until,
+                        requires_acceptance, total_quantity, assigned_count,
+                        is_gifted, gifted_to_customer_id, is_redeemed
+                 FROM store_coupons
+                 WHERE id = ?
+                 FOR UPDATE",
+                [$couponId]
+            );
+
+            if (!$coupon) {
+                $this->db->rollBack();
+                Response::notFound('Store coupon not found.');
+            }
+
+            if (($coupon['status'] ?? '') !== 'active') {
+                $this->db->rollBack();
+                Response::error('This store coupon is not active.', 409, 'STORE_COUPON_INACTIVE');
+            }
+
+            if (!empty($coupon['valid_from']) && strtotime((string)$coupon['valid_from']) > time()) {
+                $this->db->rollBack();
+                Response::error('This store coupon is not yet available.', 409, 'STORE_COUPON_NOT_STARTED');
+            }
+
+            if (!empty($coupon['valid_until']) && strtotime((string)$coupon['valid_until']) < time()) {
+                $this->db->rollBack();
+                Response::error('This store coupon has expired.', 410, 'STORE_COUPON_EXPIRED');
+            }
+
+            if ((int)$coupon['requires_acceptance'] !== 1) {
+                $this->db->rollBack();
+                Response::error('This store coupon does not support Grab Now.', 409, 'STORE_COUPON_AUTO_ASSIGN');
+            }
+
+            if ((int)$coupon['is_redeemed'] === 1) {
+                $this->db->rollBack();
+                Response::error('This store coupon has already been redeemed.', 409, 'STORE_COUPON_REDEEMED');
+            }
+
+            if ((int)$coupon['is_gifted'] === 1) {
+                if ((int)$coupon['gifted_to_customer_id'] === $customerId) {
+                    $this->db->commit();
+                    Response::success([
+                        'id'             => (int)$coupon['id'],
+                        'coupon_code'    => $coupon['coupon_code'],
+                        'already_grabbed'=> true,
+                    ], 'Store coupon already in your wallet.');
+                }
+
+                $this->db->rollBack();
+                Response::error('This store coupon has already been claimed.', 409, 'STORE_COUPON_ALREADY_CLAIMED');
+            }
+
+            if ($coupon['total_quantity'] !== null && (int)$coupon['assigned_count'] >= (int)$coupon['total_quantity']) {
+                $this->db->rollBack();
+                Response::error('This store coupon has reached its assignment limit.', 409, 'STORE_COUPON_LIMIT_REACHED');
+            }
+
+            $this->db->execute(
+                "UPDATE store_coupons
+                 SET is_gifted = 1,
+                     gifted_to_customer_id = ?,
+                     gifted_at = NOW(),
+                     assigned_count = assigned_count + 1,
+                     updated_at = NOW()
+                 WHERE id = ?",
+                [$customerId, $couponId]
+            );
+
+            $updated = $this->db->queryOne(
+                "SELECT id, title, coupon_code, gifted_at, assigned_count
+                 FROM store_coupons
+                 WHERE id = ?",
+                [$couponId]
+            );
+
+            $this->db->commit();
+
+            Response::created([
+                'id'             => (int)$updated['id'],
+                'title'          => $updated['title'],
+                'coupon_code'    => $updated['coupon_code'],
+                'gifted_at'      => $updated['gifted_at'],
+                'assigned_count' => (int)$updated['assigned_count'],
+            ], 'Store coupon grabbed successfully.');
+        } catch (Throwable $e) {
+            if ($this->db->pdo()->inTransaction()) {
+                $this->db->rollBack();
+            }
+            error_log('grabStoreCoupon error: ' . $e->getMessage());
+            Response::error('Failed to grab store coupon.', 500, 'STORE_COUPON_GRAB_FAILED');
+        }
     }
 }

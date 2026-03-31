@@ -103,4 +103,91 @@ class Store extends Model {
         return $this->db->prepare("UPDATE {$this->table} SET status=?, updated_at=NOW() WHERE id=?")
                         ->execute([$newStatus, $id]);
     }
+
+    // ─── GLOBAL LIST (all stores across all merchants) ────────────────────────
+
+    public function getAllWithDetails(array $filters = []): array {
+        $sql = "SELECT s.*,
+                       c.city_name, a.area_name,
+                       m.business_name AS merchant_name,
+                       m.id            AS merchant_id
+                FROM {$this->table} s
+                JOIN cities c    ON s.city_id     = c.id
+                LEFT JOIN areas  a ON s.area_id   = a.id
+                JOIN merchants m ON s.merchant_id = m.id
+                WHERE 1=1";
+        $params = [];
+
+        if (!empty($filters['merchant_id'])) {
+            $sql .= " AND s.merchant_id = ?";
+            $params[] = (int)$filters['merchant_id'];
+        }
+        if (!empty($filters['city_id'])) {
+            $sql .= " AND s.city_id = ?";
+            $params[] = (int)$filters['city_id'];
+        }
+        if (!empty($filters['status'])) {
+            $sql .= " AND s.status = ?";
+            $params[] = $filters['status'];
+        }
+        if (!empty($filters['search'])) {
+            $like = '%' . $filters['search'] . '%';
+            $sql .= " AND (s.store_name LIKE ? OR m.business_name LIKE ? OR s.phone LIKE ? OR s.email LIKE ?)";
+            $params[] = $like; $params[] = $like; $params[] = $like; $params[] = $like;
+        }
+
+        $sql .= " ORDER BY s.status DESC, s.created_at DESC";
+
+        if (!empty($filters['limit'])) {
+            $sql .= " LIMIT ? OFFSET ?";
+            $params[] = (int)$filters['limit'];
+            $params[] = (int)($filters['offset'] ?? 0);
+        }
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
+        return $stmt->fetchAll();
+    }
+
+    public function countAll(array $filters = []): int {
+        $sql = "SELECT COUNT(*) FROM {$this->table} s
+                JOIN merchants m ON s.merchant_id = m.id
+                WHERE 1=1";
+        $params = [];
+
+        if (!empty($filters['merchant_id'])) {
+            $sql .= " AND s.merchant_id = ?";
+            $params[] = (int)$filters['merchant_id'];
+        }
+        if (!empty($filters['city_id'])) {
+            $sql .= " AND s.city_id = ?";
+            $params[] = (int)$filters['city_id'];
+        }
+        if (!empty($filters['status'])) {
+            $sql .= " AND s.status = ?";
+            $params[] = $filters['status'];
+        }
+        if (!empty($filters['search'])) {
+            $like = '%' . $filters['search'] . '%';
+            $sql .= " AND (s.store_name LIKE ? OR m.business_name LIKE ? OR s.phone LIKE ? OR s.email LIKE ?)";
+            $params[] = $like; $params[] = $like; $params[] = $like; $params[] = $like;
+        }
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
+        return (int)$stmt->fetchColumn();
+    }
+
+    public function getStats(): array {
+        $sql = "SELECT
+                    COUNT(*)                                                          AS total,
+                    SUM(CASE WHEN s.status = 'active'   THEN 1 ELSE 0 END)          AS active,
+                    SUM(CASE WHEN s.status = 'inactive' THEN 1 ELSE 0 END)          AS inactive,
+                    SUM(CASE WHEN s.booking_enabled = 1 THEN 1 ELSE 0 END)          AS booking_enabled,
+                    SUM(CASE WHEN DATE(s.created_at) = CURDATE() THEN 1 ELSE 0 END) AS today
+                FROM {$this->table} s";
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute();
+        return $stmt->fetch();
+    }
 }

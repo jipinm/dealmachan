@@ -37,9 +37,6 @@ $typeColors = [
                 <?= $customer['status'] === 'active' ? 'Block' : 'Activate' ?>
             </button>
         </form>
-        <button class="btn btn-sm btn-outline-danger" onclick="confirmDelete(<?= $customer['id'] ?>, '<?= escape($customer['name']) ?>')">
-            <i class="fas fa-trash me-1"></i> Delete
-        </button>
     </div>
 </div>
 
@@ -110,6 +107,26 @@ $typeColors = [
                         <div><?= $customer['profession_name'] ? escape($customer['profession_name']) : '<span class="text-muted fst-italic">Not set</span>' ?></div>
                     </div>
                     <div class="col-md-6">
+                        <label class="text-muted small text-uppercase fw-semibold">City</label>
+                        <div><?= !empty($customer['city_name']) ? escape($customer['city_name']) : '<span class="text-muted fst-italic">Not set</span>' ?></div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="text-muted small text-uppercase fw-semibold">Area</label>
+                        <div><?= !empty($customer['area_name']) ? escape($customer['area_name']) : '<span class="text-muted fst-italic">Not set</span>' ?></div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="text-muted small text-uppercase fw-semibold">Location</label>
+                        <div>
+                            <?php
+                                $locationParts = array_filter([
+                                    $customer['area_name'] ?? '',
+                                    $customer['city_name'] ?? '',
+                                ]);
+                            ?>
+                            <?= $locationParts ? escape(implode(', ', $locationParts)) : '<span class="text-muted fst-italic">Not set</span>' ?>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
                         <label class="text-muted small text-uppercase fw-semibold">Registration Type</label>
                         <div><?= ucwords(str_replace('_', ' ', $customer['registration_type'])) ?></div>
                     </div>
@@ -127,6 +144,23 @@ $typeColors = [
                         <div><?= escape($customer['referrer_name']) ?> <span class="text-muted small">(<?= escape($customer['referrer_code'] ?? '') ?>)</span></div>
                     </div>
                     <?php endif; ?>
+                    <div class="col-md-6">
+                        <label class="text-muted small text-uppercase fw-semibold">Assigned Card</label>
+                        <?php if (!empty($customer['card_number'])): ?>
+                            <?php
+                                $cardStatusColors = ['activated' => 'success', 'active' => 'success', 'available' => 'secondary', 'assigned' => 'warning', 'disabled' => 'danger'];
+                                $cardStatusColor  = $cardStatusColors[$customer['card_status'] ?? ''] ?? 'secondary';
+                            ?>
+                            <div>
+                                <code><?= escape($customer['card_number']) ?></code>
+                                <span class="badge bg-<?= $cardStatusColor ?>-subtle text-<?= $cardStatusColor ?> border border-<?= $cardStatusColor ?>-subtle ms-1 small">
+                                    <?= ucfirst($customer['card_status'] ?? '') ?>
+                                </span>
+                            </div>
+                        <?php else: ?>
+                            <div class="text-muted fst-italic">No card assigned</div>
+                        <?php endif; ?>
+                    </div>
                     <?php if ($customer['subscription_expiry']): ?>
                     <div class="col-md-6">
                         <label class="text-muted small text-uppercase fw-semibold">Subscription Expiry</label>
@@ -586,40 +620,8 @@ $typeColors = [
             </div>
         </div>
 
-        <!-- Danger Zone -->
-        <div class="card border-danger border-opacity-25 shadow-sm">
-            <div class="card-header bg-white fw-semibold border-bottom text-danger"><i class="fas fa-exclamation-triangle me-2"></i> Danger Zone</div>
-            <div class="card-body">
-                <p class="text-muted small mb-3">Permanently remove this customer and all associated data.</p>
-                <button class="btn btn-sm btn-danger w-100" onclick="confirmDelete(<?= $customer['id'] ?>, '<?= escape($customer['name']) ?>')">
-                    <i class="fas fa-trash me-1"></i> Delete Customer
-                </button>
-            </div>
-        </div>
+
 
     </div>
 </div>
 
-<!-- Delete Form -->
-<form method="POST" action="<?= BASE_URL ?>customers/delete" id="deleteForm">
-    <input type="hidden" name="csrf_token" value="<?= generateCSRFToken() ?>">
-    <input type="hidden" name="id" id="deleteId">
-</form>
-
-<script>
-function confirmDelete(id, name) {
-    Swal.fire({
-        title: 'Delete Customer?',
-        html: `Permanently delete <b>${name}</b>? This action cannot be undone.`,
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#dc3545',
-        confirmButtonText: 'Delete'
-    }).then(r => {
-        if (r.isConfirmed) {
-            document.getElementById('deleteId').value = id;
-            document.getElementById('deleteForm').submit();
-        }
-    });
-}
-</script>

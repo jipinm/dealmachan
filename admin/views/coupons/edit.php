@@ -37,14 +37,19 @@
                             <input type="text" name="coupon_code" id="coupon_code" class="form-control text-uppercase"
                                    value="<?= escape($coupon['coupon_code']) ?>"
                                    maxlength="50" pattern="[A-Za-z0-9_\-]+" required>
-                            <button type="button" class="btn btn-outline-secondary" onclick="generateCode()">
-                                <i class="fas fa-random me-1"></i> Generate
+                            <button type="button" class="btn btn-outline-secondary" onclick="generateCode(this)">
+                                <i class="fas fa-random me-1"></i> Auto-Generate
                             </button>
                         </div>
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Terms & Conditions</label>
                         <textarea name="terms_conditions" class="form-control" rows="3"><?= escape($coupon['terms_conditions'] ?? '') ?></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Internal Note</label>
+                        <textarea name="note" class="form-control" rows="3" placeholder="Internal admin note (not visible to customers)…"><?= escape($coupon['note'] ?? '') ?></textarea>
+                        <div class="form-text">Only visible in admin context.</div>
                     </div>
                 </div>
             </div>
@@ -128,6 +133,12 @@
                             <label class="form-label">Usage Limit</label>
                             <input type="number" name="usage_limit" class="form-control" min="1"
                                    value="<?= escape($coupon['usage_limit'] ?? '') ?>" placeholder="Unlimited">
+                        </div>
+                        <div class="col-sm-6">
+                            <label class="form-label">Usage Limit Per User</label>
+                            <input type="number" name="usage_limit_per_user" class="form-control" min="1" step="1"
+                                   value="<?= escape($coupon['usage_limit_per_user'] ?? '') ?>" placeholder="Leave blank for unlimited per-user usage">
+                            <div class="form-text">Leave blank for unlimited per-user usage.</div>
                         </div>
                         <div class="col-sm-6">
                             <label class="form-label text-muted">Current Usage Count</label>
@@ -344,11 +355,37 @@
 </form>
 
 <script>
-function generateCode() {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-    let code = '';
-    for (let i = 0; i < 8; i++) code += chars[Math.floor(Math.random() * chars.length)];
-    document.getElementById('coupon_code').value = code;
+async function generateCode(triggerButton) {
+    const codeInput = document.getElementById('coupon_code');
+    const button = triggerButton || null;
+    const originalHtml = button ? button.innerHTML : '';
+
+    if (button) {
+        button.disabled = true;
+        button.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Generating...';
+    }
+
+    try {
+        const response = await fetch('/admin/coupons/generate-code', {
+            method: 'GET',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        });
+        const data = await response.json();
+
+        if (!response.ok || !data.success || !data.code) {
+            throw new Error(data.error || 'Failed to generate coupon code.');
+        }
+
+        codeInput.value = String(data.code).toUpperCase();
+        codeInput.dispatchEvent(new Event('input', { bubbles: true }));
+    } catch (err) {
+        alert(err && err.message ? err.message : 'Unable to auto-generate coupon code right now.');
+    } finally {
+        if (button) {
+            button.disabled = false;
+            button.innerHTML = originalHtml;
+        }
+    }
 }
 
 function updateDiscountFields() {

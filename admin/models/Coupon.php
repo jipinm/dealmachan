@@ -54,6 +54,28 @@ class Coupon extends Model {
             $sql .= " AND c.merchant_id = ?";
             $params[] = (int)$filters['merchant_id'];
         }
+        if (!empty($filters['merchant_name'])) {
+            $sql .= " AND m.business_name LIKE ?";
+            $params[] = '%' . $filters['merchant_name'] . '%';
+        }
+        if (!empty($filters['category_id'])) {
+            $sql .= " AND EXISTS (
+                SELECT 1
+                FROM coupon_categories cc
+                WHERE cc.coupon_id = c.id
+                  AND cc.category_id = ?
+            )";
+            $params[] = (int)$filters['category_id'];
+        }
+        if (!empty($filters['city_id'])) {
+            $sql .= " AND EXISTS (
+                SELECT 1
+                FROM coupon_city_targets cct
+                WHERE cct.coupon_id = c.id
+                  AND cct.city_id = ?
+            )";
+            $params[] = (int)$filters['city_id'];
+        }
         if (!empty($filters['status'])) {
             $sql .= " AND c.status = ?";
             $params[] = $filters['status'];

@@ -5,6 +5,7 @@ import {
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { storeCouponApi } from '@/api/endpoints/storeCoupons'
+import { useState } from 'react'
 
 const STATUS_STYLE: Record<string, string> = {
   active:   'bg-emerald-50 text-emerald-700',
@@ -16,6 +17,7 @@ export default function StoreCouponDetailPage() {
   const { id }   = useParams<{ id: string }>()
   const navigate = useNavigate()
   const qc       = useQueryClient()
+  const [requestQty, setRequestQty] = useState<number>(1)
 
   const { data: coupon, isLoading } = useQuery({
     queryKey: ['store-coupon', id],
@@ -31,6 +33,15 @@ export default function StoreCouponDetailPage() {
       navigate('/store-coupons', { replace: true })
     },
     onError: () => toast.error('Failed to delete'),
+  })
+
+  const requestMutation = useMutation({
+    mutationFn: () => storeCouponApi.requestAssignment(Number(id), { quantity: requestQty }),
+    onSuccess: () => {
+      toast.success('Bulk assignment request submitted')
+      qc.invalidateQueries({ queryKey: ['store-coupon', id] })
+    },
+    onError: (err: any) => toast.error(err?.response?.data?.message ?? 'Request failed'),
   })
 
   if (isLoading || !coupon) {
@@ -53,6 +64,8 @@ export default function StoreCouponDetailPage() {
 
   const formatDate = (d: string | null) =>
     d ? new Date(d).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—'
+
+  const usage = coupon.coupon_usage
 
   return (
     <div className="min-h-full bg-gray-50 pb-10">
@@ -157,6 +170,53 @@ export default function StoreCouponDetailPage() {
             </div>
           )}
         </div>
+
+        {coupon.assignment_type === 'merchant_request' && (
+          <div className="bg-white rounded-2xl shadow-sm p-4 space-y-3">
+            <p className="text-[10px] font-bold text-gray-400 uppercase">Bulk Assignment Request</p>
+
+            <div className="rounded-xl bg-amber-50 px-3 py-2 text-xs text-amber-800">
+              This coupon requires admin approval before assignment.
+            </div>
+
+            {usage && (
+              <div className="grid grid-cols-2 gap-3 text-xs">
+                <div className="rounded-xl bg-gray-50 p-2">
+                  <p className="text-gray-400">This Month</p>
+                  <p className="font-bold text-gray-800">
+                    {usage.this_month} / {usage.monthly_limit ?? 'Unlimited'}
+                  </p>
+                </div>
+                <div className="rounded-xl bg-gray-50 p-2">
+                  <p className="text-gray-400">Total Usage</p>
+                  <p className="font-bold text-gray-800">
+                    {usage.total_used} / {usage.total_limit ?? 'Unlimited'}
+                  </p>
+                </div>
+              </div>
+            )}
+
+            <div className="flex items-end gap-2">
+              <div className="flex-1">
+                <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">Quantity Requested</label>
+                <input
+                  type="number"
+                  min={1}
+                  value={requestQty}
+                  onChange={(e) => setRequestQty(Math.max(1, Number(e.target.value || 1)))}
+                  className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm"
+                />
+              </div>
+              <button
+                onClick={() => requestMutation.mutate()}
+                disabled={requestMutation.isPending}
+                className="px-4 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-sm font-semibold disabled:opacity-60"
+              >
+                {requestMutation.isPending ? 'Submitting...' : 'Request Assignment'}
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Actions */}
         <div className="flex gap-3">

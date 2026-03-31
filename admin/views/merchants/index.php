@@ -20,29 +20,18 @@ $statusColors = [
 <?php if ($flash_success): ?><div class="alert alert-success alert-dismissible fade show border-0 shadow-sm"><i class="fas fa-check-circle me-2"></i><?= escape($flash_success) ?><button type="button" class="btn-close" data-bs-dismiss="alert"></button></div><?php endif; ?>
 <?php if ($flash_error):   ?><div class="alert alert-danger  alert-dismissible fade show border-0 shadow-sm"><i class="fas fa-exclamation-circle me-2"></i><?= escape($flash_error) ?><button type="button" class="btn-close" data-bs-dismiss="alert"></button></div><?php endif; ?>
 
-<!-- Header -->
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <div>
-        <h1 class="h3 mb-0">Merchant Management</h1>
-        <p class="text-muted mb-0 small">View, search and manage registered merchants.</p>
-    </div>
-    <a href="<?= BASE_URL ?>merchants/add" class="btn btn-primary">
-        <i class="fas fa-plus me-2"></i> Add Merchant
+<!-- Page header -->
+<div class="d-flex align-items-center justify-content-between mb-3">
+    <h5 class="fw-bold mb-0">Merchant Management</h5>
+    <a href="<?= BASE_URL ?>merchants/add" class="btn btn-primary btn-sm">
+        <i class="fas fa-plus me-1"></i> Add Merchant
     </a>
 </div>
 
-<!-- Stats Cards -->
-<div class="row g-3 mb-4">
+<!-- Stats row -->
+<div class="row g-3 mb-3">
     <div class="col-6 col-md-2">
-        <div class="card border-0 shadow-sm text-center h-100">
-            <div class="card-body py-3">
-                <div class="fs-2 fw-bold text-dark"><?= number_format($stats['total']) ?></div>
-                <div class="text-muted small">Total</div>
-            </div>
-        </div>
-    </div>
-    <div class="col-6 col-md-2">
-        <div class="card border-0 shadow-sm text-center h-100">
+        <div class="card border-0 shadow-sm text-center h-100" style="border-top:3px solid var(--bs-success) !important;">
             <div class="card-body py-3">
                 <div class="fs-2 fw-bold text-success"><?= number_format($stats['active']) ?></div>
                 <div class="text-muted small">Active</div>
@@ -116,6 +105,16 @@ $statusColors = [
                 </select>
             </div>
             <div class="col-auto">
+                <select name="city_id" class="form-select form-select-sm">
+                    <option value="">All Cities</option>
+                    <?php foreach ($cities as $city): ?>
+                    <option value="<?= $city['id'] ?>" <?= (string)$filters['city_id'] === (string)$city['id'] ? 'selected' : '' ?>>
+                        <?= escape($city['city_name']) ?>
+                    </option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+            <div class="col-auto">
                 <select name="status" class="form-select form-select-sm">
                     <option value="">All User Statuses</option>
                     <option value="active"  <?= $filters['status'] === 'active'  ? 'selected' : '' ?>>Active</option>
@@ -171,6 +170,9 @@ $statusColors = [
                                     <?php if ($m['is_premium']): ?>
                                     <span class="badge ms-1 text-white small" style="background:#6f42c1">Premium</span>
                                     <?php endif; ?>
+                                    <?php if ($m['is_verified']): ?>
+                                    <span class="badge ms-1 bg-success-subtle text-success border border-success-subtle small"><i class="fas fa-check-circle me-1"></i>Verified</span>
+                                    <?php endif; ?>
                                     <?php if ($m['label_name']): ?>
                                     <span class="badge bg-info-subtle text-info border border-info-subtle ms-1 small"><?= escape($m['label_name']) ?></span>
                                     <?php endif; ?>
@@ -220,7 +222,6 @@ $statusColors = [
                                 <button type="submit" class="btn btn-sm btn-outline-success me-1" title="Approve"><i class="fas fa-check"></i></button>
                             </form>
                             <?php endif; ?>
-                            <button class="btn btn-sm btn-outline-danger" onclick="confirmDelete(<?= $m['id'] ?>, '<?= escape($m['business_name']) ?>')" title="Delete"><i class="fas fa-trash"></i></button>
                         </td>
                     </tr>
                     <?php endforeach; ?>
@@ -251,6 +252,7 @@ $statusColors = [
                     'profile_status'      => $filters['profile_status'],
                     'subscription_status' => $filters['subscription_status'],
                     'is_premium'          => $filters['is_premium'],
+                    'city_id'             => $filters['city_id'],
                 ]);
                 $base = BASE_URL . 'merchants?' . ($qp ? http_build_query($qp) . '&' : '');
             ?>
@@ -284,26 +286,4 @@ $statusColors = [
 </div>
 <?php endif; ?>
 
-<!-- Delete Form -->
-<form method="POST" action="<?= BASE_URL ?>merchants/delete" id="deleteForm">
-    <input type="hidden" name="csrf_token" value="<?= generateCSRFToken() ?>">
-    <input type="hidden" name="id" id="deleteId">
-</form>
 
-<script>
-function confirmDelete(id, name) {
-    Swal.fire({
-        title: 'Delete Merchant?',
-        html: `Permanently delete <b>${name}</b> and all associated stores?`,
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#dc3545',
-        confirmButtonText: 'Delete'
-    }).then(r => {
-        if (r.isConfirmed) {
-            document.getElementById('deleteId').value = id;
-            document.getElementById('deleteForm').submit();
-        }
-    });
-}
-</script>

@@ -122,13 +122,6 @@
                                 </div>
                             </div>
 
-                            <div class="mb-3">
-                                <label class="form-label">Parameters (JSON)</label>
-                                <textarea name="parameters_json" class="form-control font-monospace" rows="3"
-                                          placeholder='{"tier": "gold", "points": 0}'></textarea>
-                                <div class="form-text">Optional custom parameters in JSON format.</div>
-                            </div>
-
                             <button type="submit" class="btn btn-primary w-100">
                                 <i class="fas fa-plus me-2"></i> Generate Card
                             </button>
@@ -211,13 +204,6 @@
                                     <i class="fas fa-info-circle me-1"></i>
                                     Bulk-generated pre-printed cards are created without images. You can upload front &amp; back images for each card individually from <strong>Cards &rarr; View / Edit card</strong> after generation.
                                 </div>
-                            </div>
-
-                            <div class="mb-3">
-                                <label class="form-label">Parameters (JSON)</label>
-                                <textarea name="parameters_json" class="form-control font-monospace" rows="3"
-                                          placeholder='{"tier": "standard", "points": 0}'></textarea>
-                                <div class="form-text">Applied to all generated cards.</div>
                             </div>
 
                             <button type="submit" class="btn btn-success w-100">

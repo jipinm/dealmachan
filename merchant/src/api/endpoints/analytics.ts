@@ -15,6 +15,12 @@ export interface DashboardAnalytics {
   avg_rating: number | null
   pending_grievances: number
   weekly_redemptions: { date: string; count: number }[]
+  coupon_usage?: {
+    this_month: number
+    monthly_limit: number | null
+    total_limit: number | null
+    total_used: number
+  }
 }
 
 export interface RedemptionAnalytics {

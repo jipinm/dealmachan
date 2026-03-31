@@ -4,6 +4,7 @@ import PageLoader from '@/components/ui/PageLoader'
 import AuthGuard from '@/components/layout/AuthGuard'
 import GuestShell from '@/components/layout/GuestShell'
 import MandatoryPasswordResetGuard from '@/components/layout/MandatoryPasswordResetGuard'
+import CardRequiredGuard from '@/components/layout/CardRequiredGuard'
 import ErrorBoundary from '@/components/ui/ErrorBoundary'
 
 // ── Auth pages (small, load eagerly) ─────────────────────────────────────────
@@ -39,6 +40,7 @@ const StoreCouponPage      = lazy(() => import('@/pages/coupons/StoreCouponPage'
 const WishlistPage         = lazy(() => import('@/pages/wishlist/WishlistPage'))
 const LoyaltyCardsPage     = lazy(() => import('@/pages/loyalty/LoyaltyCardsPage'))
 const CardSelectionPage    = lazy(() => import('@/pages/loyalty/CardSelectionPage'))
+const CardClaimPage        = lazy(() => import('@/pages/loyalty/CardClaimPage'))
 const ImportantDaysPage    = lazy(() => import('@/pages/important-days/ImportantDaysPage'))
 const ActivityPage         = lazy(() => import('@/pages/activity/ActivityPage'))
 const NotificationsPage    = lazy(() => import('@/pages/notifications/NotificationsPage'))
@@ -56,6 +58,8 @@ const MorePage             = lazy(() => import('@/pages/more/MorePage'))
 const CmsPage              = lazy(() => import('@/pages/static/CmsPage'))
 const SurveyTakePage       = lazy(() => import('@/pages/surveys/SurveyTakePage'))
 const ContestDetailPage    = lazy(() => import('@/pages/contests/ContestDetailPage'))
+const BookingFormPage      = lazy(() => import('@/pages/stores/BookingFormPage'))
+const BookingListPage      = lazy(() => import('@/pages/stores/BookingListPage'))
 
 /** Wraps lazy-loaded content in a Suspense fallback + ErrorBoundary */
 function Lazy({ element }: { element: React.ReactNode }) {
@@ -140,13 +144,10 @@ export const router = createBrowserRouter([
         children: [
           { path: 'dashboard', element: <Navigate to="/deals" replace /> },
           { path: 'explore',                  element: <Lazy element={<ExplorePage />} /> },
-          { path: 'wallet',                   element: <Lazy element={<CouponWalletPage />} /> },
-          { path: 'wallet/gifts',             element: <Lazy element={<CouponWalletPage />} /> },
-          { path: 'wallet/store',             element: <Lazy element={<StoreCouponPage />} /> },
-          { path: 'wallet/history',           element: <Lazy element={<CouponWalletPage />} /> },
           { path: 'wishlist',                 element: <Lazy element={<WishlistPage />} /> },
           { path: 'loyalty-cards',            element: <Lazy element={<LoyaltyCardsPage />} /> },
           { path: 'loyalty/select-card',       element: <Lazy element={<CardSelectionPage />} /> },
+          { path: 'loyalty/claim-card',         element: <Lazy element={<CardClaimPage />} /> },
           { path: 'important-days',           element: <Lazy element={<ImportantDaysPage />} /> },
           { path: 'activity',                 element: <Lazy element={<ActivityPage />} /> },
           { path: 'activity/*',               element: <Lazy element={<ActivityPage />} /> },
@@ -165,8 +166,19 @@ export const router = createBrowserRouter([
           { path: 'more',                    element: <Lazy element={<MorePage />} /> },
           { path: 'surveys/:id',             element: <Lazy element={<SurveyTakePage />} /> },
           { path: 'contests/:id',            element: <Lazy element={<ContestDetailPage />} /> },
+          { path: 'bookings',                element: <Lazy element={<BookingListPage />} /> },
+          { path: 'stores/:id/book',          element: <Lazy element={<BookingFormPage />} /> },
         ],
         },         // AppShell
+        {
+          element: <CardRequiredGuard />,
+          children: [
+            { path: 'wallet',                 element: <Lazy element={<CouponWalletPage />} /> },
+            { path: 'wallet/gifts',           element: <Lazy element={<CouponWalletPage />} /> },
+            { path: 'wallet/store',           element: <Lazy element={<StoreCouponPage />} /> },
+            { path: 'wallet/history',         element: <Lazy element={<CouponWalletPage />} /> },
+          ],
+        },
         ],
       },           // MandatoryPasswordResetGuard
     ],

@@ -23,6 +23,12 @@ interface DashboardData {
   avg_rating: number | null
   pending_grievances: number
   weekly_redemptions: Array<{ date: string; count: number }>
+  coupon_usage?: {
+    this_month: number
+    monthly_limit: number | null
+    total_limit: number | null
+    total_used: number
+  }
 }
 
 // ── KPI card ─────────────────────────────────────────────────────────────────
@@ -124,6 +130,11 @@ export default function HomePage() {
     Redemptions: d.count,
   })) ?? []
 
+  const couponUsage = data?.coupon_usage
+  const usagePct = couponUsage && couponUsage.monthly_limit && couponUsage.monthly_limit > 0
+    ? Math.min(100, Math.round((couponUsage.this_month / couponUsage.monthly_limit) * 100))
+    : null
+
   return (
     <div className="min-h-full bg-gray-50">
       {/* Header */}
@@ -184,6 +195,28 @@ export default function HomePage() {
             />
           </div>
         )}
+
+        {/* Quick actions */}
+        <div className="bg-white rounded-2xl p-4 shadow-sm">
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-sm font-bold text-gray-800">Store Coupons This Month</p>
+            <span className="text-xs text-gray-500">
+              {(couponUsage?.this_month ?? 0)} / {(couponUsage?.monthly_limit ?? 'Unlimited')}
+            </span>
+          </div>
+          {usagePct !== null ? (
+            <>
+              <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                <div className="h-full bg-brand-600" style={{ width: `${usagePct}%` }} />
+              </div>
+              <p className="text-[11px] text-gray-500 mt-2">
+                Total Used: {couponUsage?.total_used ?? 0} / {couponUsage?.total_limit ?? 'Unlimited'}
+              </p>
+            </>
+          ) : (
+            <p className="text-[11px] text-gray-500">No monthly cap set. Total used: {couponUsage?.total_used ?? 0}</p>
+          )}
+        </div>
 
         {/* Quick actions */}
         <div className="bg-white rounded-2xl p-4 shadow-sm">

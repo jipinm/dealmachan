@@ -15,6 +15,15 @@ function StoreBadge({ status }: { status: string }) {
 
 function StoreCard({ store, onClick }: { store: StoreType; onClick: () => void }) {
   const coverUrl = store.cover_image ? getImageUrl(store.cover_image) : null
+  const usage = store.coupon_usage
+  const usageLabel = usage
+    ? `${usage.this_month} / ${usage.monthly_limit ?? 'Unlimited'}`
+    : '0 / Unlimited'
+
+  const usagePct = usage && usage.monthly_limit && usage.monthly_limit > 0
+    ? Math.min(100, Math.round((usage.this_month / usage.monthly_limit) * 100))
+    : null
+
   return (
     <div onClick={onClick} className="bg-white rounded-2xl shadow-sm overflow-hidden active:scale-[0.98] transition-transform cursor-pointer">
       {/* Cover image */}
@@ -40,6 +49,16 @@ function StoreCard({ store, onClick }: { store: StoreType; onClick: () => void }
           <span className="flex items-center gap-1 text-xs text-gray-400">
             <Image size={12} />{store.gallery_count} photos
           </span>
+        </div>
+        <div className="mt-2">
+          <p className="text-[11px] font-medium text-gray-600">
+            Store Coupons This Month: <span className="text-gray-800">{usageLabel}</span>
+          </p>
+          {usagePct !== null && (
+            <div className="mt-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+              <div className="h-full bg-brand-500" style={{ width: `${usagePct}%` }} />
+            </div>
+          )}
         </div>
       </div>
     </div>

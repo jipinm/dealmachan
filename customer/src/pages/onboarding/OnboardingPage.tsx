@@ -51,8 +51,8 @@ export default function OnboardingPage() {
     onSuccess: (res) => {
       if (res.data.data) setCustomer(res.data.data as any)
       setLocation(selectedCityId!, selectedCityName, selectedAreaId ?? undefined, selectedAreaName || undefined)
-      toast.success(`Welcome to Deal Machan, ${selectedCityName}!`)
-      navigate('/deals', { replace: true })
+      toast.success(`Great! Now let's get your card.`)
+      navigate('/loyalty/select-card', { replace: true })
     },
     onError: (err) => toast.error(getApiError(err)),
   })
@@ -75,7 +75,7 @@ export default function OnboardingPage() {
     if (selectedCityId) {
       setLocation(selectedCityId, selectedCityName, null, null)
     }
-    navigate('/deals', { replace: true })
+    navigate('/loyalty/select-card', { replace: true })
   }
 
   const canContinue = !!selectedCityId

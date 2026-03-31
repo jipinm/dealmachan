@@ -184,12 +184,6 @@
                         <a href="<?= BASE_URL ?>cards/detail?id=<?= $c['id'] ?>" class="btn btn-sm btn-outline-info" title="View">
                             <i class="fas fa-eye"></i>
                         </a>
-                        <?php if ($c['status'] === 'available'): ?>
-                        <button class="btn btn-sm btn-outline-danger" title="Delete"
-                                onclick="confirmDelete(<?= $c['id'] ?>, '<?= escape($c['card_number']) ?>')">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                        <?php endif; ?>
                     </td>
                 </tr>
             <?php endforeach; ?>
@@ -233,26 +227,4 @@
 <?php endif; ?>
 <?php endif; ?>
 
-<!-- Delete form -->
-<form id="deleteForm" method="POST" action="<?= BASE_URL ?>cards/delete" style="display:none">
-    <input type="hidden" name="csrf_token" value="<?= generateCSRFToken() ?>">
-    <input type="hidden" name="id" id="deleteId">
-</form>
 
-<script>
-function confirmDelete(id, number) {
-    Swal.fire({
-        title: 'Delete Card?',
-        html: `Delete card <strong>${number}</strong>? This cannot be undone.`,
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#dc3545',
-        confirmButtonText: 'Yes, delete it',
-    }).then(r => {
-        if (r.isConfirmed) {
-            document.getElementById('deleteId').value = id;
-            document.getElementById('deleteForm').submit();
-        }
-    });
-}
-</script>

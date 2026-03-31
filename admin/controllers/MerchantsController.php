@@ -44,6 +44,7 @@ class MerchantsController extends Controller {
             'profile_status'       => $_GET['profile_status']       ?? '',
             'subscription_status'  => $_GET['subscription_status']  ?? '',
             'is_premium'           => $_GET['is_premium']           ?? '',
+            'city_id'              => $_GET['city_id']              ?? '',
             'search'               => trim($_GET['search']          ?? ''),
         ];
 
@@ -57,11 +58,14 @@ class MerchantsController extends Controller {
         $merchants    = $this->merchantModel->getAllWithDetails($fetchFilters);
         $stats        = $this->merchantModel->getStats();
 
+        $cityModel = new City();
+
         $this->loadView('merchants/index', [
             'title'         => 'Merchant Management',
             'merchants'     => $merchants,
             'stats'         => $stats,
             'filters'       => $filters,
+            'cities'        => $cityModel->getActive(),
             'currentPage'   => $currentPage,
             'totalPages'    => $totalPages,
             'totalCount'    => $totalCount,
@@ -219,11 +223,21 @@ class MerchantsController extends Controller {
         $phone           = sanitize($_POST['phone']            ?? '');
         $regNumber       = sanitize($_POST['registration_number'] ?? '');
         $gstNumber       = sanitize($_POST['gst_number']       ?? '');
-        $isPremium       = isset($_POST['is_premium']) ? 1 : 0;
-        $labelId         = !empty($_POST['label_id']) ? (int)$_POST['label_id'] : null;
-        $subsStatus      = sanitize($_POST['subscription_status'] ?? 'trial');
-        $subscriptionPlan = sanitize($_POST['subscription_plan'] ?? 'merchant_only');
-        $subsExpiry      = sanitize($_POST['subscription_expiry']  ?? '');
+        $isPremium          = isset($_POST['is_premium'])  ? 1 : 0;
+        $isVerified         = isset($_POST['is_verified']) ? 1 : 0;
+        $labelId            = !empty($_POST['label_id']) ? (int)$_POST['label_id'] : null;
+        $subsStatus         = sanitize($_POST['subscription_status'] ?? 'trial');
+        $subscriptionPlan   = sanitize($_POST['subscription_plan']   ?? 'merchant_only');
+        $subscriptionPeriod = sanitize($_POST['subscription_period']  ?? '1Y');
+        $subsExpiry         = sanitize($_POST['subscription_expiry']  ?? '');
+        if ($subsStatus === 'active') {
+            $periodMap  = ['1M' => '+1 month', '3M' => '+3 months', '6M' => '+6 months', '1Y' => '+1 year'];
+            $subsExpiry = date('Y-m-d', strtotime($periodMap[$subscriptionPeriod] ?? '+1 year'));
+        }
+        $couponLimit     = isset($_POST['coupon_limit']) && $_POST['coupon_limit'] !== ''
+                           ? (int)$_POST['coupon_limit'] : null;
+        $monthlyLimit    = isset($_POST['monthly_assignment_limit']) && $_POST['monthly_assignment_limit'] !== ''
+                           ? (int)$_POST['monthly_assignment_limit'] : null;
         $profileStatus   = sanitize($_POST['profile_status']  ?? 'pending');
         $priorityWeight  = (int)($_POST['priority_weight']    ?? 0);
         $userStatus      = sanitize($_POST['status']           ?? 'active');
@@ -326,16 +340,20 @@ class MerchantsController extends Controller {
             $userData['status'] = $userStatus;
 
             $merchantData = [
-                'business_name'       => $businessName,
-                'registration_number' => $regNumber  ?: null,
-                'gst_number'          => $gstNumber  ?: null,
-                'is_premium'          => $isPremium,
-                'label_id'            => $labelId,
-                'subscription_status' => $subsStatus,
-                'subscription_expiry' => $subsExpiry ?: null,
-                'profile_status'      => $profileStatus,
-                'priority_weight'     => $priorityWeight,
-                'subscription_plan'   => $subscriptionPlan,
+                'business_name'            => $businessName,
+                'registration_number'      => $regNumber  ?: null,
+                'gst_number'               => $gstNumber  ?: null,
+                'is_premium'               => $isPremium,
+                'is_verified'              => $isVerified,
+                'label_id'                 => $labelId,
+                'subscription_status'      => $subsStatus,
+                'subscription_expiry'      => $subsExpiry ?: null,
+                'subscription_period'      => $subscriptionPeriod,
+                'subscription_plan'        => $subscriptionPlan,
+                'coupon_limit'             => $couponLimit,
+                'monthly_assignment_limit' => $monthlyLimit,
+                'profile_status'           => $profileStatus,
+                'priority_weight'          => $priorityWeight,
             ];
             // Logo: new upload, or explicit removal, or keep existing
             if ($businessLogo !== null)    { $merchantData['business_logo'] = $businessLogo; }
@@ -386,16 +404,20 @@ class MerchantsController extends Controller {
             $userData['password'] = $password;
 
             $merchantData = [
-                'business_name'       => $businessName,
-                'registration_number' => $regNumber  ?: null,
-                'gst_number'          => $gstNumber  ?: null,
-                'is_premium'          => $isPremium,
-                'label_id'            => $labelId,
-                'subscription_status' => $subsStatus,
-                'subscription_expiry' => $subsExpiry ?: null,
-                'profile_status'      => $profileStatus,
-                'priority_weight'     => $priorityWeight,
-                'subscription_plan'   => $subscriptionPlan,
+                'business_name'            => $businessName,
+                'registration_number'      => $regNumber  ?: null,
+                'gst_number'               => $gstNumber  ?: null,
+                'is_premium'               => $isPremium,
+                'is_verified'              => $isVerified,
+                'label_id'                 => $labelId,
+                'subscription_status'      => $subsStatus,
+                'subscription_expiry'      => $subsExpiry ?: null,
+                'subscription_period'      => $subscriptionPeriod,
+                'subscription_plan'        => $subscriptionPlan,
+                'coupon_limit'             => $couponLimit,
+                'monthly_assignment_limit' => $monthlyLimit,
+                'profile_status'           => $profileStatus,
+                'priority_weight'          => $priorityWeight,
             ];
             if ($businessLogo !== null) { $merchantData['business_logo'] = $businessLogo; }
             if ($bannerImage  !== null) { $merchantData['banner_image']  = $bannerImage; }
@@ -435,24 +457,11 @@ class MerchantsController extends Controller {
         }
     }
 
-    // ─── DELETE ───────────────────────────────────────────────────────────────
+    // ─── DELETE (DISABLED) ───────────────────────────────────────────────────
 
     public function delete() {
         $this->requireCSRF();
-        $id = (int)($_POST['id'] ?? 0);
-        if (!$id) { $this->redirectWithError('merchants', 'Invalid merchant ID.'); return; }
-
-        $merchant = $this->merchantModel->findWithDetails($id);
-        if (!$merchant) { $this->redirectWithError('merchants', 'Merchant not found.'); return; }
-
-        try {
-            $this->merchantModel->deleteWithUser($id);
-            $cu = $this->auth->getCurrentUser();
-            logAudit('merchant_deleted', 'merchant', $id);
-            $_SESSION['success'] = "Merchant '{$merchant['business_name']}' deleted.";
-        } catch (Exception $e) {
-            $_SESSION['error'] = 'Cannot delete merchant: ' . $e->getMessage();
-        }
+        $_SESSION['error'] = 'Delete is disabled. Use account status and profile status controls instead.';
         $this->redirect('merchants');
     }
 
@@ -483,25 +492,11 @@ class MerchantsController extends Controller {
         $this->redirect($_POST['redirect'] ?? "merchants/profile?id={$id}");
     }
 
-    public function reject() {
-        $this->requireCSRF();
-        $id = (int)($_POST['id'] ?? 0);
-        if (!$id) { $this->redirectWithError('merchants', 'Invalid merchant ID.'); return; }
-
-        $this->merchantModel->updateProfileStatus($id, 'rejected');
-        $cu = $this->auth->getCurrentUser();
-        logAudit('merchant_rejected', 'merchant', $id);
-        $_SESSION['success'] = 'Merchant rejected.';
-        $this->redirect($_POST['redirect'] ?? "merchants/profile?id={$id}");
-    }
-
-    // ─── STORE MANAGEMENT ────────────────────────────────────────────────────
-
     public function addStore() {
         $merchantId = (int)($_GET['merchant_id'] ?? $_POST['merchant_id'] ?? 0);
         if (!$merchantId) { $this->redirectWithError('merchants', 'Invalid merchant ID.'); return; }
 
-        $merchant = $this->merchantModel->find($merchantId);
+        $merchant = $this->merchantModel->findWithDetails($merchantId);
         if (!$merchant) { $this->redirectWithError('merchants', 'Merchant not found.'); return; }
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -514,8 +509,13 @@ class MerchantsController extends Controller {
             $locationId  = !empty($_POST['location_id'])   ? (int)$_POST['location_id'] : null;
             $phone       = sanitize($_POST['phone']        ?? '');
             $email       = sanitize($_POST['email']        ?? '');
+            $websiteLink = sanitize($_POST['website_link'] ?? '');
             $description = sanitize($_POST['description']  ?? '');
+            $latitude    = !empty($_POST['latitude'])  ? (float)$_POST['latitude']  : null;
+            $longitude   = !empty($_POST['longitude']) ? (float)$_POST['longitude'] : null;
             $storeStatus = sanitize($_POST['status']       ?? 'active');
+            $bookingEnabled = isset($_POST['booking_enabled']) ? 1 : 0;
+            $bookingConfirm = isset($_POST['booking_confirmation_required']) ? 1 : 0;
             $redirect    = "merchants/add-store?merchant_id={$merchantId}";
 
             // Parse opening hours from form
@@ -566,17 +566,22 @@ class MerchantsController extends Controller {
                 $db->beginTransaction();
 
                 $storeData = [
-                    'merchant_id'   => $merchantId,
-                    'store_name'    => $storeName,
-                    'address'       => $address,
-                    'city_id'       => $cityId,
-                    'area_id'       => $areaId,
-                    'location_id'   => $locationId,
-                    'phone'         => $phone  ?: null,
-                    'email'         => $email  ?: null,
-                    'description'   => $description ?: null,
-                    'opening_hours' => $openingHours,
-                    'status'        => $storeStatus,
+                    'merchant_id'                  => $merchantId,
+                    'store_name'                   => $storeName,
+                    'address'                      => $address,
+                    'city_id'                      => $cityId,
+                    'area_id'                      => $areaId,
+                    'location_id'                  => $locationId,
+                    'phone'                        => $phone  ?: null,
+                    'email'                        => $email  ?: null,
+                    'website_link'                 => $websiteLink ? (filter_var($websiteLink, FILTER_VALIDATE_URL) ? $websiteLink : null) : null,
+                    'description'                  => $description ?: null,
+                    'latitude'                     => $latitude,
+                    'longitude'                    => $longitude,
+                    'opening_hours'                => $openingHours,
+                    'status'                       => $storeStatus,
+                    'booking_enabled'              => $bookingEnabled,
+                    'booking_confirmation_required' => $bookingConfirm,
                 ];
                 if ($storeImage !== null) { $storeData['store_image'] = $storeImage; }
 
@@ -700,8 +705,13 @@ class MerchantsController extends Controller {
             $locationId  = !empty($_POST['location_id'])   ? (int)$_POST['location_id'] : null;
             $phone       = sanitize($_POST['phone']        ?? '');
             $email       = sanitize($_POST['email']        ?? '');
+            $websiteLink = sanitize($_POST['website_link'] ?? '');
             $description = sanitize($_POST['description']  ?? '');
+            $latitude    = !empty($_POST['latitude'])  ? (float)$_POST['latitude']  : null;
+            $longitude   = !empty($_POST['longitude']) ? (float)$_POST['longitude'] : null;
             $storeStatus = sanitize($_POST['status']       ?? 'active');
+            $bookingEnabled = isset($_POST['booking_enabled']) ? 1 : 0;
+            $bookingConfirm = isset($_POST['booking_confirmation_required']) ? 1 : 0;
             $redirect    = "merchants/edit-store?id={$storeId}";
 
             // Parse opening hours from form
@@ -752,16 +762,21 @@ class MerchantsController extends Controller {
                 $db->beginTransaction();
 
                 $storeUpdateData = [
-                    'store_name'    => $storeName,
-                    'address'       => $address,
-                    'city_id'       => $cityId,
-                    'area_id'       => $areaId,
-                    'location_id'   => $locationId,
-                    'phone'         => $phone  ?: null,
-                    'email'         => $email  ?: null,
-                    'description'   => $description ?: null,
-                    'opening_hours' => $openingHours,
-                    'status'        => $storeStatus,
+                    'store_name'                   => $storeName,
+                    'address'                      => $address,
+                    'city_id'                      => $cityId,
+                    'area_id'                      => $areaId,
+                    'location_id'                  => $locationId,
+                    'phone'                        => $phone  ?: null,
+                    'email'                        => $email  ?: null,
+                    'website_link'                 => $websiteLink ? (filter_var($websiteLink, FILTER_VALIDATE_URL) ? $websiteLink : null) : null,
+                    'description'                  => $description ?: null,
+                    'latitude'                     => $latitude,
+                    'longitude'                    => $longitude,
+                    'opening_hours'                => $openingHours,
+                    'status'                       => $storeStatus,
+                    'booking_enabled'              => $bookingEnabled,
+                    'booking_confirmation_required' => $bookingConfirm,
                 ];
                 if ($storeImage !== null)              { $storeUpdateData['store_image'] = $storeImage; }
                 elseif (($_POST['remove_store_image'] ?? '0') === '1') { $storeUpdateData['store_image'] = null; }

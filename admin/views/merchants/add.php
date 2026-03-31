@@ -129,14 +129,24 @@
                         </select>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Subscription Plan</label>
-                        <select name="subscription_status" class="form-select">
+                        <label class="form-label">Subscription Status</label>
+                        <select name="subscription_status" id="subsStatusAdd" class="form-select" onchange="toggleSubsPeriodAdd(this.value)">
                             <option value="trial"   <?= ($_POST['subscription_status'] ?? 'trial') === 'trial'   ? 'selected' : '' ?>>Trial</option>
                             <option value="active"  <?= ($_POST['subscription_status'] ?? '') === 'active'       ? 'selected' : '' ?>>Active</option>
                             <option value="expired" <?= ($_POST['subscription_status'] ?? '') === 'expired'      ? 'selected' : '' ?>>Expired</option>
                         </select>
                     </div>
-                    <div class="mb-3">
+                    <div class="mb-3" id="subsPeriodWrapAdd">
+                        <label class="form-label">Subscription Period</label>
+                        <select name="subscription_period" class="form-select">
+                            <option value="1M" <?= ($_POST['subscription_period'] ?? '') === '1M' ? 'selected' : '' ?>>1 Month</option>
+                            <option value="3M" <?= ($_POST['subscription_period'] ?? '') === '3M' ? 'selected' : '' ?>>3 Months</option>
+                            <option value="6M" <?= ($_POST['subscription_period'] ?? '') === '6M' ? 'selected' : '' ?>>6 Months</option>
+                            <option value="1Y" <?= ($_POST['subscription_period'] ?? '1Y') === '1Y' ? 'selected' : '' ?>>1 Year</option>
+                        </select>
+                        <div class="form-text">Expiry is auto-calculated from today when saved.</div>
+                    </div>
+                    <div class="mb-3" id="subsExpiryWrapAdd" style="<?= ($_POST['subscription_status'] ?? '') === 'active' ? 'display:none' : '' ?>">
                         <label class="form-label">Subscription Expiry</label>
                         <input type="date" name="subscription_expiry" class="form-control"
                                value="<?= escape($_POST['subscription_expiry'] ?? '') ?>">
@@ -167,10 +177,36 @@
                                value="<?= (int)($_POST['priority_weight'] ?? 0) ?>">
                         <div class="form-text">Higher = appears first in listings.</div>
                     </div>
-                    <div class="form-check form-switch">
+                    <div class="form-check form-switch mb-2">
                         <input class="form-check-input" type="checkbox" name="is_premium" id="isPremium" value="1"
                                <?= !empty($_POST['is_premium']) ? 'checked' : '' ?>>
                         <label class="form-check-label" for="isPremium">Premium Partner</label>
+                    </div>
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" name="is_verified" id="isVerified" value="1"
+                               <?= !empty($_POST['is_verified']) ? 'checked' : '' ?>>
+                        <label class="form-check-label" for="isVerified">Verified Merchant</label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Assignment Limits -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white fw-semibold border-bottom">
+                    <i class="fas fa-ticket-alt me-2 text-primary"></i> Assignment Limits
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="form-label">Coupon Limit</label>
+                        <input type="number" name="coupon_limit" class="form-control" min="0"
+                               value="<?= escape($_POST['coupon_limit'] ?? '') ?>" placeholder="Unlimited">
+                        <div class="form-text">Max total coupons assignable to this merchant. Leave blank for unlimited.</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Monthly Assignment Limit</label>
+                        <input type="number" name="monthly_assignment_limit" class="form-control" min="0"
+                               value="<?= escape($_POST['monthly_assignment_limit'] ?? '') ?>" placeholder="Unlimited">
+                        <div class="form-text">Max coupons assignable per calendar month. Leave blank for unlimited.</div>
                     </div>
                 </div>
             </div>
@@ -263,6 +299,15 @@
 </form>
 
 <script>
+function toggleSubsPeriodAdd(status) {
+    var expiryWrap = document.getElementById('subsExpiryWrapAdd');
+    if (status === 'active') {
+        if (expiryWrap) expiryWrap.style.display = 'none';
+    } else {
+        if (expiryWrap) expiryWrap.style.display = '';
+    }
+}
+
 function togglePwd(id, iconId) {
     const input = document.getElementById(id);
     const icon  = document.getElementById(iconId);

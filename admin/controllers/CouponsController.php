@@ -47,6 +47,9 @@ class CouponsController extends Controller {
     public function index() {
         $filters = [
             'merchant_id'     => !empty($_GET['merchant_id'])    ? (int)$_GET['merchant_id']  : '',
+            'merchant_name'   => trim($_GET['merchant_name']     ?? ''),
+            'category_id'     => !empty($_GET['category_id'])    ? (int)$_GET['category_id']   : '',
+            'city_id'         => !empty($_GET['city_id'])        ? (int)$_GET['city_id']       : '',
             'status'          => $_GET['status']                 ?? '',
             'approval_status' => $_GET['approval_status']        ?? '',
             'discount_type'   => $_GET['discount_type']          ?? '',
@@ -67,13 +70,19 @@ class CouponsController extends Controller {
 
         // Merchant list for filter dropdown
         $merchantModel = new Merchant();
+        $cityModel = new City();
+        $db = Database::getInstance()->getConnection();
         $merchants = $merchantModel->getAllWithDetails(['limit' => 200]);
+        $categories = $db->query("SELECT id, name FROM categories WHERE status = 'active' ORDER BY name")->fetchAll(PDO::FETCH_ASSOC);
+        $cities = $cityModel->getActive();
 
         $this->loadView('coupons/index', [
             'title'         => 'Coupon Management',
             'coupons'       => $coupons,
             'stats'         => $stats,
             'merchants'     => $merchants,
+            'categories'    => $categories,
+            'cities'        => $cities,
             'filters'       => $filters,
             'currentPage'   => $currentPage,
             'totalPages'    => $totalPages,
@@ -235,6 +244,8 @@ class CouponsController extends Controller {
         $approvalStatus  = sanitize($_POST['approval_status'] ?? 'pending');
         $status          = sanitize($_POST['status']          ?? 'active');
         $terms           = sanitize($_POST['terms_conditions'] ?? '');
+        $note            = sanitize($_POST['note']            ?? null);
+        $usageLimitPerUser = trim($_POST['usage_limit_per_user'] ?? '');
         $tagIds          = $_POST['tags'] ?? [];
         $categoryIds     = array_filter(array_map('intval', $_POST['category_ids'] ?? []));
         $subCategoryIds  = array_filter(array_map('intval', $_POST['sub_category_ids'] ?? []));
@@ -335,6 +346,8 @@ class CouponsController extends Controller {
             'approval_status'       => $approvalStatus,
             'status'                => $status,
             'terms_conditions'      => $terms       !== '' ? $terms : null,
+            'note'                  => $note        !== '' ? $note : null,
+            'usage_limit_per_user'  => $usageLimitPerUser !== '' ? (int)$usageLimitPerUser : null,
             'bogo_buy_quantity'     => $bogoBuyQty,
             'bogo_get_quantity'     => $bogoGetQty,
             'addon_item_description'=> $addonDesc   ?: null,
@@ -434,24 +447,11 @@ class CouponsController extends Controller {
         }
     }
 
-    // ─── DELETE ───────────────────────────────────────────────────────────────
+    // ─── DELETE (DISABLED) ───────────────────────────────────────────────────
 
     public function delete() {
         $this->requireCSRF();
-        $id = (int)($_POST['id'] ?? 0);
-        if (!$id) { $this->redirectWithError('coupons', 'Invalid coupon ID.'); return; }
-
-        $coupon = $this->couponModel->findWithDetails($id);
-        if (!$coupon) { $this->redirectWithError('coupons', 'Coupon not found.'); return; }
-
-        try {
-            $this->couponModel->deleteCoupon($id);
-            $cu = $this->auth->getCurrentUser();
-            logAudit('coupon_deleted', 'coupon', $id);
-            $_SESSION['success'] = "Coupon '{$coupon['title']}' deleted.";
-        } catch (Exception $e) {
-            $_SESSION['error'] = 'Cannot delete coupon: ' . $e->getMessage();
-        }
+        $_SESSION['error'] = 'Delete is disabled. Set coupon status to inactive instead.';
         $this->redirect('coupons');
     }
 
@@ -489,6 +489,31 @@ class CouponsController extends Controller {
         logAudit('coupon_rejected', 'coupon', $id);
         $_SESSION['success'] = 'Coupon rejected.';
         $this->redirect($_POST['redirect'] ?? "coupons/detail?id={$id}");
+    }
+
+    // ─── AJAX: generate unique coupon code ───────────────────────────────────
+
+    public function generateCode() {
+        if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
+            $this->json(['success' => false, 'error' => 'Method not allowed'], 405);
+            return;
+        }
+
+        $chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+
+        for ($attempt = 0; $attempt < 25; $attempt++) {
+            $code = '';
+            for ($i = 0; $i < 8; $i++) {
+                $code .= $chars[random_int(0, strlen($chars) - 1)];
+            }
+
+            if (!$this->couponModel->codeExists($code)) {
+                $this->json(['success' => true, 'code' => $code]);
+                return;
+            }
+        }
+
+        $this->json(['success' => false, 'error' => 'Unable to generate unique code right now.'], 500);
     }
 
     // ─── AJAX: stores for merchant ────────────────────────────────────────────

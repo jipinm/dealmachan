@@ -29,7 +29,10 @@ class CardController {
 
         $card = $this->db->queryOne(
             "SELECT c.*, cc.name AS config_name, cc.classification, cc.features_html,
-                    cc.max_live_coupons, cc.coupon_authorization
+                    cc.max_live_coupons, cc.coupon_authorization,
+                    cc.pay_back_points_enabled, cc.pay_back_points_value,
+                    cc.lifetime_subscription, cc.gift_coupon_eligibility,
+                    cc.lucky_draw_eligible, cc.contest_eligible
              FROM cards c
              LEFT JOIN card_configurations cc ON cc.id = c.card_configuration_id
              WHERE c.assigned_to_customer_id = ? AND c.status = 'activated'
@@ -42,6 +45,32 @@ class CardController {
                 $card['parameters'] = json_decode($card['parameters_json'], true);
                 unset($card['parameters_json']);
             }
+
+            // Optional points wallet integration (M11). If table is not present, keep value null.
+            $card['points_balance'] = null;
+            try {
+                $pointsRow = $this->db->queryOne(
+                    "SELECT points_balance FROM customer_points WHERE customer_id = ? LIMIT 1",
+                    [(int)$customer['id']]
+                );
+                if ($pointsRow && isset($pointsRow['points_balance'])) {
+                    $card['points_balance'] = (float)$pointsRow['points_balance'];
+                }
+            } catch (Throwable $e) {
+                // M11 is optional; ignore if customer_points table does not exist.
+            }
+
+            // Attach sub-classifications (with gender filter and profession IDs) if configuration is linked
+            $card['sub_classifications'] = $card['card_configuration_id']
+                ? ($this->db->query(
+                    "SELECT sc.id, sc.name, m.gender_filter, m.profession_ids
+                     FROM card_config_sub_class_map m
+                     JOIN card_sub_classifications sc ON sc.id = m.sub_class_id
+                     WHERE m.config_id = ?
+                     ORDER BY sc.name",
+                    [$card['card_configuration_id']]
+                ) ?? [])
+                : [];
 
             // Attach partner merchants if configuration is linked
             $card['partners'] = $card['card_configuration_id']

@@ -84,11 +84,13 @@ class Card extends Model {
                     cu.phone         AS customer_phone,
                     cu.email         AS customer_email,
                     m.business_name  AS merchant_name,
+                    s.store_name     AS store_name,
                     a.name           AS admin_name
              FROM {$this->table} c
              LEFT JOIN customers  cust ON c.assigned_to_customer_id = cust.id
              LEFT JOIN users      cu   ON cust.user_id = cu.id
              LEFT JOIN merchants  m    ON c.assigned_to_merchant_id  = m.id
+             LEFT JOIN stores     s    ON c.assigned_to_store_id     = s.id
              LEFT JOIN admins     a    ON c.assigned_to_admin_id     = a.id
              WHERE c.id = ?"
         );
@@ -238,10 +240,39 @@ class Card extends Model {
              SET assigned_to_merchant_id  = ?,
                  assigned_to_customer_id  = NULL,
                  assigned_to_admin_id     = NULL,
+                 assigned_to_store_id     = NULL,
                  status = 'assigned',
                  updated_at = NOW()
              WHERE id = ?"
         )->execute([$merchantId, $cardId]);
+    }
+
+    /** Assign a card to a store. */
+    public function assignToStore(int $cardId, int $storeId): void {
+        $this->db->prepare(
+            "UPDATE {$this->table}
+             SET assigned_to_store_id     = ?,
+                 assigned_to_customer_id  = NULL,
+                 assigned_to_merchant_id  = NULL,
+                 assigned_to_admin_id     = NULL,
+                 status = 'assigned',
+                 updated_at = NOW()
+             WHERE id = ?"
+        )->execute([$storeId, $cardId]);
+    }
+
+    /** Assign a card to an admin. */
+    public function assignToAdmin(int $cardId, int $adminId): void {
+        $this->db->prepare(
+            "UPDATE {$this->table}
+             SET assigned_to_admin_id     = ?,
+                 assigned_to_customer_id  = NULL,
+                 assigned_to_merchant_id  = NULL,
+                 assigned_to_store_id     = NULL,
+                 status = 'assigned',
+                 updated_at = NOW()
+             WHERE id = ?"
+        )->execute([$adminId, $cardId]);
     }
 
     // ─── STATUS ───────────────────────────────────────────────────────────────

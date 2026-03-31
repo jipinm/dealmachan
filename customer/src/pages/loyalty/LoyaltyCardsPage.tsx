@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import {
   Gift, Star, Zap, CreditCard, CheckCircle, Lock,
   Tag, BarChart2, Loader2, Clock, Crown, ArrowUpRight, AlertCircle,
+  Infinity, Coins, Trophy, Dices,
 } from 'lucide-react'
 import { profileApi } from '@/api/endpoints/profile'
 import { useAuthStore } from '@/store/authStore'
@@ -158,7 +159,12 @@ export default function LoyaltyCardsPage() {
               {cardData?.config_name && (
                 <p className="text-white/80 text-xs mt-0.5">{cardData.config_name}</p>
               )}
-              {cardExpiryStatus === 'expired' ? (
+              {cardData?.lifetime_subscription ? (
+                <div className="flex items-center gap-1.5 mt-1">
+                  <Infinity size={13} className="text-white/70" />
+                  <p className="text-white/70 text-xs font-semibold">Lifetime Membership</p>
+                </div>
+              ) : cardExpiryStatus === 'expired' ? (
                 <div className="flex items-center gap-1.5 mt-1">
                   <AlertCircle size={13} className="text-red-300" />
                   <p className="text-red-200 text-xs font-semibold">Card Expired</p>
@@ -247,6 +253,41 @@ export default function LoyaltyCardsPage() {
               ))}
             </ul>
           </div>
+
+          {/* ── Card feature badges (from card configuration) ─────────── */}
+          {cardData && (cardData.lifetime_subscription || cardData.pay_back_points_enabled || cardData.gift_coupon_eligibility || cardData.lucky_draw_eligible || cardData.contest_eligible) && (
+            <div className="bg-white rounded-2xl border border-slate-100 p-5">
+              <h2 className="font-semibold text-sm text-slate-700 mb-3">Card Features</h2>
+              <div className="flex flex-wrap gap-2">
+                {!!cardData.lifetime_subscription && (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-50 text-indigo-700 text-xs font-semibold">
+                    <Infinity size={13} /> Lifetime
+                  </span>
+                )}
+                {!!cardData.pay_back_points_enabled && (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-green-50 text-green-700 text-xs font-semibold">
+                    <Coins size={13} />
+                    Pay Back{cardData.pay_back_points_value ? ` ${Number(cardData.pay_back_points_value).toFixed(2)}%` : ''}
+                  </span>
+                )}
+                {!!cardData.gift_coupon_eligibility && (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-pink-50 text-pink-700 text-xs font-semibold">
+                    <Gift size={13} /> Gift Coupons
+                  </span>
+                )}
+                {!!cardData.lucky_draw_eligible && (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-yellow-50 text-yellow-700 text-xs font-semibold">
+                    <Dices size={13} /> Lucky Draw
+                  </span>
+                )}
+                {!!cardData.contest_eligible && (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-orange-50 text-orange-700 text-xs font-semibold">
+                    <Trophy size={13} /> Contests
+                  </span>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* ── Upgrade CTA (standard only) ─────────────────────────────── */}
           {tier === 'standard' && (

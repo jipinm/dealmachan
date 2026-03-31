@@ -132,7 +132,6 @@ class CardsController extends Controller {
 
             $type       = $_POST['generate_type'] ?? 'single';
             $preprinted = isset($_POST['is_preprinted']) ? 1 : 0;
-            $paramsJson = trim($_POST['parameters_json'] ?? '');
             $cu         = $this->auth->getCurrentUser();
 
             // Resolve variant from config_id (if provided) or fall back to card_variant
@@ -150,17 +149,9 @@ class CardsController extends Controller {
                 $variant = $cfgRow['classification']; // silver/gold/platinum/diamond
             }
 
-            // Validate JSON if provided
-            if ($paramsJson && !json_decode($paramsJson)) {
-                $_SESSION['error'] = 'Parameters JSON is not valid JSON.';
-                $this->redirect('cards/generate');
-                return;
-            }
-
             $genData = [
                 'card_variant'         => $variant,
                 'is_preprinted'        => $preprinted,
-                'parameters_json'      => $paramsJson ?: null,
                 'card_configuration_id'=> $configId ?: null,
             ];
 
@@ -242,6 +233,8 @@ class CardsController extends Controller {
             $cardId      = (int)($_POST['card_id']      ?? 0);
             $customerId  = (int)($_POST['customer_id']  ?? 0);
             $merchantId  = (int)($_POST['merchant_id']  ?? 0);
+            $storeId     = (int)($_POST['store_id']     ?? 0);
+            $adminId     = (int)($_POST['admin_id']     ?? 0);
             $cu          = $this->auth->getCurrentUser();
 
             if (!$cardId) {
@@ -265,8 +258,16 @@ class CardsController extends Controller {
                 $this->cardModel->assignToMerchant($cardId, $merchantId);
                 logAudit('card_assigned_merchant', 'card', $cardId);
                 $_SESSION['success'] = "Card {$card['card_number']} assigned to merchant.";
+            } elseif ($storeId) {
+                $this->cardModel->assignToStore($cardId, $storeId);
+                logAudit('card_assigned_store', 'card', $cardId);
+                $_SESSION['success'] = "Card {$card['card_number']} assigned to store.";
+            } elseif ($adminId) {
+                $this->cardModel->assignToAdmin($cardId, $adminId);
+                logAudit('card_assigned_admin', 'card', $cardId);
+                $_SESSION['success'] = "Card {$card['card_number']} assigned to admin.";
             } else {
-                $_SESSION['error'] = 'Please select a customer or merchant to assign the card to.';
+                $_SESSION['error'] = 'Please select a customer, merchant, store, or admin to assign the card to.';
                 $this->redirect('cards/assign');
                 return;
             }
@@ -282,10 +283,27 @@ class CardsController extends Controller {
         }
 
         $merchantModel = new Merchant();
+
+        // Load stores for the store-assignment dropdown
+        $db     = Database::getInstance()->getConnection();
+        $stores = $db->query(
+            "SELECT s.id, s.store_name, m.business_name
+             FROM stores s
+             JOIN merchants m ON m.id = s.merchant_id
+             WHERE s.status = 'active'
+             ORDER BY m.business_name, s.store_name"
+        )->fetchAll(PDO::FETCH_ASSOC);
+
+        require_once MODEL_PATH . '/Admin.php';
+        $adminModel = new Admin();
+        $admins     = $adminModel->getAllWithUsers();
+
         $this->loadView('cards/assign', [
             'title'         => 'Assign Card',
             'available'     => $this->cardModel->getAvailable(200),
             'merchants'     => $merchantModel->getAllWithDetails(['limit' => 200]),
+            'stores'        => $stores,
+            'admins'        => $admins,
             'current_user'  => $this->auth->getCurrentUser(),
         ]);
     }
@@ -328,24 +346,11 @@ class CardsController extends Controller {
         $this->redirect("cards/detail?id={$id}");
     }
 
-    // ─── DELETE ───────────────────────────────────────────────────────────────
+    // ─── DELETE (DISABLED) ───────────────────────────────────────────────────
 
     public function delete() {
         $this->requireCSRF();
-        $id = (int)($_POST['id'] ?? 0);
-        if (!$id) { $this->redirectWithError('cards', 'Invalid card ID.'); return; }
-
-        $card = $this->cardModel->findWithDetails($id);
-        if (!$card) { $this->redirectWithError('cards', 'Card not found.'); return; }
-
-        $deleted = $this->cardModel->deleteCard($id);
-        if ($deleted) {
-            $cu = $this->auth->getCurrentUser();
-            logAudit('card_deleted', 'card', $id);
-            $_SESSION['success'] = "Card {$card['card_number']} deleted.";
-        } else {
-            $_SESSION['error'] = 'Only available (unassigned) cards can be deleted.';
-        }
+        $_SESSION['error'] = 'Delete is disabled. Use status controls (block/unblock/activate) instead.';
         $this->redirect('cards');
     }
 

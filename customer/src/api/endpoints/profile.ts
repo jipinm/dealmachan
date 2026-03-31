@@ -48,6 +48,13 @@ export interface CustomerCard {
   features_html: string | null
   max_live_coupons: number | null
   coupon_authorization: number | null
+  pay_back_points_enabled: number | null
+  pay_back_points_value: number | null
+  points_balance: number | null
+  lifetime_subscription: number | null
+  gift_coupon_eligibility: number | null
+  lucky_draw_eligible: number | null
+  contest_eligible: number | null
   partners: CardPartner[]
 }
 

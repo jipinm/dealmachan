@@ -190,6 +190,27 @@ export interface PublicStoreDetail extends PublicStore {
   description: string | null
   city_id: number | null
   area_id: number | null
+  website_link: string | null
+  booking_enabled: boolean
+}
+
+export interface PublicStoreCoupon {
+  id: number
+  title: string
+  description: string | null
+  terms_conditions: string | null
+  coupon_code: string
+  discount_type: 'percentage' | 'fixed'
+  discount_value: number
+  valid_from: string | null
+  valid_until: string | null
+  requires_acceptance: number
+  assignment_type: 'auto_assign' | 'merchant_request'
+  total_quantity: number | null
+  assigned_count: number
+  status: 'active' | 'inactive' | 'expired'
+  gifted_at: string | null
+  in_wallet: number
 }
 
 export interface StoreReview {
@@ -359,7 +380,7 @@ export const publicApi = {
 
   /** Single store public detail */
   getStore: (id: number) =>
-    apiClient.get<{ data: { store: PublicStoreDetail; coupons: TopCoupon[]; reviews: StoreReview[] } }>(`/public/stores/${id}`),
+    apiClient.get<{ data: { store: PublicStoreDetail; coupons: TopCoupon[]; reviews: StoreReview[]; store_coupons: PublicStoreCoupon[] } }>(`/public/stores/${id}`),
 
   /** Categories (replaces tags for store-level filtering) */
   getCategories: () =>
@@ -384,4 +405,8 @@ export const publicApi = {
   /** Submit a review for a store (requires auth) */
   submitStoreReview: (storeId: number, body: { rating: number; review_text?: string }) =>
     apiClient.post<{ data: { message: string } }>(`/public/stores/${storeId}/reviews`, body),
+
+  /** Log a call attempt for a store (requires auth, fire-and-forget) */
+  logStoreCall: (storeId: number) =>
+    apiClient.post(`/customers/stores/${storeId}/call-log`),
 }

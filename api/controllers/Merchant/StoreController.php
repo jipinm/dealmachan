@@ -26,6 +26,14 @@ class StoreController {
         $merchant = AuthMiddleware::user();
         $merchantId = (int)$merchant['merchant_id'];
 
+        $merchantLimits = $this->db->queryOne(
+            "SELECT monthly_assignment_limit, coupon_limit
+             FROM merchants
+             WHERE id = ?
+             LIMIT 1",
+            [$merchantId]
+        ) ?: ['monthly_assignment_limit' => null, 'coupon_limit' => null];
+
         $status = isset($params['status']) && in_array($params['status'], ['active', 'inactive'])
             ? $params['status'] : null;
 
@@ -47,7 +55,17 @@ class StoreController {
                     a.area_name,
                     COUNT(DISTINCT CASE WHEN cp.status='active' AND (cp.valid_until IS NULL OR cp.valid_until >= CURDATE()) THEN cp.id END) AS active_coupons,
                     COUNT(DISTINCT g.id)  AS gallery_count,
-                    (SELECT g2.image_url FROM store_gallery g2 WHERE g2.store_id = s.id AND g2.is_cover = 1 LIMIT 1) AS cover_image
+                                        (SELECT g2.image_url FROM store_gallery g2 WHERE g2.store_id = s.id AND g2.is_cover = 1 LIMIT 1) AS cover_image,
+                                        (SELECT COALESCE(SUM(cba.quantity), 0)
+                                         FROM coupon_bulk_allotments cba
+                                         WHERE cba.store_id = s.id
+                                             AND cba.status = 'approved'
+                                             AND YEAR(cba.created_at) = YEAR(CURDATE())
+                                             AND MONTH(cba.created_at) = MONTH(CURDATE())) AS coupon_this_month,
+                                        (SELECT COALESCE(SUM(cba.quantity), 0)
+                                         FROM coupon_bulk_allotments cba
+                                         WHERE cba.store_id = s.id
+                                             AND cba.status = 'approved') AS coupon_total_used
              FROM stores s
              LEFT JOIN cities c ON c.id = s.city_id
              LEFT JOIN areas  a ON a.id = s.area_id
@@ -64,6 +82,13 @@ class StoreController {
             $st['gallery_count']  = (int)$st['gallery_count'];
             $st['opening_hours']  = $st['opening_hours'] ? json_decode($st['opening_hours'], true) : null;
             $st['cover_image']    = imageUrl($st['cover_image']);
+            $st['coupon_usage']   = [
+                'this_month'    => (int)($st['coupon_this_month'] ?? 0),
+                'monthly_limit' => $merchantLimits['monthly_assignment_limit'] !== null ? (int)$merchantLimits['monthly_assignment_limit'] : null,
+                'total_limit'   => $merchantLimits['coupon_limit'] !== null ? (int)$merchantLimits['coupon_limit'] : null,
+                'total_used'    => (int)($st['coupon_total_used'] ?? 0),
+            ];
+            unset($st['coupon_this_month'], $st['coupon_total_used']);
         }
 
         Response::success($stores);
@@ -423,7 +448,17 @@ class StoreController {
             "SELECT s.*,
                     c.city_name,
                     a.area_name,
-                    COUNT(DISTINCT CASE WHEN cp.status='active' AND (cp.valid_until IS NULL OR cp.valid_until >= CURDATE()) THEN cp.id END) AS active_coupons
+                                        COUNT(DISTINCT CASE WHEN cp.status='active' AND (cp.valid_until IS NULL OR cp.valid_until >= CURDATE()) THEN cp.id END) AS active_coupons,
+                                        (SELECT COALESCE(SUM(cba.quantity), 0)
+                                         FROM coupon_bulk_allotments cba
+                                         WHERE cba.store_id = s.id
+                                             AND cba.status = 'approved'
+                                             AND YEAR(cba.created_at) = YEAR(CURDATE())
+                                             AND MONTH(cba.created_at) = MONTH(CURDATE())) AS coupon_this_month,
+                                        (SELECT COALESCE(SUM(cba.quantity), 0)
+                                         FROM coupon_bulk_allotments cba
+                                         WHERE cba.store_id = s.id
+                                             AND cba.status = 'approved') AS coupon_total_used
              FROM stores s
              LEFT JOIN cities c ON c.id = s.city_id
              LEFT JOIN areas  a ON a.id = s.area_id
@@ -435,8 +470,23 @@ class StoreController {
 
         if (!$store) return null;
 
+        $merchantLimits = $this->db->queryOne(
+            "SELECT monthly_assignment_limit, coupon_limit
+             FROM merchants
+             WHERE id = ?
+             LIMIT 1",
+            [$merchantId]
+        ) ?: ['monthly_assignment_limit' => null, 'coupon_limit' => null];
+
         $store['active_coupons'] = (int)$store['active_coupons'];
         $store['opening_hours']  = $store['opening_hours'] ? json_decode($store['opening_hours'], true) : null;
+        $store['coupon_usage']   = [
+            'this_month'    => (int)($store['coupon_this_month'] ?? 0),
+            'monthly_limit' => $merchantLimits['monthly_assignment_limit'] !== null ? (int)$merchantLimits['monthly_assignment_limit'] : null,
+            'total_limit'   => $merchantLimits['coupon_limit'] !== null ? (int)$merchantLimits['coupon_limit'] : null,
+            'total_used'    => (int)($store['coupon_total_used'] ?? 0),
+        ];
+        unset($store['coupon_this_month'], $store['coupon_total_used']);
 
         // Categories
         $store['categories'] = $this->db->query(

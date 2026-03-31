@@ -104,6 +104,10 @@ if (matchRoute('POST', 'auth/customer/login', $path)) {
     loadController('Customer', 'AuthController');
     (new CustomerAuthController())->login($body);
 }
+if (matchRoute('POST', 'auth/customer/check-login', $path)) {
+    loadController('Customer', 'AuthController');
+    (new CustomerAuthController())->checkLogin($body);
+}
 if (matchRoute('POST', 'auth/customer/verify-otp', $path)) {
     loadController('Customer', 'AuthController');
     (new CustomerAuthController())->verifyOtp($body);
@@ -123,6 +127,14 @@ if (matchRoute('POST', 'auth/customer/reset-password', $path)) {
 if (matchRoute('POST', 'auth/customer/refresh', $path)) {
     loadController('Customer', 'AuthController');
     (new CustomerAuthController())->refresh($body);
+}
+if (matchRoute('POST', 'auth/customer/login-otp', $path)) {
+    loadController('Customer', 'AuthController');
+    (new CustomerAuthController())->loginOtp($body);
+}
+if (matchRoute('POST', 'auth/customer/verify-login-otp', $path)) {
+    loadController('Customer', 'AuthController');
+    (new CustomerAuthController())->verifyLoginOtp($body);
 }
 if (matchRoute('POST', 'auth/customer/logout', $path)) {
     loadController('Customer', 'AuthController');
@@ -233,6 +245,28 @@ if (matchRoute('PUT', 'merchants/stores/:id/gallery/reorder', $path)) {
     loadController('Merchant', 'StoreController');
     AuthMiddleware::require();
     (new StoreController())->reorderGallery((int)param('id'), $body);
+}
+
+// ---------- Merchant Bookings ----------
+if (matchRoute('GET', 'merchants/bookings', $path)) {
+    AuthMiddleware::require();
+    loadController('Merchant', 'BookingController');
+    (new MerchantBookingController())->index($_GET);
+}
+if (matchRoute('PATCH', 'merchants/bookings/:id/confirm', $path)) {
+    AuthMiddleware::require();
+    loadController('Merchant', 'BookingController');
+    (new MerchantBookingController())->confirm((int)param('id'));
+}
+if (matchRoute('PATCH', 'merchants/bookings/:id/reject', $path)) {
+    AuthMiddleware::require();
+    loadController('Merchant', 'BookingController');
+    (new MerchantBookingController())->reject((int)param('id'), $body);
+}
+if (matchRoute('PATCH', 'merchants/bookings/:id/complete', $path)) {
+    AuthMiddleware::require();
+    loadController('Merchant', 'BookingController');
+    (new MerchantBookingController())->complete((int)param('id'));
 }
 
 // ---------- Public: Master Data ----------
@@ -523,6 +557,11 @@ if (matchRoute('POST', 'merchants/store-coupons/:id/bulk-assign', $path)) {
     $user = AuthMiddleware::require();
     (new StoreCouponController())->bulkAssign($user, (int)param('id'), $body);
 }
+if (matchRoute('POST', 'merchants/store-coupons/:id/request-assignment', $path)) {
+    loadController('Merchant', 'StoreCouponController');
+    $user = AuthMiddleware::require();
+    (new StoreCouponController())->requestAssignment($user, (int)param('id'), $body);
+}
 if (matchRoute('POST', 'merchants/store-coupons/:id/redeem', $path)) {
     loadController('Merchant', 'StoreCouponController');
     $user = AuthMiddleware::require();
@@ -788,6 +827,36 @@ if (matchRoute('GET', 'customers/store-coupons', $path)) {
     $user = AuthMiddleware::requireCustomer();
     loadController('Customer', 'CouponController');
     (new CustomerCouponController())->storeCoupons($user);
+}
+if (matchRoute('POST', 'customers/store-coupons/:id/grab', $path)) {
+    $user = AuthMiddleware::requireCustomer();
+    AuthMiddleware::requireActiveCard($user);
+    loadController('Customer', 'CouponController');
+    (new CustomerCouponController())->grabStoreCoupon($user, (int)param('id'));
+}
+
+// ---------- Customer Store Actions ----------
+if (matchRoute('POST', 'customers/stores/:id/call-log', $path)) {
+    $user = AuthMiddleware::requireCustomer();
+    loadController('Customer', 'StoreController');
+    (new CustomerStoreController())->callLog($user, (int)param('id'));
+}
+
+// ---------- Customer Bookings ----------
+if (matchRoute('POST', 'customers/stores/:id/bookings', $path)) {
+    $user = AuthMiddleware::requireCustomer();
+    loadController('Customer', 'BookingController');
+    (new CustomerBookingController())->create($user, (int)param('id'), $body);
+}
+if (matchRoute('GET', 'customers/bookings', $path)) {
+    $user = AuthMiddleware::requireCustomer();
+    loadController('Customer', 'BookingController');
+    (new CustomerBookingController())->index($user);
+}
+if (matchRoute('PATCH', 'customers/bookings/:id/cancel', $path)) {
+    $user = AuthMiddleware::requireCustomer();
+    loadController('Customer', 'BookingController');
+    (new CustomerBookingController())->cancel($user, (int)param('id'));
 }
 
 // ---------- Customer Profile (extended) ----------

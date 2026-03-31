@@ -221,39 +221,11 @@ $st = $card['status'] ?? 'available';
             </div>
         </div>
 
-        <!-- Danger Zone -->
-        <?php if ($st === 'available'): ?>
-        <div class="card border-danger shadow-sm">
-            <div class="card-header text-danger fw-semibold"><i class="fas fa-exclamation-triangle me-2"></i>Danger Zone</div>
-            <div class="card-body">
-                <p class="small text-muted mb-2">Permanently delete this card. Only available cards can be deleted.</p>
-                <button class="btn btn-sm btn-danger w-100"
-                        onclick="confirmDelete(<?= $card['id'] ?>, '<?= escape($card['card_number']) ?>')">
-                    <i class="fas fa-trash me-1"></i> Delete Card
-                </button>
-            </div>
-        </div>
-        <?php endif; ?>
+
     </div>
 </div>
 
-<!-- Delete form -->
-<form id="deleteForm" method="POST" action="<?= BASE_URL ?>cards/delete" style="display:none">
-    <input type="hidden" name="csrf_token" value="<?= generateCSRFToken() ?>">
-    <input type="hidden" name="id" value="<?= $card['id'] ?>">
-</form>
-
 <script>
-function confirmDelete(id, number) {
-    Swal.fire({
-        title: 'Delete Card?',
-        html: `Permanently delete card <strong>${number}</strong>?`,
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#dc3545',
-        confirmButtonText: 'Yes, delete it',
-    }).then(r => { if (r.isConfirmed) document.getElementById('deleteForm').submit(); });
-}
 function copyText(text) {
     navigator.clipboard.writeText(text).then(() =>
         Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Copied!', showConfirmButton: false, timer: 1500 })

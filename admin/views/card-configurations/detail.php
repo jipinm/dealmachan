@@ -17,16 +17,15 @@ $normalPartners  = array_filter($cfg['partners'] ?? [], fn($p) => $p['partner_ty
         <a href="<?= BASE_URL ?>card-configurations/edit?id=<?= $cfg['id'] ?>" class="btn btn-sm btn-primary">
             <i class="fas fa-edit me-1"></i> Edit
         </a>
-        <?php if (empty($cfg['cards_count']) || $cfg['cards_count'] == 0): ?>
-        <form method="POST" action="<?= BASE_URL ?>card-configurations/delete"
-              onsubmit="return confirm('Delete this configuration permanently?')">
+        <form method="POST" action="<?= BASE_URL ?>card-configurations/toggle-status"
+              onsubmit="return confirm('Toggle status of this configuration?')">
             <input type="hidden" name="csrf_token" value="<?= generateCSRFToken() ?>">
             <input type="hidden" name="id" value="<?= $cfg['id'] ?>">
-            <button type="submit" class="btn btn-sm btn-outline-danger">
-                <i class="fas fa-trash me-1"></i> Delete
+            <button type="submit" class="btn btn-sm btn-outline-<?= $cfg['status'] === 'active' ? 'warning' : 'success' ?>">
+                <i class="fas fa-toggle-<?= $cfg['status'] === 'active' ? 'off' : 'on' ?> me-1"></i>
+                <?= $cfg['status'] === 'active' ? 'Deactivate' : 'Activate' ?>
             </button>
         </form>
-        <?php endif; ?>
         <a href="<?= BASE_URL ?>card-configurations" class="btn btn-sm btn-outline-secondary">
             <i class="fas fa-arrow-left me-1"></i> Back
         </a>
@@ -89,6 +88,32 @@ $normalPartners  = array_filter($cfg['partners'] ?? [], fn($p) => $p['partner_ty
                     <div class="col-sm-4">
                         <label class="text-muted small">Publicly Selectable</label>
                         <div><?= $cfg['is_publicly_selectable'] ? '<span class="badge bg-success">Yes</span>' : '<span class="badge bg-secondary">No</span>' ?></div>
+                    </div>
+                    <div class="col-12">
+                        <label class="text-muted small">Feature Toggles</label>
+                        <div class="mt-1 d-flex flex-wrap gap-2">
+                            <?php if (!empty($cfg['lifetime_subscription'])): ?>
+                                <span class="badge bg-primary"><i class="fas fa-infinity me-1"></i> Lifetime</span>
+                            <?php endif; ?>
+                            <?php if (!empty($cfg['pay_back_points_enabled'])): ?>
+                                <span class="badge bg-success">
+                                    <i class="fas fa-coins me-1"></i>
+                                    Pay Back <?= !empty($cfg['pay_back_points_value']) ? number_format($cfg['pay_back_points_value'], 2) . '%' : '' ?>
+                                </span>
+                            <?php endif; ?>
+                            <?php if (!empty($cfg['gift_coupon_eligibility'])): ?>
+                                <span class="badge bg-info text-dark"><i class="fas fa-gift me-1"></i> Gift Coupons</span>
+                            <?php endif; ?>
+                            <?php if (!empty($cfg['lucky_draw_eligible'])): ?>
+                                <span class="badge bg-warning text-dark"><i class="fas fa-dice me-1"></i> Lucky Draw</span>
+                            <?php endif; ?>
+                            <?php if (!empty($cfg['contest_eligible'])): ?>
+                                <span class="badge bg-orange text-white" style="background-color:#f97316"><i class="fas fa-trophy me-1"></i> Contests</span>
+                            <?php endif; ?>
+                            <?php if (empty($cfg['lifetime_subscription']) && empty($cfg['pay_back_points_enabled']) && empty($cfg['gift_coupon_eligibility']) && empty($cfg['lucky_draw_eligible']) && empty($cfg['contest_eligible'])): ?>
+                                <span class="text-muted small">None enabled</span>
+                            <?php endif; ?>
+                        </div>
                     </div>
                     <?php if (!empty($cfg['features_html'])): ?>
                     <div class="col-12">

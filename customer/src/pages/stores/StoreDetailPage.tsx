@@ -1,9 +1,11 @@
 import { useState } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { publicApi, type PublicStoreDetail, type StoreReview } from '@/api/endpoints/public'
+import { publicApi, type PublicStoreDetail, type PublicStoreCoupon, type StoreReview } from '@/api/endpoints/public'
 import { favouritesApi } from '@/api/endpoints/favourites'
-import { Star, MapPin, Phone, Tag, ChevronRight, Store, Clock, ArrowLeft, MessageSquare, User, Mail, Navigation, Send, Heart, Lock, Loader2 as HeartLoader } from 'lucide-react'
+import { couponsApi } from '@/api/endpoints/coupons'
+import { profileApi } from '@/api/endpoints/profile'
+import { Star, MapPin, Phone, Tag, ChevronRight, Store, Clock, ArrowLeft, MessageSquare, User, Mail, Navigation, Send, Heart, Lock, Loader2 as HeartLoader, Globe, CalendarPlus } from 'lucide-react'
 import RatingStars from '@/components/ui/RatingStars'
 import { getImageUrl } from '@/lib/imageUrl'
 import { slugify } from '@/lib/slugify'
@@ -94,6 +96,14 @@ export default function StoreDetailPage() {
   const [reviewText, setReviewText] = useState('')
   const [showHours, setShowHours] = useState(false)
   const [reviewSubmitted, setReviewSubmitted] = useState(false)
+  const [grabbingCouponId, setGrabbingCouponId] = useState<number | null>(null)
+
+  const { data: cardData } = useQuery({
+    queryKey: ['store-detail-active-card-check'],
+    queryFn: () => profileApi.getCard().then((r) => r.data.data),
+    enabled: isAuthenticated,
+    staleTime: 120_000,
+  })
 
   // ── Store data ───────────────────────────────────────────────────────────
   const { data: storeDetail, isLoading } = useQuery({
@@ -101,7 +111,12 @@ export default function StoreDetailPage() {
     queryFn: () =>
       publicApi.getStore(Number(id)).then((r) => {
         const payload = (r.data as any).data
-        return payload as { store: PublicStoreDetail; coupons: any[]; reviews: StoreReview[] }
+        return payload as {
+          store: PublicStoreDetail
+          coupons: any[]
+          reviews: StoreReview[]
+          store_coupons: PublicStoreCoupon[]
+        }
       }),
     enabled: !!id,
   })
@@ -109,6 +124,7 @@ export default function StoreDetailPage() {
   const store = storeDetail?.store
   const coupons = storeDetail?.coupons ?? []
   const reviews = storeDetail?.reviews ?? []
+  const storeCoupons = storeDetail?.store_coupons ?? []
 
   // ── Favourite state (merchant-scoped, derived from loaded store) ─────────
   const merchantIdForFav = store?.merchant_id ?? 0
@@ -152,6 +168,41 @@ export default function StoreDetailPage() {
       queryClient.invalidateQueries({ queryKey: ['store', id] })
     },
   })
+
+  const grabStoreCouponMutation = useMutation({
+    mutationFn: (couponId: number) => couponsApi.grabStoreCoupon(couponId),
+    onMutate: (couponId: number) => {
+      setGrabbingCouponId(couponId)
+    },
+    onSuccess: () => {
+      toast.success('Coupon added to your wallet')
+      queryClient.invalidateQueries({ queryKey: ['store', id] })
+      queryClient.invalidateQueries({ queryKey: ['store-coupons'] })
+    },
+    onError: (err: any) => {
+      const msg = err?.response?.data?.message ?? 'Could not grab store coupon'
+      toast.error(msg)
+    },
+    onSettled: () => {
+      setGrabbingCouponId(null)
+    },
+  })
+
+  function canUseCardOnlyFeature() {
+    if (!isAuthenticated) {
+      navigate(`/login?redirect=${encodeURIComponent(location.pathname)}`)
+      return false
+    }
+
+    const cardStatus = (cardData as any)?.status
+    const hasActiveCard = cardStatus === 'active' || cardStatus === 'activated'
+    if (!hasActiveCard) {
+      toast.error('You need an activated DealMachan card to use this feature.')
+      return false
+    }
+
+    return true
+  }
 
   if (isLoading) {
     return (
@@ -250,10 +301,45 @@ export default function StoreDetailPage() {
                 </div>
               )}
 
-              {/* Phone */}
+              {/* Phone — Call button with background log */}
               {store.phone && (
-                <a href={`tel:${store.phone}`} className="flex items-center gap-2 text-sm text-brand-600 hover:underline mb-2">
-                  <Phone size={13} /> {store.phone}
+                <a
+                  href={`tel:${store.phone}`}
+                  onClick={() => { publicApi.logStoreCall(store.id).catch(() => {}) }}
+                  className="flex items-center gap-2 w-full px-4 py-2.5 mb-3 bg-brand-600 hover:bg-brand-700 text-white text-sm font-semibold rounded-xl transition-colors"
+                >
+                  <Phone size={15} /> Call {store.phone}
+                </a>
+              )}
+
+              {/* Book Now */}
+              {store.booking_enabled && (
+                isAuthenticated ? (
+                  <button
+                    onClick={() => navigate(`/stores/${id}/book`)}
+                    className="flex items-center gap-2 w-full px-4 py-2.5 mb-3 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold rounded-xl transition-colors"
+                  >
+                    <CalendarPlus size={15} /> Book Now
+                  </button>
+                ) : (
+                  <a
+                    href={`/login?redirect=/stores/${id}/book`}
+                    className="flex items-center gap-2 w-full px-4 py-2.5 mb-3 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold rounded-xl transition-colors"
+                  >
+                    <CalendarPlus size={15} /> Book Now
+                  </a>
+                )
+              )}
+
+              {/* Website */}
+              {store.website_link && (
+                <a
+                  href={store.website_link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 text-sm text-brand-600 hover:underline mb-2"
+                >
+                  <Globe size={13} /> {store.website_link.replace(/^https?:\/\//, '')}
                 </a>
               )}
 
@@ -323,6 +409,99 @@ export default function StoreDetailPage() {
 
           {/* Main: deals + reviews */}
           <main>
+            {/* Store coupons (Grab Now flow) */}
+            <section className="mb-8">
+              <h2 className="section-heading mb-4 text-xl">
+                Store Coupons <span className="text-slate-400 text-base font-normal">({storeCoupons.length})</span>
+              </h2>
+
+              {storeCoupons.length > 0 ? (
+                <div className="grid sm:grid-cols-2 gap-4">
+                  {storeCoupons.map((sc) => {
+                    const inWallet = Number(sc.in_wallet) === 1
+                    const soldOut = sc.total_quantity !== null
+                      && Number(sc.assigned_count) >= Number(sc.total_quantity)
+                      && !inWallet
+                    const grabEnabled = Number(sc.requires_acceptance) === 1 && !inWallet && !soldOut
+                    const grabbingThis = grabStoreCouponMutation.isPending && grabbingCouponId === sc.id
+
+                    return (
+                      <div key={sc.id} className="card p-4">
+                        <div className="flex items-start justify-between gap-3 mb-2">
+                          <div>
+                            <h3 className="font-semibold text-slate-800 text-sm line-clamp-2">{sc.title}</h3>
+                            {sc.description && (
+                              <p className="text-xs text-slate-500 mt-1 line-clamp-2">{sc.description}</p>
+                            )}
+                            {sc.terms_conditions && (
+                              <p className="text-xs text-slate-400 mt-1 line-clamp-2 italic">T&amp;C: {sc.terms_conditions}</p>
+                            )}
+                          </div>
+                          <span className="badge-discount whitespace-nowrap">
+                            {sc.discount_type === 'percentage' ? `${sc.discount_value}%` : `₹${sc.discount_value}`} OFF
+                          </span>
+                        </div>
+
+                        <div className="flex items-center justify-between text-xs text-slate-400 mb-3">
+                          <span className="font-mono bg-slate-50 px-2 py-1 rounded-lg border border-dashed border-slate-300">
+                            {sc.coupon_code}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <Clock size={11} /> {timeLeft(sc.valid_until)}
+                          </span>
+                        </div>
+
+                        {sc.total_quantity !== null && (
+                          <p className="text-xs text-slate-500 mb-3">
+                            Assigned: {sc.assigned_count} / {sc.total_quantity}
+                          </p>
+                        )}
+
+                        {inWallet ? (
+                          <div className="w-full text-center py-2.5 rounded-xl bg-emerald-50 text-emerald-700 text-sm font-semibold">
+                            In Your Wallet
+                          </div>
+                        ) : soldOut ? (
+                          <div className="w-full text-center py-2.5 rounded-xl bg-amber-50 text-amber-700 text-sm font-semibold">
+                            Fully Claimed
+                          </div>
+                        ) : grabEnabled ? (
+                          isAuthenticated ? (
+                            <button
+                              onClick={() => {
+                                if (!canUseCardOnlyFeature()) return
+                                grabStoreCouponMutation.mutate(sc.id)
+                              }}
+                              disabled={grabbingThis}
+                              className="w-full py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 disabled:opacity-60 text-white text-sm font-semibold transition-colors"
+                            >
+                              {grabbingThis ? 'Grabbing...' : 'Grab Now'}
+                            </button>
+                          ) : (
+                            <Link
+                              to={`/login?redirect=${encodeURIComponent(location.pathname)}`}
+                              className="w-full inline-flex items-center justify-center py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-sm font-semibold transition-colors"
+                            >
+                              Login to Grab
+                            </Link>
+                          )
+                        ) : (
+                          <div className="w-full text-center py-2.5 rounded-xl bg-slate-100 text-slate-600 text-sm font-medium">
+                            Auto Available with Active Card
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
+              ) : (
+                <div className="text-center py-10 text-slate-400 bg-white rounded-2xl border border-slate-100">
+                  <Tag size={32} className="mx-auto mb-2 opacity-30" />
+                  <p className="text-sm">No store coupons available right now</p>
+                </div>
+              )}
+            </section>
+
             {/* Active deals */}
             <section className="mb-8">
               <h2 className="section-heading mb-4 text-xl">
