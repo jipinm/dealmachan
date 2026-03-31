@@ -84,7 +84,9 @@ export default function BookingFormPage() {
         </div>
         <div>
           <h1 className="font-heading font-bold text-2xl text-slate-800">Book a Visit</h1>
-          {store && <p className="text-sm text-slate-500 mt-0.5">{store.name}</p>}
+          {store?.data?.store && (
+            <p className="text-sm text-slate-500 mt-0.5">{store.data.store.store_name}</p>
+          )}
         </div>
       </div>
 
